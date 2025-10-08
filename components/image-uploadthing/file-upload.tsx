@@ -74,7 +74,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       content={{
         label: "Chọn hình ảnh dịch vụ",
       }}
-      onClientUploadComplete={(res) => {
+      onClientUploadComplete={(res: any) => {
         onChange(res?.[0].url);
         console.log(res);
       }}
