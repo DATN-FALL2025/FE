@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# Ignore Claude local settings
+.claude/
+
 # Env files
 .env*
 
