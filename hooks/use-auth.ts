@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 
 interface User {
   email: string;
-  role: "admin" | "training_director" | "head_of_department" | "academic_affairs_staff" | "trainee";
+  role: "admin" | "head" | "manager" | "student";
   name?: string;
 }
 

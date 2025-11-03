@@ -1,6 +1,6 @@
 "use client";
 
-import { useTraineeData } from "@/features/trainee/hooks/use-trainee-data";
+import { useStudentData } from "@/features/students/hooks/use-student-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-export default function TraineeProfilePage() {
-  const { trainee, loading } = useTraineeData();
+export default function StudentProfilePage() {
+  const { student, loading } = useStudentData();
   const [isEditing, setIsEditing] = useState(false);
 
   const getInitials = (name: string) => {
@@ -48,7 +48,7 @@ export default function TraineeProfilePage() {
     );
   }
 
-  if (!trainee) {
+  if (!student) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
@@ -92,21 +92,21 @@ export default function TraineeProfilePage() {
           <Card>
             <CardContent className="p-6 text-center space-y-4">
               <Avatar className="w-32 h-32 mx-auto border-4 border-primary/10">
-                <AvatarImage src={trainee.avatar} alt={trainee.fullName} />
+                <AvatarImage src={student.avatar} alt={student.fullName} />
                 <AvatarFallback className="text-4xl font-bold bg-primary/10 text-primary">
-                  {getInitials(trainee.fullName)}
+                  {getInitials(student.fullName)}
                 </AvatarFallback>
               </Avatar>
-
+              
               <div>
-                <h2 className="text-2xl font-bold">{trainee.fullName}</h2>
+                <h2 className="text-2xl font-bold">{student.fullName}</h2>
                 <p className="text-lg text-muted-foreground font-mono mt-1">
-                  {trainee.traineeCode}
+                  {student.studentCode}
                 </p>
               </div>
 
               <Badge className="bg-blue-500 hover:bg-blue-600 text-white">
-                {trainee.trainingRole}
+                {student.trainingRole}
               </Badge>
 
               {isEditing && (
@@ -129,7 +129,7 @@ export default function TraineeProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Enrollment</span>
                 <Badge variant="outline">
-                  {trainee.enrollmentDate.toLocaleDateString("en-US", {
+                  {student.enrollmentDate.toLocaleDateString("en-US", {
                     month: "short",
                     year: "numeric",
                   })}
@@ -160,7 +160,7 @@ export default function TraineeProfilePage() {
                     <User className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="fullName"
-                      value={trainee.fullName}
+                      value={student.fullName}
                       disabled={!isEditing}
                       className={!isEditing ? "bg-muted" : ""}
                     />
@@ -168,10 +168,10 @@ export default function TraineeProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="traineeCode">Trainee Code</Label>
+                  <Label htmlFor="studentCode">Student Code</Label>
                   <Input
-                    id="traineeCode"
-                    value={trainee.traineeCode}
+                    id="studentCode"
+                    value={student.studentCode}
                     disabled
                     className="bg-muted font-mono"
                   />
@@ -184,7 +184,7 @@ export default function TraineeProfilePage() {
                     <Input
                       id="email"
                       type="email"
-                      value={trainee.email}
+                      value={student.email}
                       disabled={!isEditing}
                       className={!isEditing ? "bg-muted" : ""}
                     />
@@ -198,7 +198,7 @@ export default function TraineeProfilePage() {
                     <Input
                       id="phone"
                       type="tel"
-                      value={trainee.phone}
+                      value={student.phone}
                       disabled={!isEditing}
                       className={!isEditing ? "bg-muted" : ""}
                     />
@@ -227,7 +227,7 @@ export default function TraineeProfilePage() {
                     <GraduationCap className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="program"
-                      value={trainee.program}
+                      value={student.program}
                       disabled
                       className="bg-muted"
                     />
@@ -238,7 +238,7 @@ export default function TraineeProfilePage() {
                   <Label htmlFor="trainingRole">Training Role</Label>
                   <Input
                     id="trainingRole"
-                    value={trainee.trainingRole}
+                    value={student.trainingRole}
                     disabled
                     className="bg-muted"
                   />
@@ -252,7 +252,7 @@ export default function TraineeProfilePage() {
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="courseName"
-                      value={trainee.courseName}
+                      value={student.courseName}
                       disabled
                       className="bg-muted"
                     />
@@ -263,7 +263,7 @@ export default function TraineeProfilePage() {
                   <Label htmlFor="courseCode">Course Code</Label>
                   <Input
                     id="courseCode"
-                    value={trainee.courseCode}
+                    value={student.courseCode}
                     disabled
                     className="bg-muted font-mono"
                   />
@@ -275,7 +275,7 @@ export default function TraineeProfilePage() {
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="enrollmentDate"
-                      value={trainee.enrollmentDate.toLocaleDateString("en-US", {
+                      value={student.enrollmentDate.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -293,3 +293,4 @@ export default function TraineeProfilePage() {
     </div>
   );
 }
+

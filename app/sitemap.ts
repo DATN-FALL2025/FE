@@ -5,11 +5,11 @@ import { siteConfig } from "@/config/site"
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "",
-    "/trainees/dashboard",
-    "/trainees/documents",
-    "/trainees/profile",
-    "/trainees/help",
-    "/trainees/settings",
+    "/students/dashboard",
+    "/students/documents",
+    "/students/profile",
+    "/students/help",
+    "/students/settings",
   ].map((route) => ({
     url: `${siteConfig.url}${route}`,
     lastModified: new Date().toISOString(),

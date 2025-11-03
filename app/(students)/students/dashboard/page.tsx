@@ -1,14 +1,14 @@
 "use client";
 
-import { useTraineeData } from "@/features/trainee/hooks/use-trainee-data";
-import { ProgressOverview } from "@/features/trainee/components/dashboard/progress-overview";
-import { TraineeInfoCard } from "@/features/trainee/components/dashboard/trainee-info-card";
-import { RecentActivity } from "@/features/trainee/components/dashboard/recent-activity";
+import { useStudentData } from "@/features/students/hooks/use-student-data";
+import { ProgressOverview } from "@/features/students/components/dashboard/progress-overview";
+import { StudentInfoCard } from "@/features/students/components/dashboard/student-info-card";
+import { RecentActivity } from "@/features/students/components/dashboard/recent-activity";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function TraineeDashboardPage() {
-  const { trainee, documents, progress, loading } = useTraineeData();
+export default function StudentDashboardPage() {
+  const { student, documents, progress, loading } = useStudentData();
 
   if (loading) {
     return (
@@ -30,11 +30,11 @@ export default function TraineeDashboardPage() {
     );
   }
 
-  if (!trainee || !progress) {
+  if (!student || !progress) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <p className="text-muted-foreground">Failed to load trainee data</p>
+          <p className="text-muted-foreground">Failed to load student data</p>
         </CardContent>
       </Card>
     );
@@ -46,7 +46,7 @@ export default function TraineeDashboardPage() {
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-2 text-base">
-          Welcome back, {trainee.fullName.split(" ").slice(-1)[0]}! Track your document submission progress.
+          Welcome back, {student.fullName.split(" ").slice(-1)[0]}! Track your document submission progress.
         </p>
       </div>
 
@@ -58,11 +58,12 @@ export default function TraineeDashboardPage() {
           <RecentActivity documents={documents} />
         </div>
 
-        {/* Right Column - Trainee Info */}
+        {/* Right Column - Student Info */}
         <div className="lg:col-span-2 lg:sticky lg:top-24 lg:self-start">
-          <TraineeInfoCard trainee={trainee} />
+          <StudentInfoCard student={student} />
         </div>
       </div>
     </div>
   );
 }
+

@@ -12,31 +12,31 @@ export const routes: Route[] = [
     label: "Dashboard",
     icon: LayoutDashboard,
     activeIcon: LayoutDashboard,
-    href: "/trainees/dashboard",
+    href: "/students/dashboard",
   },
   {
     label: "My Documents",
     icon: FileText,
     activeIcon: FileText,
-    href: "/trainees/documents",
+    href: "/students/documents",
   },
   {
     label: "Profile",
     icon: User,
     activeIcon: User,
-    href: "/trainees/profile",
+    href: "/students/profile",
   },
   {
     label: "Help & Support",
     icon: HelpCircle,
     activeIcon: HelpCircle,
-    href: "/trainees/help",
+    href: "/students/help",
   },
   {
     label: "Settings",
     icon: Settings,
     activeIcon: Settings,
-    href: "/trainees/settings",
+    href: "/students/settings",
   },
 ];
 
