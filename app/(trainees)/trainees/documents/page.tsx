@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useStudentData } from "@/features/students/hooks/use-student-data";
-import { DocumentUploadCard } from "@/features/students/components/documents/document-upload-card";
-import { DocumentFilter, FilterState } from "@/features/students/components/documents/document-filter";
+import { useTraineeData } from "@/features/trainee/hooks/use-trainee-data";
+import { DocumentUploadCard } from "@/features/trainee/components/documents/document-upload-card";
+import { DocumentFilter, FilterState } from "@/features/trainee/components/documents/document-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { FileText, AlertCircle } from "lucide-react";
-import { Document } from "@/features/students/types";
+import { Document } from "@/features/trainee/types";
 
-export default function StudentDocumentsPage() {
-  const { documents, progress, loading } = useStudentData();
+export default function TraineeDocumentsPage() {
+  const { documents, progress, loading } = useTraineeData();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     status: "all",
@@ -152,7 +152,7 @@ export default function StudentDocumentsPage() {
             <h2 className="text-xl font-semibold">Required Documents</h2>
             <Badge variant="destructive">{requiredDocs.length}</Badge>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
             {requiredDocs.map((doc) => (
               <DocumentUploadCard
@@ -175,7 +175,7 @@ export default function StudentDocumentsPage() {
             <h2 className="text-xl font-semibold">Optional Documents</h2>
             <Badge variant="outline">{optionalDocs.length}</Badge>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
             {optionalDocs.map((doc) => (
               <DocumentUploadCard
@@ -202,4 +202,3 @@ export default function StudentDocumentsPage() {
     </div>
   );
 }
-

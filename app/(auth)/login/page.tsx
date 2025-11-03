@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "student",
+    role: "trainee",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,12 +34,13 @@ export default function LoginPage() {
     // Redirect to appropriate dashboard
     const redirectMap: Record<string, string> = {
       admin: "/admin/dashboard",
-      head: "/head/dashboard",
-      manager: "/manager/dashboard",
-      student: "/students/dashboard",
+      training_director: "/training-director/dashboard",
+      head_of_department: "/head/dashboard",
+      academic_affairs_staff: "/academic-staff/dashboard",
+      trainee: "/trainees/dashboard",
     };
 
-    router.push(redirectMap[formData.role] || "/students/dashboard");
+    router.push(redirectMap[formData.role] || "/trainees/dashboard");
   };
 
   return (
@@ -75,10 +76,11 @@ export default function LoginPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="head">Head of Department</SelectItem>
-                  <SelectItem value="manager">Input Document Manager</SelectItem>
-                  <SelectItem value="admin">System Admin</SelectItem>
+                  <SelectItem value="trainee">Trainee</SelectItem>
+                  <SelectItem value="academic_affairs_staff">Academic Affairs Staff</SelectItem>
+                  <SelectItem value="head_of_department">Head of Department</SelectItem>
+                  <SelectItem value="training_director">Training Director</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -126,13 +128,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don&apos;t have an account? </span>
-            <Link href="/signup" className="text-primary font-medium hover:underline">
-              Sign up
-            </Link>
-          </div>
         </CardContent>
       </Card>
 
