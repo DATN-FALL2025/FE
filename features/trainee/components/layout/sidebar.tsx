@@ -16,17 +16,17 @@ import {
 const navigation = [
   {
     name: "Dashboard",
-    href: "/trainees/dashboard",
+    href: "/trainee/dashboard",
     icon: LayoutDashboard,
   },
   {
     name: "My Documents",
-    href: "/trainees/documents",
+    href: "/trainee/documents",
     icon: FileText,
   },
   {
     name: "Profile",
-    href: "/trainees/profile",
+    href: "/trainee/profile",
     icon: User,
   },
 ];
@@ -34,12 +34,12 @@ const navigation = [
 const secondaryNavigation = [
   {
     name: "Help & Support",
-    href: "/trainees/help",
+    href: "/trainee/help",
     icon: HelpCircle,
   },
   {
     name: "Settings",
-    href: "/trainees/settings",
+    href: "/trainee/settings",
     icon: Settings,
   },
 ];

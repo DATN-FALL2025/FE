@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTraineeData } from "../../hooks/use-trainee-data";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,27 +12,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NotificationCenter } from "../notifications/notification-center";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
 import { Menu, User, Settings, LogOut, GraduationCap } from "lucide-react";
 
 export const Navbar = () => {
-  const {
-    trainee,
-    notifications,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
-  } = useTraineeData();
+  const router = useRouter();
 
   const getInitials = (name: string) => {
-    if (!name) return "TR";
+    if (!name) return "HO";
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleLogout = () => {
+    // Clear any stored auth data
+    localStorage.clear();
+    sessionStorage.clear();
+    // Redirect to login
+    router.push("/login");
+  };
+
+  // Mock user data - replace with actual data hook later
+  const user = {
+    fullName: "Head of Department",
+    email: "head@idmawa.edu.vn",
+    code: "HOD001",
+    department: "Ground Operations",
   };
 
   return (
@@ -53,37 +63,30 @@ export const Navbar = () => {
           </Sheet>
 
           {/* Logo */}
-          <Link href="/trainee/dashboard" className="flex items-center gap-2">
+          <Link href="/head/dashboard" className="flex items-center gap-2">
             <div className="bg-primary rounded-lg p-2">
               <GraduationCap className="w-6 h-6 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
               <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Trainee Portal</p>
+              <p className="text-xs text-muted-foreground">Head of Department</p>
             </div>
           </Link>
         </div>
 
-        {/* Right Side - Notifications & Profile */}
+        {/* Right Side - Profile */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <NotificationCenter
-            notifications={notifications}
-            onMarkAsRead={markNotificationAsRead}
-            onMarkAllAsRead={markAllNotificationsAsRead}
-          />
-
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10 border-2 border-primary/10">
                   <AvatarImage
-                    src={trainee?.avatar}
-                    alt={trainee?.fullName || "Trainee"}
+                    src=""
+                    alt={user.fullName}
                   />
                   <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {getInitials(trainee?.fullName || "")}
+                    {getInitials(user.fullName)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -92,29 +95,34 @@ export const Navbar = () => {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {trainee?.fullName}
+                    {user.fullName}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {trainee?.email}
+                    {user.email}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground font-mono mt-1">
-                    {trainee?.traineeCode}
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.department}
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/trainee/profile" className="cursor-pointer">
+                <Link href="/head/profile" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+              <DropdownMenuItem asChild>
+                <Link href="/head/settings" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -125,4 +133,3 @@ export const Navbar = () => {
     </header>
   );
 };
-

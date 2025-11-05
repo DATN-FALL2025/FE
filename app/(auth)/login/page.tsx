@@ -37,10 +37,10 @@ export default function LoginPage() {
       training_director: "/training-director/dashboard",
       head_of_department: "/head/dashboard",
       academic_affairs_staff: "/academic-staff/dashboard",
-      trainee: "/trainees/dashboard",
+      trainee: "/trainee/dashboard",
     };
 
-    router.push(redirectMap[formData.role] || "/trainees/dashboard");
+    router.push(redirectMap[formData.role] || "/trainee/dashboard");
   };
 
   return (
