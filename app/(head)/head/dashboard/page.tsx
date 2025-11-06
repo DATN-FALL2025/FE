@@ -101,7 +101,7 @@ export default function HeadDashboard() {
               <div>
                 <h3 className="font-semibold">View Trainees</h3>
                 <p className="text-sm text-muted-foreground">
-                  Monitor your department's trainees
+                  Monitor your department&apos;s trainees
                 </p>
               </div>
             </div>

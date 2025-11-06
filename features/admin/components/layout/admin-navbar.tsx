@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +18,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminMobileSidebar } from "./admin-mobile-sidebar";
 
 export const AdminNavbar = () => {
+  const router = useRouter();
   const adminName = "System Administrator";
   const adminEmail = "admin@idmawa.edu.vn";
+
+  const handleLogout = () => {
+    // Clear any stored auth data
+    localStorage.clear();
+    sessionStorage.clear();
+    // Redirect to login
+    router.push("/login");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -89,12 +99,11 @@ export const AdminNavbar = () => {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

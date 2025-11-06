@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Building2,
@@ -27,19 +26,19 @@ export default function DepartmentsPage() {
   const departments = [
     {
       id: "1",
-      name: "Pilot Training",
-      code: "PT",
-      description: "Commercial and Private Pilot License programs",
-      headOfDepartment: "Capt. John Smith",
-      totalPrograms: 5,
-      totalStudents: 342,
-      activeStudents: 328,
-      completionRate: 95.9,
+      name: "Ground Operations",
+      code: "GO",
+      description: "Airport operations and ground handling",
+      headOfDepartment: "Mr. David Wilson",
+      totalPrograms: 2,
+      totalStudents: 156,
+      activeStudents: 148,
+      completionRate: 90.3,
       color: "bg-blue-500",
     },
     {
       id: "2",
-      name: "Cabin Crew Training",
+      name: "Cabin Crew",
       code: "CC",
       description: "Flight attendant and cabin service training",
       headOfDepartment: "Ms. Sarah Johnson",
@@ -51,8 +50,8 @@ export default function DepartmentsPage() {
     },
     {
       id: "3",
-      name: "Aircraft Maintenance",
-      code: "AM",
+      name: "Technical and Maintenance",
+      code: "TAM",
       description: "Technical maintenance and engineering programs",
       headOfDepartment: "Eng. Michael Chen",
       totalPrograms: 4,
@@ -63,15 +62,15 @@ export default function DepartmentsPage() {
     },
     {
       id: "4",
-      name: "Ground Operations",
-      code: "GO",
-      description: "Airport operations and ground handling",
-      headOfDepartment: "Mr. David Wilson",
-      totalPrograms: 2,
-      totalStudents: 156,
-      activeStudents: 148,
-      completionRate: 90.3,
-      color: "bg-green-500",
+      name: "Flight Crew",
+      code: "FC",
+      description: "Pilot and flight operations training",
+      headOfDepartment: "Capt. John Smith",
+      totalPrograms: 5,
+      totalStudents: 342,
+      activeStudents: 328,
+      completionRate: 95.9,
+      color: "bg-red-500",
     },
   ];
 
@@ -87,7 +86,7 @@ export default function DepartmentsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Departments</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Department Management</h1>
           <p className="text-muted-foreground mt-2 text-base">
             Manage academy departments and their programs
           </p>
@@ -206,4 +205,3 @@ export default function DepartmentsPage() {
     </div>
   );
 }
-

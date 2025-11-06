@@ -11,9 +11,7 @@ import {
   Building2,
   FileText,
   Shield,
-  Settings,
-  Award,
-  BarChart3,
+  Briefcase,
 } from "lucide-react";
 
 const adminNavigation = [
@@ -23,19 +21,14 @@ const adminNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "User Management",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    name: "Departments",
+    name: "Department Management",
     href: "/admin/departments",
     icon: Building2,
   },
   {
-    name: "Document Approvals",
-    href: "/admin/approvals",
-    icon: FileText,
+    name: "Position Management",
+    href: "/admin/positions",
+    icon: Briefcase,
   },
   {
     name: "Rule Management",
@@ -43,22 +36,14 @@ const adminNavigation = [
     icon: Shield,
   },
   {
-    name: "Certificates",
-    href: "/admin/certificates",
-    icon: Award,
+    name: "Document Management",
+    href: "/admin/documents",
+    icon: FileText,
   },
   {
-    name: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
-  },
-];
-
-const secondaryNavigation = [
-  {
-    name: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
+    name: "Account Management",
+    href: "/admin/accounts",
+    icon: Users,
   },
 ];
 
@@ -77,35 +62,6 @@ export const AdminSidebar = () => {
               </div>
               <ul role="list" className="space-y-1">
                 {adminNavigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <li key={item.name}>
-                      <Link href={item.href}>
-                        <Button
-                          variant={isActive ? "secondary" : "ghost"}
-                          className={cn(
-                            "w-full justify-start gap-3",
-                            isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          {item.name}
-                        </Button>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-
-            <li>
-              <Separator />
-            </li>
-
-            {/* Secondary Navigation */}
-            <li>
-              <ul role="list" className="space-y-1">
-                {secondaryNavigation.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.name}>
