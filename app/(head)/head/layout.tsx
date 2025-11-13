@@ -1,7 +1,7 @@
-import { Navbar } from "@/features/students/components/layout/navbar";
-import { Sidebar } from "@/features/students/components/layout/sidebar";
+import { HeadNavbar } from "@/features/head/components/layout/head-navbar";
+import { HeadSidebar } from "@/features/head/components/layout/head-sidebar";
 
-export default function StudentLayout({
+export default function HeadLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -9,12 +9,12 @@ export default function StudentLayout({
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <Navbar />
-
+      <HeadNavbar />
+      
       <div className="flex">
         {/* Sidebar */}
-        <Sidebar />
-
+        <HeadSidebar />
+        
         {/* Main Content */}
           <div className="container mx-auto p-6 lg:p-8">
             {children}

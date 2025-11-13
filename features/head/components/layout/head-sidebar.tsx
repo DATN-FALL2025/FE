@@ -7,64 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
+  FileCheck,
   Users,
-  Building2,
-  FileText,
-  Shield,
-  Settings,
-  Award,
   BarChart3,
+  Settings,
+  BookOpen,
 } from "lucide-react";
 
-const adminNavigation = [
+const headNavigation = [
   {
     name: "Dashboard",
-    href: "/admin/dashboard",
+    href: "/head/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "User Management",
-    href: "/admin/users",
-    icon: Users,
+    name: "Criteria Matrix",
+    href: "/head/criteria",
+    icon: FileCheck,
   },
   {
-    name: "Departments",
-    href: "/admin/departments",
-    icon: Building2,
-  },
-  {
-    name: "Positions",
-    href: "/admin/positions",
+    name: "Students",
+    href: "/head/students",
     icon: Users,
   },
   {
     name: "Documents",
-    href: "/admin/documents",
-    icon: FileText,
-  },
-  {
-    name: "Document Rules",
-    href: "/admin/document-rules",
-    icon: Shield,
-  },
-  {
-    name: "Document Approvals",
-    href: "/admin/approvals",
-    icon: FileText,
-  },
-  {
-    name: "Rule Management",
-    href: "/admin/rules",
-    icon: Shield,
-  },
-  {
-    name: "Certificates",
-    href: "/admin/certificates",
-    icon: Award,
+    href: "/head/documents",
+    icon: BookOpen,
   },
   {
     name: "Reports",
-    href: "/admin/reports",
+    href: "/head/reports",
     icon: BarChart3,
   },
 ];
@@ -72,12 +45,12 @@ const adminNavigation = [
 const secondaryNavigation = [
   {
     name: "Settings",
-    href: "/admin/settings",
+    href: "/head/settings",
     icon: Settings,
   },
 ];
 
-export const AdminSidebar = () => {
+export const HeadSidebar = () => {
   const pathname = usePathname();
 
   return (
@@ -88,10 +61,10 @@ export const AdminSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Administration
+                Department Management
               </div>
               <ul role="list" className="space-y-1">
-                {adminNavigation.map((item) => {
+                {headNavigation.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.name}>
