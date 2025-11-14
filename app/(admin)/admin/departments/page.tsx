@@ -67,9 +67,9 @@ export default function DepartmentsPage() {
     setIsLoading(true);
     setError("");
     try {
-      const result = await getAllDepartments();
+      const result: any = await getAllDepartments();
       console.log('📋 Load departments result:', result);
-      
+
       // Check if data exists (backend returns "200 OK" in status field)
       if (result.data && Array.isArray(result.data)) {
         setDepartments(result.data);
@@ -96,7 +96,7 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await createDepartment({
+      const result: any = await createDepartment({
         departmentName: formData.departmentName,
         departmentDescription: formData.departmentDescription,
       });
@@ -105,10 +105,10 @@ export default function DepartmentsPage() {
 
       // Check if successful (backend returns "201 CREATED" or "200 OK")
       if (result.data || (result.status && result.status.includes('CREATED'))) {
-        toast.success('Tạo phòng ban thành công!');
         setIsCreateOpen(false);
         resetForm();
-        loadDepartments();
+        await loadDepartments();
+        toast.success('Tạo phòng ban thành công!');
       } else {
         toast.error(result.message || 'Tạo phòng ban thất bại!');
       }
@@ -128,7 +128,7 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await updateDepartmentById(selectedDept.id, {
+      const result: any = await updateDepartmentById(Number(selectedDept.id), {
         departmentName: formData.departmentName,
         departmentDescription: formData.departmentDescription,
       });
@@ -137,11 +137,11 @@ export default function DepartmentsPage() {
 
       // Check if successful
       if (result.data || (result.status && result.status.includes('OK'))) {
-        toast.success('Cập nhật phòng ban thành công!');
         setIsEditOpen(false);
         resetForm();
         setSelectedDept(null);
-        loadDepartments();
+        await loadDepartments();
+        toast.success('Cập nhật phòng ban thành công!');
       } else {
         toast.error(result.message || 'Cập nhật phòng ban thất bại!');
       }
@@ -158,16 +158,16 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await deleteDepartmentById(selectedDept.id);
+      const result: any = await deleteDepartmentById(Number(selectedDept.id));
 
       console.log('🗑️ Delete result:', result);
 
       // Check if successful
       if (result.data || (result.status && result.status.includes('OK'))) {
-        toast.success('Xóa phòng ban thành công!');
         setIsDeleteOpen(false);
         setSelectedDept(null);
-        loadDepartments();
+        await loadDepartments();
+        toast.success('Xóa phòng ban thành công!');
       } else {
         toast.error(result.message || 'Xóa phòng ban thất bại!');
       }

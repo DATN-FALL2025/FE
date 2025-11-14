@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Trash2, Calendar, Loader2, AlertCircle } from "lucide-react";
@@ -59,8 +59,15 @@ export default function DocumentsManagementPage() {
     documentDescription: "",
   });
 
+  // Prevent double-fetching in React StrictMode
+  const hasLoadedData = useRef(false);
+
   // Load documents on mount
   useEffect(() => {
+    if (hasLoadedData.current) {
+      return;
+    }
+    hasLoadedData.current = true;
     loadDocuments();
   }, []);
 
@@ -68,13 +75,23 @@ export default function DocumentsManagementPage() {
     setIsLoading(true);
     setError("");
     try {
-      const result = await getAllDocuments();
-      if (result.status === 'success' && result.data) {
-        setDocuments(result.data);
-      } else {
+      const result: any = await getAllDocuments();
+      console.log('📄 Load documents result:', result);
+
+      // API might return {status: "200 OK", data: [...]}
+      if (result && result.data) {
+        console.log('✅ Setting documents:', result.data);
+        setDocuments(Array.isArray(result.data) ? result.data : []);
+      } else if (result && Array.isArray(result)) {
+        console.log('✅ Setting documents (direct array):', result);
+        setDocuments(result);
+      } else if (result.status && result.status.includes('error')) {
         setError(result.message || 'Không thể tải danh sách tài liệu');
+      } else {
+        setError('Không thể tải danh sách tài liệu');
       }
     } catch (err) {
+      console.error('❌ Error in loadDocuments:', err);
       setError('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setIsLoading(false);
@@ -99,13 +116,21 @@ export default function DocumentsManagementPage() {
         documentDescription: formData.documentDescription,
       });
 
-      if (result.status === 'success') {
-        alert('Tạo tài liệu thành công!');
+      console.log('🆕 Create document result:', result);
+
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+      );
+
+      if (isSuccess) {
         setIsCreateOpen(false);
         resetForm();
-        loadDocuments();
+        await loadDocuments();
+        alert('Tạo tài liệu thành công!');
       } else {
-        alert(result.message || 'Tạo tài liệu thất bại!');
+        alert(result?.message || 'Tạo tài liệu thất bại!');
       }
     } catch (err) {
       alert('Có lỗi xảy ra!');
@@ -128,14 +153,22 @@ export default function DocumentsManagementPage() {
         documentDescription: formData.documentDescription,
       });
 
-      if (result.status === 'success') {
-        alert('Cập nhật tài liệu thành công!');
+      console.log('✏️ Update document result:', result);
+
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+      );
+
+      if (isSuccess) {
         setIsEditOpen(false);
         resetForm();
         setSelectedDoc(null);
-        loadDocuments();
+        await loadDocuments();
+        alert('Cập nhật tài liệu thành công!');
       } else {
-        alert(result.message || 'Cập nhật tài liệu thất bại!');
+        alert(result?.message || 'Cập nhật tài liệu thất bại!');
       }
     } catch (err) {
       alert('Có lỗi xảy ra!');
@@ -152,13 +185,21 @@ export default function DocumentsManagementPage() {
     try {
       const result = await deleteDocumentById(selectedDoc.id);
 
-      if (result.status === 'success') {
-        alert('Xóa tài liệu thành công!');
+      console.log('🗑️ Delete document result:', result);
+
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+      );
+
+      if (isSuccess) {
         setIsDeleteOpen(false);
         setSelectedDoc(null);
-        loadDocuments();
+        await loadDocuments();
+        alert('Xóa tài liệu thành công!');
       } else {
-        alert(result.message || 'Xóa tài liệu thất bại!');
+        alert(result?.message || 'Xóa tài liệu thất bại!');
       }
     } catch (err) {
       alert('Có lỗi xảy ra!');
@@ -292,7 +333,7 @@ export default function DocumentsManagementPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tạo tài liệu mới</DialogTitle>
             <DialogDescription>Thêm tài liệu mới vào hệ thống</DialogDescription>
@@ -348,7 +389,7 @@ export default function DocumentsManagementPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cập nhật tài liệu</DialogTitle>
             <DialogDescription>Chỉnh sửa thông tin tài liệu</DialogDescription>

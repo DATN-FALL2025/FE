@@ -67,7 +67,7 @@ export default function DocumentRulesPage() {
     setIsLoading(true);
     setError("");
     try {
-      const result = await getAllDocumentRules();
+      const result: any = await getAllDocumentRules();
       if (result.status === 'success' && result.data) {
         setDocumentRules(result.data);
       } else {
@@ -93,13 +93,13 @@ export default function DocumentRulesPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await createDocumentRule(formData);
+      const result: any = await createDocumentRule(formData);
 
       if (result.status === 'success') {
-        alert('Tạo quy tắc thành công!');
         setIsCreateOpen(false);
         resetForm();
-        loadDocumentRules();
+        await loadDocumentRules();
+        alert('Tạo quy tắc thành công!');
       } else {
         alert(result.message || 'Tạo quy tắc thất bại!');
       }
@@ -119,14 +119,14 @@ export default function DocumentRulesPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await updateDocumentRuleById(selectedRule.id, formData);
+      const result: any = await updateDocumentRuleById(Number(selectedRule.id), formData);
 
       if (result.status === 'success') {
-        alert('Cập nhật quy tắc thành công!');
         setIsEditOpen(false);
         resetForm();
         setSelectedRule(null);
-        loadDocumentRules();
+        await loadDocumentRules();
+        alert('Cập nhật quy tắc thành công!');
       } else {
         alert(result.message || 'Cập nhật quy tắc thất bại!');
       }
@@ -143,13 +143,13 @@ export default function DocumentRulesPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await deleteDocumentRuleById(selectedRule.id);
+      const result: any = await deleteDocumentRuleById(Number(selectedRule.id));
 
       if (result.status === 'success') {
-        alert('Xóa quy tắc thành công!');
         setIsDeleteOpen(false);
         setSelectedRule(null);
-        loadDocumentRules();
+        await loadDocumentRules();
+        alert('Xóa quy tắc thành công!');
       } else {
         alert(result.message || 'Xóa quy tắc thất bại!');
       }

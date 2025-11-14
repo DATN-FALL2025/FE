@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,17 +36,38 @@ import {
   updatePositionById,
   deletePositionById,
 } from "@/lib/actions/position";
+import { getAllDepartments } from "@/lib/actions/department";
 import { uploadFile } from "@/lib/actions/upload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Position {
   id: string;
   positionName: string;
   positionDescription: string;
   positionImage: string;
+  departmentID?: string;
+  department?: {
+    id: string | number;
+    departmentName: string;
+    departmentDescription: string;
+  };
+}
+
+interface Department {
+  departmentId: string;
+  departmentName: string;
+  departmentDescription: string;
 }
 
 export default function PositionsPage() {
   const [positions, setPositions] = useState<Position[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -63,14 +84,22 @@ export default function PositionsPage() {
     positionName: "",
     positionDescription: "",
     positionImage: "",
+    departmentID: "",
   });
 
-  // Fetch positions on mount
+  // Fetch positions and departments on mount
   useEffect(() => {
+    console.log('🔵 useEffect running - mounting component');
     loadPositions();
+    loadDepartments();
+
+    return () => {
+      console.log('🔴 useEffect cleanup - unmounting component');
+    };
   }, []);
 
   const loadPositions = async () => {
+    console.log('📍 loadPositions called - stack trace:', new Error().stack);
     setIsLoading(true);
     setError("");
     try {
@@ -82,11 +111,23 @@ export default function PositionsPage() {
       // Check if result has data - API might return {status: "200 OK", data: [...]}
       if (result && result.data) {
         console.log('✅ Setting positions:', result.data);
-        setPositions(Array.isArray(result.data) ? result.data : []);
+        // Map department.id to departmentID for easier access
+        const positionsWithDeptId = Array.isArray(result.data)
+          ? result.data.map((pos: any) => ({
+              ...pos,
+              departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+            }))
+          : [];
+        console.log('✅ Positions mapped with departmentID:', positionsWithDeptId);
+        setPositions(positionsWithDeptId);
       } else if (result && Array.isArray(result)) {
         // In case API returns array directly
         console.log('✅ Setting positions (direct array):', result);
-        setPositions(result);
+        const positionsWithDeptId = result.map((pos: any) => ({
+          ...pos,
+          departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+        }));
+        setPositions(positionsWithDeptId);
       } else if (result.status && result.status.includes('error')) {
         setError(result.message || 'Không thể tải danh sách vị trí');
       } else {
@@ -97,6 +138,33 @@ export default function PositionsPage() {
       setError('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const token = getToken();
+      const result = await getAllDepartments(token || undefined);
+      console.log('🏢 Load departments result:', result);
+
+      if (result && (result as any).data) {
+        const deptArray = Array.isArray((result as any).data) ? (result as any).data : [];
+        console.log('🏢 Departments array:', deptArray);
+        console.log('🏢 Number of departments:', deptArray.length);
+        if (deptArray.length > 0) {
+          console.log('🏢 First department:', deptArray[0]);
+        }
+        setDepartments(deptArray);
+      } else if (result && Array.isArray(result)) {
+        console.log('🏢 Departments array (direct):', result);
+        setDepartments(result);
+      } else {
+        console.warn('⚠️ No departments data found');
+        setDepartments([]);
+      }
+    } catch (err) {
+      console.error('❌ Error loading departments:', err);
+      setDepartments([]);
     }
   };
 
@@ -117,14 +185,19 @@ export default function PositionsPage() {
       positionName: "",
       positionDescription: "",
       positionImage: "",
+      departmentID: "",
     });
     setImagePreview("");
     setImageFile(null);
   };
 
   const handleCreate = async () => {
-    if (!formData.positionName || !formData.positionDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+    console.log('🔍 handleCreate - formData:', formData);
+    console.log('🔍 handleCreate - departments:', departments);
+    console.log('🔍 handleCreate - departmentID:', formData.departmentID);
+
+    if (!formData.positionName || !formData.positionDescription || !formData.departmentID) {
+      alert("Vui lòng điền đầy đủ thông tin và chọn phòng ban!");
       return;
     }
 
@@ -149,22 +222,35 @@ export default function PositionsPage() {
       const positionFormData = new FormData();
       positionFormData.append('positionName', formData.positionName);
       positionFormData.append('positionDescription', formData.positionDescription);
+      positionFormData.append('departmentID', formData.departmentID);
       if (imageFile) {
         positionFormData.append('positionImage', imageFile);
       }
 
+      console.log('📤 Sending to API - departmentID:', formData.departmentID);
+
       const result = await createPosition(positionFormData, token || undefined);
 
       console.log('🆕 Create position result:', result);
+      console.log('🆕 result.status:', result?.status);
+      console.log('🆕 result.message:', result?.message);
 
       // Check if successful - API might return {status: "200 OK", data: {...}}
-      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
-        alert('Tạo vị trí thành công!');
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+      );
+
+      console.log('🆕 isSuccess:', isSuccess);
+
+      if (isSuccess) {
         setIsCreateOpen(false);
         resetForm();
-        loadPositions(); // Reload list
+        await loadPositions(); // Reload list
+        alert('Tạo vị trí thành công!');
       } else {
-        alert(result.message || 'Tạo vị trí thất bại!');
+        alert(result?.message || 'Tạo vị trí thất bại!');
       }
     } catch (err) {
       alert('Có lỗi xảy ra!');
@@ -174,8 +260,8 @@ export default function PositionsPage() {
   };
 
   const handleEdit = async () => {
-    if (!selectedPosition || !formData.positionName || !formData.positionDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+    if (!selectedPosition || !formData.positionName || !formData.positionDescription || !formData.departmentID) {
+      alert("Vui lòng điền đầy đủ thông tin và chọn phòng ban!");
       return;
     }
 
@@ -186,6 +272,7 @@ export default function PositionsPage() {
       const updateFormData = new FormData();
       updateFormData.append('positionName', formData.positionName);
       updateFormData.append('positionDescription', formData.positionDescription);
+      updateFormData.append('departmentID', formData.departmentID);
       if (imageFile) {
         updateFormData.append('positionImage', imageFile);
       }
@@ -193,16 +280,26 @@ export default function PositionsPage() {
       const result = await updatePositionById(selectedPosition.id, updateFormData, token || undefined);
 
       console.log('✏️ Update position result:', result);
+      console.log('✏️ result.status:', result?.status);
+      console.log('✏️ result.message:', result?.message);
 
       // Check if successful
-      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
-        alert('Cập nhật vị trí thành công!');
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+      );
+
+      console.log('✏️ isSuccess:', isSuccess);
+
+      if (isSuccess) {
         setIsEditOpen(false);
         resetForm();
         setSelectedPosition(null);
-        loadPositions();
+        await loadPositions();
+        alert('Cập nhật vị trí thành công!');
       } else {
-        alert(result.message || 'Cập nhật vị trí thất bại!');
+        alert(result?.message || 'Cập nhật vị trí thất bại!');
       }
     } catch (err) {
       alert('Có lỗi xảy ra!');
@@ -224,10 +321,10 @@ export default function PositionsPage() {
 
       // Check if successful
       if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
-        alert('Xóa vị trí thành công!');
         setIsDeleteOpen(false);
         setSelectedPosition(null);
-        loadPositions();
+        await loadPositions();
+        alert('Xóa vị trí thành công!');
       } else {
         alert(result.message || 'Xóa vị trí thất bại!');
       }
@@ -239,11 +336,22 @@ export default function PositionsPage() {
   };
 
   const openEditDialog = (position: Position) => {
+    console.log('🔧 openEditDialog - position:', position);
+    console.log('🔧 openEditDialog - position.department:', position.department);
+    console.log('🔧 openEditDialog - position.departmentID:', position.departmentID);
+
+    // Get departmentID from either position.departmentID (already mapped) or position.department.id
+    const deptId = position.departmentID ||
+                   (position.department?.id ? String(position.department.id) : "");
+
+    console.log('🔧 openEditDialog - final departmentID:', deptId);
+
     setSelectedPosition(position);
     setFormData({
       positionName: position.positionName,
       positionDescription: position.positionDescription,
       positionImage: position.positionImage,
+      departmentID: deptId,
     });
     setImagePreview(position.positionImage);
     setIsEditOpen(true);
@@ -302,7 +410,7 @@ export default function PositionsPage() {
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Hình ảnh</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên vị trí</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Mô tả</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Phòng ban</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
@@ -345,8 +453,8 @@ export default function PositionsPage() {
                         <div className="font-medium">{position.positionName}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-sm text-muted-foreground max-w-md truncate">
-                          {position.positionDescription}
+                        <div className="text-sm text-muted-foreground">
+                          {position.department?.departmentName || 'Chưa gán phòng ban'}
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -391,7 +499,7 @@ export default function PositionsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tạo vị trí mới</DialogTitle>
             <DialogDescription>Thêm vị trí mới vào hệ thống</DialogDescription>
@@ -417,6 +525,40 @@ export default function PositionsPage() {
                 onChange={(e) => setFormData({ ...formData, positionDescription: e.target.value })}
                 disabled={isSubmitting}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.departmentID}
+                onValueChange={(value) => {
+                  console.log('🔄 Selected department ID:', value);
+                  setFormData({ ...formData, departmentID: value });
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="department">
+                  <SelectValue placeholder="Chọn phòng ban" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
+                  {departments.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                  ) : (
+                    departments.map((dept, index) => {
+                      console.log(`🔍 CREATE - Dept ${index}:`, dept);
+                      console.log(`🔍 CREATE - Keys:`, Object.keys(dept));
+                      const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
+                      const deptName = (dept as any).departmentName || (dept as any).name;
+                      console.log(`🔍 CREATE - ID: ${deptId}, Name: ${deptName}`);
+
+                      return (
+                        <SelectItem key={deptId || index} value={String(deptId)}>
+                          {deptName || 'N/A'}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Hình ảnh</Label>
@@ -471,10 +613,10 @@ export default function PositionsPage() {
             >
               Hủy
             </Button>
-            <Button 
-              onClick={handleCreate} 
+            <Button
+              onClick={handleCreate}
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.positionName || !formData.positionDescription || isSubmitting}
+              disabled={!formData.positionName || !formData.positionDescription || !formData.departmentID || isSubmitting}
             >
               {isSubmitting ? (
                 <>
@@ -491,7 +633,7 @@ export default function PositionsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa vị trí</DialogTitle>
             <DialogDescription>Cập nhật thông tin vị trí</DialogDescription>
@@ -515,6 +657,37 @@ export default function PositionsPage() {
                 onChange={(e) => setFormData({ ...formData, positionDescription: e.target.value })}
                 disabled={isSubmitting}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.departmentID}
+                onValueChange={(value) => {
+                  console.log('🔄 Selected department ID (Edit):', value);
+                  setFormData({ ...formData, departmentID: value });
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="edit-department">
+                  <SelectValue placeholder="Chọn phòng ban" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
+                  {departments.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                  ) : (
+                    departments.map((dept, index) => {
+                      const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
+                      const deptName = (dept as any).departmentName || (dept as any).name;
+
+                      return (
+                        <SelectItem key={deptId || index} value={String(deptId)}>
+                          {deptName || 'N/A'}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Hình ảnh</Label>
@@ -569,10 +742,10 @@ export default function PositionsPage() {
             >
               Hủy
             </Button>
-            <Button 
-              onClick={handleEdit} 
+            <Button
+              onClick={handleEdit}
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.positionName || !formData.positionDescription || isSubmitting}
+              disabled={!formData.positionName || !formData.positionDescription || !formData.departmentID || isSubmitting}
             >
               {isSubmitting ? (
                 <>
