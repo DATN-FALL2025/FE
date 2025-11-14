@@ -1,5 +1,6 @@
 import { AdminNavbar } from "@/features/admin/components/layout/admin-navbar";
 import { AdminSidebar } from "@/features/admin/components/layout/admin-sidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function AdminLayout({
   children,
@@ -20,6 +21,9 @@ export default function AdminLayout({
             {children}
           </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

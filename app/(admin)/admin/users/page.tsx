@@ -1,272 +1,238 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Eye, Loader2, AlertCircle, User, Mail } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, UserPlus } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { getAllUsers } from "@/lib/actions/auth";
+import Image from "next/image";
+
+interface UserData {
+  id: string;
+  userName: string;
+  gmail: string;
+  accountImage?: string;
+  roles?: any[];
+  [key: string]: any;
+}
 
 export default function UsersPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
-  const users = [
-    {
-      id: "1",
-      name: "Tôn Thiện Hoàng Hiệp",
-      email: "hieptthse161662@fpt.edu.vn",
-      role: "student",
-      status: "active",
-      department: "Software Engineering",
-      lastLogin: "2024-10-08",
-    },
-    {
-      id: "2",
-      name: "Ngô Đăng Hà An",
-      email: "anndh2@fe.edu.vn",
-      role: "head_of_department",
-      status: "active",
-      department: "Aviation Training",
-      lastLogin: "2024-10-08",
-    },
-    {
-      id: "3",
-      name: "Admin System",
-      email: "admin@idmawa.edu.vn",
-      role: "admin",
-      status: "active",
-      department: "Administration",
-      lastLogin: "2024-10-08",
-    },
-    {
-      id: "4",
-      name: "Trần Duy Khanh",
-      email: "khanhtdse173443@fpt.edu.vn",
-      role: "student",
-      status: "active",
-      department: "Software Engineering",
-      lastLogin: "2024-10-07",
-    },
-    {
-      id: "5",
-      name: "Document Manager",
-      email: "manager@idmawa.edu.vn",
-      role: "input_document_manager",
-      status: "active",
-      department: "Training Department",
-      lastLogin: "2024-10-08",
-    },
-  ];
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "admin":
-        return <Badge className="bg-purple-500">Admin</Badge>;
-      case "head_of_department":
-        return <Badge className="bg-blue-500">Head of Dept</Badge>;
-      case "input_document_manager":
-        return <Badge className="bg-green-500">Doc Manager</Badge>;
-      case "student":
-        return <Badge variant="outline">Student</Badge>;
-      default:
-        return <Badge variant="secondary">{role}</Badge>;
+  const loadUsers = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await getAllUsers();
+      if (result.status === 'success' && result.data) {
+        setUsers(result.data);
+      } else {
+        setError(result.message || 'Không thể tải danh sách người dùng');
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra khi tải dữ liệu');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">Active</Badge>;
-      case "banned":
-        return <Badge className="bg-red-500">Banned</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
+  const openViewDialog = (user: UserData) => {
+    setSelectedUser(user);
+    setIsViewOpen(true);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 w-full">
-      {/* Page Header */}
+    <div className="space-y-6 w-full">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Manage system users and their permissions
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý người dùng</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Xem và quản lý thông tin người dùng trong hệ thống
           </p>
         </div>
-        <Button size="lg" className="gap-2">
-          <UserPlus className="w-5 h-5" />
-          Add New User
+        <Button onClick={loadUsers} variant="outline" className="gap-2">
+          <Loader2 className="w-4 h-4" />
+          Làm mới
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: "Total Users", value: users.length, color: "text-blue-600" },
-          { label: "Active", value: users.filter(u => u.status === "active").length, color: "text-green-600" },
-          { label: "Students", value: users.filter(u => u.role === "student").length, color: "text-purple-600" },
-          { label: "Staff", value: users.filter(u => u.role !== "student").length, color: "text-orange-600" },
-        ].map((stat, i) => (
-          <Card key={i} className="border-0 shadow-md">
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              <p className={`text-3xl font-bold mt-2 ${stat.color}`}>{stat.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* Filters & Search */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-xl font-bold">All Users</CardTitle>
-              <CardDescription className="text-base mt-1.5">
-                {filteredUsers.length} users found
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="head_of_department">Head of Dept</SelectItem>
-                  <SelectItem value="input_document_manager">Doc Manager</SelectItem>
-                  <SelectItem value="student">Student</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={`/avatars/${user.id}.jpg`} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                            {getInitials(user.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+      <Card className="border shadow-sm">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b bg-muted/50">
+                <tr>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Avatar</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Tên đăng nhập</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Email</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Vai trò</th>
+                  <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-12 text-muted-foreground">
+                      Chưa có người dùng nào trong hệ thống
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                          {user.accountImage ? (
+                            <Image 
+                              src={user.accountImage} 
+                              alt={user.userName} 
+                              width={48} 
+                              height={48} 
+                              className="object-cover w-full h-full" 
+                            />
+                          ) : (
+                            <User className="w-6 h-6 text-white" />
+                          )}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
-                    <TableCell className="text-muted-foreground">{user.department}</TableCell>
-                    <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell className="text-muted-foreground">{user.lastLogin}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="font-medium">{user.userName}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          {user.gmail}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex gap-1 flex-wrap">
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map((role: any, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {role.roleName || role.name || 'User'}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="outline" className="text-xs">User</Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openViewDialog(user)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Chi tiết
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-orange-600">
-                            <Ban className="w-4 h-4 mr-2" />
-                            Ban User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* View Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Thông tin người dùng</DialogTitle>
+            <DialogDescription>Chi tiết thông tin người dùng trong hệ thống</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4 py-4">
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-4">
+                  {selectedUser.accountImage ? (
+                    <Image 
+                      src={selectedUser.accountImage} 
+                      alt={selectedUser.userName} 
+                      width={96} 
+                      height={96} 
+                      className="object-cover w-full h-full" 
+                    />
+                  ) : (
+                    <User className="w-12 h-12 text-white" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold">{selectedUser.userName}</h3>
+                <p className="text-sm text-muted-foreground">{selectedUser.gmail}</p>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t">
+                <div>
+                  <Label className="text-sm text-muted-foreground">Tên đăng nhập</Label>
+                  <p className="mt-1 font-medium">{selectedUser.userName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Email</Label>
+                  <p className="mt-1">{selectedUser.gmail}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Vai trò</Label>
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    {selectedUser.roles && selectedUser.roles.length > 0 ? (
+                      selectedUser.roles.map((role: any, index: number) => (
+                        <Badge key={index} variant="secondary">
+                          {role.roleName || role.name || 'User'}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="secondary">User</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setIsViewOpen(false)}>Đóng</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

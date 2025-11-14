@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,10 +16,28 @@ import {
 import { Bell, User, Settings, LogOut, Shield, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminMobileSidebar } from "./admin-mobile-sidebar";
+import { useAuthInfo } from "@/hooks/use-auth-info";
 
 export const AdminNavbar = () => {
-  const adminName = "System Administrator";
-  const adminEmail = "admin@idmawa.edu.vn";
+  // Get real user info from auth
+  const { user, displayName, avatar, role, logout } = useAuthInfo();
+  const [mounted, setMounted] = useState(false);
+  
+  // Only render user info after client-side mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const userEmail = user?.gmail || user?.email || "user@idmawa.edu.vn";
+  const userName = displayName || "User";
+  
+  // Get initials for avatar fallback
+  const initials = userName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2) || 'U';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -63,43 +82,57 @@ export const AdminNavbar = () => {
           </Button>
 
           {/* User Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10 border-2 border-primary/10">
-                  <AvatarImage src="/admin-avatar.jpg" alt={adminName} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    AD
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{adminName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{adminEmail}</p>
-                  <Badge className="bg-primary mt-2 w-fit">Administrator</Badge>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/admin/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10 border-2 border-primary/10">
+                    {avatar && <AvatarImage src={avatar} alt={userName} />}
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+                    {role && (
+                      <Badge className="bg-primary mt-2 w-fit text-xs">
+                        {role.replace(/_/g, ' ')}
+                      </Badge>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-600 focus:text-red-600 cursor-pointer"
+                  onClick={logout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // Loading skeleton for avatar during SSR/hydration
+            <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+          )}
         </div>
       </div>
     </header>

@@ -7,39 +7,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { GraduationCap, Loader2, AlertCircle } from "lucide-react";
+import { authenticateAccount } from "@/lib/actions/auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { setUser, getRoleRedirectPath } from "@/lib/auth-utils";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    email: "",
+    userName: "",
     password: "",
-    role: "student",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Mock login - simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const result = await authenticateAccount({
+        userName: formData.userName,
+        password: formData.password,
+      }) as any;
 
-    // Login and redirect based on role
-    login(formData.email, formData.role);
+      if (result.status === 'error') {
+        setError(result.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        setIsLoading(false);
+        return;
+      }
 
-    // Redirect to appropriate dashboard
-    const redirectMap: Record<string, string> = {
-      admin: "/admin/dashboard",
-      head: "/head/dashboard",
-      manager: "/manager/dashboard",
-      student: "/students/dashboard",
-    };
+      // Success - store user data and redirect
+      console.log('✅ Login successful:', result);
+      
+      if (result.data) {
+        // Store user info using auth utils
+        setUser(result.data);
 
-    router.push(redirectMap[formData.role] || "/students/dashboard");
+        // Get redirect path based on user role
+        const userRole = result.data?.role || result.data?.roles?.[0]?.roleName;
+        const redirectPath = getRoleRedirectPath(userRole);
+        
+        console.log('🔀 Redirecting to:', redirectPath);
+        
+        // Small delay to ensure localStorage is updated
+        setTimeout(() => {
+          router.push(redirectPath);
+        }, 100);
+      } else {
+        // No user data returned
+        setError('Đăng nhập thành công nhưng không nhận được thông tin user');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,44 +89,34 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="head">Head of Department</SelectItem>
-                  <SelectItem value="manager">Input Document Manager</SelectItem>
-                  <SelectItem value="admin">System Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="userName">Tên đăng nhập</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                id="userName"
+                type="text"
+                placeholder="Nhập tên đăng nhập"
+                value={formData.userName}
+                onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                 required
+                disabled={isLoading}
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Link
                   href="/forgot-password"
                   className="text-sm text-primary hover:underline"
                 >
-                  Forgot password?
+                  Quên mật khẩu?
                 </Link>
               </div>
               <Input
@@ -112,6 +126,7 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -119,10 +134,10 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
+                  Đang đăng nhập...
                 </>
               ) : (
-                "Sign In"
+                "Đăng nhập"
               )}
             </Button>
           </form>

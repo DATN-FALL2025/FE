@@ -7,41 +7,66 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { GraduationCap, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { createUser } from "@/lib/actions/auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
+    userName: "",
+    gmail: "",
     password: "",
     confirmPassword: "",
-    studentId: "",
-    program: "pilot-training",
+    accountImage: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccess(false);
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự!");
       return;
     }
 
     setIsLoading(true);
 
-    // Mock signup - simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const result = await createUser({
+        userName: formData.userName,
+        gmail: formData.gmail,
+        password: formData.password,
+        accountImage: formData.accountImage,
+      });
 
-    // Auto login as student after signup
-    login(formData.email, "student");
+      if (result.status === 'error') {
+        setError(result.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+        setIsLoading(false);
+        return;
+      }
 
-    // Redirect to student dashboard
-    router.push("/students/dashboard");
+      // Success
+      setSuccess(true);
+      setIsLoading(false);
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (err) {
+      setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,62 +92,50 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert className="bg-green-50 text-green-900 border-green-200">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription>
+                  Đăng ký thành công! Đang chuyển đến trang đăng nhập...
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="userName">Tên đăng nhập <span className="text-red-500">*</span></Label>
               <Input
-                id="fullName"
+                id="userName"
                 type="text"
-                placeholder="John Doe"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Nhập tên đăng nhập"
+                value={formData.userName}
+                onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                 required
+                disabled={isLoading || success}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID</Label>
+              <Label htmlFor="gmail">Email <span className="text-red-500">*</span></Label>
               <Input
-                id="studentId"
-                type="text"
-                placeholder="SE161662"
-                value={formData.studentId}
-                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
+                id="gmail"
                 type="email"
                 placeholder="your.email@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.gmail}
+                onChange={(e) => setFormData({ ...formData, gmail: e.target.value })}
                 required
+                disabled={isLoading || success}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="program">Training Program</Label>
-              <Select
-                value={formData.program}
-                onValueChange={(value) => setFormData({ ...formData, program: value })}
-              >
-                <SelectTrigger id="program">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pilot-training">Pilot Training</SelectItem>
-                  <SelectItem value="cabin-crew">Cabin Crew Training</SelectItem>
-                  <SelectItem value="aviation-maintenance">Aviation Maintenance</SelectItem>
-                  <SelectItem value="ground-operations">Ground Operations</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu <span className="text-red-500">*</span></Label>
               <Input
                 id="password"
                 type="password"
@@ -130,11 +143,14 @@ export default function SignupPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                disabled={isLoading || success}
+                minLength={6}
               />
+              <p className="text-xs text-muted-foreground">Tối thiểu 6 ký tự</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Xác nhận mật khẩu <span className="text-red-500">*</span></Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -142,17 +158,23 @@ export default function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 required
+                disabled={isLoading || success}
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading || success}>
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating account...
+                  Đang tạo tài khoản...
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Đăng ký thành công
                 </>
               ) : (
-                "Create Account"
+                "Tạo tài khoản"
               )}
             </Button>
           </form>

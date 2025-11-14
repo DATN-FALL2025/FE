@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Edit, Trash2, Upload, X } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Upload, X, Loader2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,64 +23,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
+import {
+  getAllPositions,
+  getPositionById,
+  createPosition,
+  updatePositionById,
+  deletePositionById,
+} from "@/lib/actions/position";
+import { uploadFile } from "@/lib/actions/upload";
 
 interface Position {
   id: string;
-  name: string;
-  departmentId: string;
-  departmentName: string;
-  description: string;
-  image: string;
-  isActive: boolean;
+  positionName: string;
+  positionDescription: string;
+  positionImage: string;
 }
 
 export default function PositionsPage() {
-  const availableDepartments = [
-    { id: "1", name: "Khoa Phi Công" },
-    { id: "2", name: "Khoa Kỹ Thuật Hàng Không" },
-    { id: "3", name: "Khoa Quản Trị" },
-  ];
-
-  const [positions, setPositions] = useState<Position[]>([
-    {
-      id: "1",
-      name: "Phi công lái máy bay trực thăng",
-      departmentId: "1",
-      departmentName: "Khoa Phi Công",
-      description: "Vận hành và điều khiển máy bay trực thăng, đảm bảo an toàn bay",
-      image: "/placeholder-position1.jpg",
-      isActive: true,
-    },
-    {
-      id: "2",
-      name: "Phi công lái máy bay cánh bằng",
-      departmentId: "1",
-      departmentName: "Khoa Phi Công",
-      description: "Điều khiển máy bay dân dụng cánh bằng cho các chuyến bay thương mại",
-      image: "/placeholder-position2.jpg",
-      isActive: true,
-    },
-    {
-      id: "3",
-      name: "Phi công huấn luyện",
-      departmentId: "1",
-      departmentName: "Khoa Phi Công",
-      description: "Đào tạo và huấn luyện các phi công mới",
-      image: "/placeholder-position3.jpg",
-      isActive: true,
-    },
-  ]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -88,21 +55,44 @@ export default function PositionsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
-    departmentId: "",
-    description: "",
-    image: "",
+    positionName: "",
+    positionDescription: "",
+    positionImage: "",
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Fetch positions on mount
+  useEffect(() => {
+    loadPositions();
+  }, []);
+
+  const loadPositions = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await getAllPositions();
+      if (result.status === 'success' && result.data) {
+        setPositions(result.data);
+      } else {
+        setError(result.message || 'Không thể tải danh sách vị trí');
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra khi tải dữ liệu');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        setFormData({ ...formData, image: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
@@ -110,74 +100,125 @@ export default function PositionsPage() {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      departmentId: "",
-      description: "",
-      image: "",
+      positionName: "",
+      positionDescription: "",
+      positionImage: "",
     });
     setImagePreview("");
+    setImageFile(null);
   };
 
-  const handleCreate = () => {
-    const selectedDept = availableDepartments.find((d) => d.id === formData.departmentId);
-    if (!selectedDept) return;
+  const handleCreate = async () => {
+    if (!formData.positionName || !formData.positionDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
 
-    const newPosition: Position = {
-      id: String(Date.now()),
-      name: formData.name,
-      departmentId: formData.departmentId,
-      departmentName: selectedDept.name,
-      description: formData.description,
-      image: formData.image || "/placeholder-position.jpg",
-      isActive: true,
-    };
-    setPositions([...positions, newPosition]);
-    setIsCreateOpen(false);
-    resetForm();
-  };
+    setIsSubmitting(true);
 
-  const handleEdit = () => {
-    if (selectedPosition) {
-      const selectedDept = availableDepartments.find((d) => d.id === formData.departmentId);
-      if (!selectedDept) return;
+    try {
+      // Upload image first if exists
+      let imageUrl = "";
+      if (imageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+        const uploadResult = await uploadFile(uploadFormData);
+        
+        if (uploadResult.status === 'success' && uploadResult.data) {
+          imageUrl = uploadResult.data.url || uploadResult.data;
+        }
+      }
 
-      setPositions(
-        positions.map((p) =>
-          p.id === selectedPosition.id
-            ? {
-                ...p,
-                name: formData.name,
-                departmentId: formData.departmentId,
-                departmentName: selectedDept.name,
-                description: formData.description,
-                image: formData.image || p.image,
-              }
-            : p
-        )
-      );
-      setIsEditOpen(false);
-      resetForm();
-      setSelectedPosition(null);
+      // Create position with FormData
+      const positionFormData = new FormData();
+      positionFormData.append('positionName', formData.positionName);
+      positionFormData.append('positionDescription', formData.positionDescription);
+      if (imageFile) {
+        positionFormData.append('positionImage', imageFile);
+      }
+
+      const result = await createPosition(positionFormData);
+
+      if (result.status === 'success') {
+        alert('Tạo vị trí thành công!');
+        setIsCreateOpen(false);
+        resetForm();
+        loadPositions(); // Reload list
+      } else {
+        alert(result.message || 'Tạo vị trí thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
-    if (selectedPosition) {
-      setPositions(positions.filter((p) => p.id !== selectedPosition.id));
-      setIsDeleteOpen(false);
-      setSelectedPosition(null);
+  const handleEdit = async () => {
+    if (!selectedPosition || !formData.positionName || !formData.positionDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const updateFormData = new FormData();
+      updateFormData.append('positionName', formData.positionName);
+      updateFormData.append('positionDescription', formData.positionDescription);
+      if (imageFile) {
+        updateFormData.append('positionImage', imageFile);
+      }
+
+      const result = await updatePositionById(selectedPosition.id, updateFormData);
+
+      if (result.status === 'success') {
+        alert('Cập nhật vị trí thành công!');
+        setIsEditOpen(false);
+        resetForm();
+        setSelectedPosition(null);
+        loadPositions();
+      } else {
+        alert(result.message || 'Cập nhật vị trí thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedPosition) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await deletePositionById(selectedPosition.id);
+
+      if (result.status === 'success') {
+        alert('Xóa vị trí thành công!');
+        setIsDeleteOpen(false);
+        setSelectedPosition(null);
+        loadPositions();
+      } else {
+        alert(result.message || 'Xóa vị trí thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const openEditDialog = (position: Position) => {
     setSelectedPosition(position);
     setFormData({
-      name: position.name,
-      departmentId: position.departmentId,
-      description: position.description,
-      image: position.image,
+      positionName: position.positionName,
+      positionDescription: position.positionDescription,
+      positionImage: position.positionImage,
     });
-    setImagePreview(position.image);
+    setImagePreview(position.positionImage);
     setIsEditOpen(true);
   };
 
@@ -190,6 +231,17 @@ export default function PositionsPage() {
     setSelectedPosition(position);
     setIsDeleteOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full">
@@ -207,6 +259,13 @@ export default function PositionsPage() {
         </Button>
       </div>
 
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Positions Table */}
       <Card className="border shadow-sm">
         <CardContent className="p-0">
@@ -216,69 +275,79 @@ export default function PositionsPage() {
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Hình ảnh</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên vị trí</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Khoa</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Mô tả</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
               <tbody>
-                {positions.map((position) => (
-                  <tr key={position.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                        {position.image && position.image.startsWith("http") ? (
-                          <Image src={position.image} alt={position.name} width={64} height={64} className="object-cover" />
-                        ) : (
-                          <span className="text-white text-xs font-medium">IMG</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium">{position.name}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge variant="outline" className="text-blue-600 border-blue-200">
-                        {position.departmentName}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-muted-foreground max-w-md truncate">
-                        {position.description}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openViewDialog(position)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Chi tiết
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(position)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Sửa
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDeleteDialog(position)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Xóa
-                        </Button>
-                      </div>
+                {positions.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-12 text-muted-foreground">
+                      Chưa có vị trí nào. Hãy tạo vị trí mới!
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  positions.map((position) => (
+                    <tr key={position.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                          {position.positionImage ? (
+                            <Image 
+                              src={position.positionImage} 
+                              alt={position.positionName} 
+                              width={64} 
+                              height={64} 
+                              className="object-cover w-full h-full" 
+                            />
+                          ) : (
+                            <span className="text-white text-xs font-medium">
+                              {position.positionName.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="font-medium">{position.positionName}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-muted-foreground max-w-md truncate">
+                          {position.positionDescription}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openViewDialog(position)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Chi tiết
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(position)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDeleteDialog(position)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Xóa
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -298,24 +367,10 @@ export default function PositionsPage() {
               <Input
                 id="name"
                 placeholder="VD: Software Engineer"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.positionName}
+                onChange={(e) => setFormData({ ...formData, positionName: e.target.value })}
+                disabled={isSubmitting}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Khoa <span className="text-red-500">*</span></Label>
-              <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
-                <SelectTrigger id="department">
-                  <SelectValue placeholder="Chọn khoa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDepartments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Mô tả <span className="text-red-500">*</span></Label>
@@ -323,8 +378,9 @@ export default function PositionsPage() {
                 id="description"
                 placeholder="Mô tả chi tiết về vị trí này..."
                 rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.positionDescription}
+                onChange={(e) => setFormData({ ...formData, positionDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -335,7 +391,8 @@ export default function PositionsPage() {
                   id="image-upload"
                   className="hidden"
                   accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImageUpload}
+                  onChange={handleImageChange}
+                  disabled={isSubmitting}
                 />
                 <label htmlFor="image-upload" className="cursor-pointer">
                   {imagePreview ? (
@@ -349,8 +406,9 @@ export default function PositionsPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           setImagePreview("");
-                          setFormData({ ...formData, image: "" });
+                          setImageFile(null);
                         }}
+                        disabled={isSubmitting}
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -362,7 +420,7 @@ export default function PositionsPage() {
                         Nhấn để tải ảnh hoặc kéo thả ảnh vào đây
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG, WEBP (tối đa 5Mb)
+                        PNG, JPG, WEBP (tối đa 5MB)
                       </p>
                     </>
                   )}
@@ -371,15 +429,26 @@ export default function PositionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm(); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsCreateOpen(false); resetForm(); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
             <Button 
               onClick={handleCreate} 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.name || !formData.departmentId || !formData.description}
+              disabled={!formData.positionName || !formData.positionDescription || isSubmitting}
             >
-              Tạo mới
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang tạo...
+                </>
+              ) : (
+                "Tạo mới"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -389,7 +458,7 @@ export default function PositionsPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa/Cập nhật vị trí</DialogTitle>
+            <DialogTitle>Chỉnh sửa vị trí</DialogTitle>
             <DialogDescription>Cập nhật thông tin vị trí</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -397,32 +466,19 @@ export default function PositionsPage() {
               <Label htmlFor="edit-name">Tên vị trí <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.positionName}
+                onChange={(e) => setFormData({ ...formData, positionName: e.target.value })}
+                disabled={isSubmitting}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-department">Khoa <span className="text-red-500">*</span></Label>
-              <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
-                <SelectTrigger id="edit-department">
-                  <SelectValue placeholder="Chọn khoa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDepartments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-description">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
                 id="edit-description"
                 rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.positionDescription}
+                onChange={(e) => setFormData({ ...formData, positionDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -433,7 +489,8 @@ export default function PositionsPage() {
                   id="image-upload-edit"
                   className="hidden"
                   accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImageUpload}
+                  onChange={handleImageChange}
+                  disabled={isSubmitting}
                 />
                 <label htmlFor="image-upload-edit" className="cursor-pointer">
                   {imagePreview ? (
@@ -447,8 +504,9 @@ export default function PositionsPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           setImagePreview("");
-                          setFormData({ ...formData, image: "" });
+                          setImageFile(null);
                         }}
+                        disabled={isSubmitting}
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -460,7 +518,7 @@ export default function PositionsPage() {
                         Nhấn để tải ảnh hoặc kéo thả ảnh vào đây
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG, WEBP (tối đa 5Mb)
+                        PNG, JPG, WEBP (tối đa 5MB)
                       </p>
                     </>
                   )}
@@ -469,15 +527,26 @@ export default function PositionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsEditOpen(false); resetForm(); setSelectedPosition(null); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsEditOpen(false); resetForm(); setSelectedPosition(null); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
             <Button 
               onClick={handleEdit} 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.name || !formData.departmentId || !formData.description}
+              disabled={!formData.positionName || !formData.positionDescription || isSubmitting}
             >
-              Cập nhật
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang cập nhật...
+                </>
+              ) : (
+                "Cập nhật"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -493,40 +562,29 @@ export default function PositionsPage() {
           {selectedPosition && (
             <div className="space-y-4 py-4">
               <div className="w-full h-48 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
-                {selectedPosition.image && selectedPosition.image.startsWith("http") ? (
-                  <Image src={selectedPosition.image} alt={selectedPosition.name} width={500} height={200} className="w-full h-full object-cover" />
+                {selectedPosition.positionImage ? (
+                  <Image 
+                    src={selectedPosition.positionImage} 
+                    alt={selectedPosition.positionName} 
+                    width={500} 
+                    height={200} 
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-white text-4xl font-bold">{selectedPosition.name.charAt(0)}</span>
+                    <span className="text-white text-4xl font-bold">
+                      {selectedPosition.positionName.charAt(0)}
+                    </span>
                   </div>
                 )}
               </div>
               <div className="space-y-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">{selectedPosition.name}</h3>
-                    <Badge className="bg-green-500">Active</Badge>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Khoa</Label>
-                  <div className="mt-1">
-                    <Badge variant="outline" className="text-blue-600 border-blue-200">
-                      {selectedPosition.departmentName}
-                    </Badge>
-                  </div>
+                  <h3 className="text-lg font-semibold">{selectedPosition.positionName}</h3>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Mô tả</Label>
-                  <p className="mt-1">{selectedPosition.description}</p>
-                </div>
-                <div className="flex items-center gap-4 text-sm pt-2 border-t">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-muted-foreground">
-                      Trạng thái: <span className="font-medium text-foreground">Đang hoạt động</span>
-                    </span>
-                  </div>
+                  <p className="mt-1">{selectedPosition.positionDescription}</p>
                 </div>
               </div>
             </div>
@@ -543,14 +601,25 @@ export default function PositionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa vị trí</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa vị trí <span className="font-semibold">{selectedPosition?.name}</span>? 
+              Bạn có chắc chắn muốn xóa vị trí <span className="font-semibold">{selectedPosition?.positionName}</span>? 
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Xóa
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -558,4 +627,3 @@ export default function PositionsPage() {
     </div>
   );
 }
-

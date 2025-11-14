@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Edit, Trash2, Calendar, FileText } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,145 +23,149 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  getAllDocumentRules,
+  getDocumentRuleById,
+  createDocumentRule,
+  updateDocumentRuleById,
+  deleteDocumentRuleById,
+} from "@/lib/actions/document-rule";
 
 interface DocumentRule {
   id: string;
-  documentId: string;
-  documentName: string;
-  ruleName: string;
-  ruleValue: string;
-  description: string;
-  createdAt: string;
-  updatedAt?: string;
+  ruleName?: string;
+  ruleDescription?: string;
+  [key: string]: any;
 }
 
 export default function DocumentRulesPage() {
-  const availableDocuments = [
-    { id: "1", name: "Tài liệu hướng dẫn sử dụng" },
-    { id: "2", name: "Chính sách bảo mật" },
-    { id: "3", name: "Quy trình đăng ký" },
-  ];
-
-  const [rules, setRules] = useState<DocumentRule[]>([
-    {
-      id: "1",
-      documentId: "1",
-      documentName: "Tài liệu hướng dẫn sử dụng",
-      ruleName: "Quy tắc định dạng",
-      ruleValue: "PDF, DOCX",
-      description: "Chỉ chấp nhận các định dạng tài liệu PDF và DOCX",
-      createdAt: "31/10/2025",
-      updatedAt: "31/10/2025",
-    },
-    {
-      id: "2",
-      documentId: "2",
-      documentName: "Chính sách bảo mật",
-      ruleName: "Quy tắc bảo mật",
-      ruleValue: "SSL Required",
-      description: "Yêu cầu kết nối SSL khi tải tài liệu này",
-      createdAt: "31/10/2025",
-      updatedAt: "31/10/2025",
-    },
-  ]);
+  const [documentRules, setDocumentRules] = useState<DocumentRule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<DocumentRule | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    documentId: "",
+  const [formData, setFormData] = useState<any>({
     ruleName: "",
-    ruleValue: "",
-    description: "",
+    ruleDescription: "",
   });
 
-  const resetForm = () => {
-    setFormData({
-      documentId: "",
-      ruleName: "",
-      ruleValue: "",
-      description: "",
-    });
-  };
+  useEffect(() => {
+    loadDocumentRules();
+  }, []);
 
-  const getCurrentDate = () => {
-    const now = new Date();
-    return `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${now.getFullYear()}`;
-  };
-
-  const handleCreate = () => {
-    const selectedDoc = availableDocuments.find((d) => d.id === formData.documentId);
-    if (!selectedDoc) return;
-
-    const newRule: DocumentRule = {
-      id: String(Date.now()),
-      documentId: formData.documentId,
-      documentName: selectedDoc.name,
-      ruleName: formData.ruleName,
-      ruleValue: formData.ruleValue,
-      description: formData.description,
-      createdAt: getCurrentDate(),
-      updatedAt: getCurrentDate(),
-    };
-    setRules([...rules, newRule]);
-    setIsCreateOpen(false);
-    resetForm();
-  };
-
-  const handleEdit = () => {
-    if (selectedRule) {
-      const selectedDoc = availableDocuments.find((d) => d.id === formData.documentId);
-      if (!selectedDoc) return;
-
-      setRules(
-        rules.map((r) =>
-          r.id === selectedRule.id
-            ? {
-                ...r,
-                documentId: formData.documentId,
-                documentName: selectedDoc.name,
-                ruleName: formData.ruleName,
-                ruleValue: formData.ruleValue,
-                description: formData.description,
-                updatedAt: getCurrentDate(),
-              }
-            : r
-        )
-      );
-      setIsEditOpen(false);
-      resetForm();
-      setSelectedRule(null);
+  const loadDocumentRules = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await getAllDocumentRules();
+      if (result.status === 'success' && result.data) {
+        setDocumentRules(result.data);
+      } else {
+        setError(result.message || 'Không thể tải danh sách quy tắc tài liệu');
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra khi tải dữ liệu');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDelete = () => {
-    if (selectedRule) {
-      setRules(rules.filter((r) => r.id !== selectedRule.id));
-      setIsDeleteOpen(false);
-      setSelectedRule(null);
+  const resetForm = () => {
+    setFormData({ ruleName: "", ruleDescription: "" });
+  };
+
+  const handleCreate = async () => {
+    if (!formData.ruleName || !formData.ruleDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createDocumentRule(formData);
+
+      if (result.status === 'success') {
+        alert('Tạo quy tắc thành công!');
+        setIsCreateOpen(false);
+        resetForm();
+        loadDocumentRules();
+      } else {
+        alert(result.message || 'Tạo quy tắc thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedRule) {
+      alert("Không tìm thấy quy tắc!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await updateDocumentRuleById(selectedRule.id, formData);
+
+      if (result.status === 'success') {
+        alert('Cập nhật quy tắc thành công!');
+        setIsEditOpen(false);
+        resetForm();
+        setSelectedRule(null);
+        loadDocumentRules();
+      } else {
+        alert(result.message || 'Cập nhật quy tắc thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedRule) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await deleteDocumentRuleById(selectedRule.id);
+
+      if (result.status === 'success') {
+        alert('Xóa quy tắc thành công!');
+        setIsDeleteOpen(false);
+        setSelectedRule(null);
+        loadDocumentRules();
+      } else {
+        alert(result.message || 'Xóa quy tắc thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const openEditDialog = (rule: DocumentRule) => {
     setSelectedRule(rule);
     setFormData({
-      documentId: rule.documentId,
-      ruleName: rule.ruleName,
-      ruleValue: rule.ruleValue,
-      description: rule.description,
+      ruleName: rule.ruleName || "",
+      ruleDescription: rule.ruleDescription || "",
+      ...rule
     });
     setIsEditOpen(true);
   };
@@ -176,9 +180,19 @@ export default function DocumentRulesPage() {
     setIsDeleteOpen(true);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 w-full">
-      {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Quản lý quy tắc tài liệu</h1>
@@ -192,76 +206,82 @@ export default function DocumentRulesPage() {
         </Button>
       </div>
 
-      {/* Rules Table */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <Card className="border shadow-sm">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Tài liệu</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Icon</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên quy tắc</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Giá trị</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Mô tả</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Ngày tạo</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
               <tbody>
-                {rules.map((rule) => (
-                  <tr key={rule.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">{rule.documentName}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium">{rule.ruleName}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {rule.ruleValue}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-muted-foreground max-w-xs truncate">
-                        {rule.description}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-muted-foreground">{rule.createdAt}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openViewDialog(rule)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(rule)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDeleteDialog(rule)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {documentRules.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-12 text-muted-foreground">
+                      Chưa có quy tắc nào. Hãy tạo quy tắc mới!
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  documentRules.map((rule) => (
+                    <tr key={rule.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-white" />
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="font-medium">{rule.ruleName || 'N/A'}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-muted-foreground max-w-md truncate">
+                          {rule.ruleDescription || 'Không có mô tả'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openViewDialog(rule)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Chi tiết
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(rule)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDeleteDialog(rule)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Xóa
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -277,59 +297,48 @@ export default function DocumentRulesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="document">Tài liệu <span className="text-red-500">*</span></Label>
-              <Select value={formData.documentId} onValueChange={(value) => setFormData({ ...formData, documentId: value })}>
-                <SelectTrigger id="document">
-                  <SelectValue placeholder="Chọn tài liệu" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDocuments.map((doc) => (
-                    <SelectItem key={doc.id} value={doc.id}>
-                      {doc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rule-name">Tên quy tắc <span className="text-red-500">*</span></Label>
+              <Label htmlFor="ruleName">Tên quy tắc <span className="text-red-500">*</span></Label>
               <Input
-                id="rule-name"
-                placeholder="VD: Quy tắc định dạng"
+                id="ruleName"
+                placeholder="VD: Quy tắc định dạng tài liệu"
                 value={formData.ruleName}
                 onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rule-value">Giá trị quy tắc <span className="text-red-500">*</span></Label>
-              <Input
-                id="rule-value"
-                placeholder="VD: PDF, DOCX"
-                value={formData.ruleValue}
-                onChange={(e) => setFormData({ ...formData, ruleValue: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Mô tả <span className="text-red-500">*</span></Label>
+              <Label htmlFor="ruleDescription">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
-                id="description"
-                placeholder="Mô tả chi tiết về quy tắc này..."
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                id="ruleDescription"
+                placeholder="Mô tả về quy tắc..."
+                rows={4}
+                value={formData.ruleDescription}
+                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm(); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsCreateOpen(false); resetForm(); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
             <Button 
               onClick={handleCreate} 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.documentId || !formData.ruleName || !formData.ruleValue || !formData.description}
+              disabled={!formData.ruleName || !formData.ruleDescription || isSubmitting}
             >
-              Tạo mới
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang tạo...
+                </>
+              ) : (
+                "Tạo mới"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -340,60 +349,50 @@ export default function DocumentRulesPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Cập nhật quy tắc</DialogTitle>
-            <DialogDescription>Chỉnh sửa thông tin quy tắc tài liệu</DialogDescription>
+            <DialogDescription>Chỉnh sửa thông tin quy tắc</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-document">Tài liệu <span className="text-red-500">*</span></Label>
-              <Select value={formData.documentId} onValueChange={(value) => setFormData({ ...formData, documentId: value })}>
-                <SelectTrigger id="edit-document">
-                  <SelectValue placeholder="Chọn tài liệu" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDocuments.map((doc) => (
-                    <SelectItem key={doc.id} value={doc.id}>
-                      {doc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-rule-name">Tên quy tắc <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-ruleName">Tên quy tắc <span className="text-red-500">*</span></Label>
               <Input
-                id="edit-rule-name"
+                id="edit-ruleName"
                 value={formData.ruleName}
                 onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-rule-value">Giá trị quy tắc <span className="text-red-500">*</span></Label>
-              <Input
-                id="edit-rule-value"
-                value={formData.ruleValue}
-                onChange={(e) => setFormData({ ...formData, ruleValue: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Mô tả <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-ruleDescription">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
-                id="edit-description"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                id="edit-ruleDescription"
+                rows={4}
+                value={formData.ruleDescription}
+                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsEditOpen(false); resetForm(); setSelectedRule(null); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsEditOpen(false); resetForm(); setSelectedRule(null); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
             <Button 
               onClick={handleEdit} 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!formData.documentId || !formData.ruleName || !formData.ruleValue || !formData.description}
+              disabled={isSubmitting}
             >
-              Cập nhật
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang cập nhật...
+                </>
+              ) : (
+                "Cập nhật"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -404,53 +403,21 @@ export default function DocumentRulesPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Chi tiết quy tắc</DialogTitle>
-            <DialogDescription>Thông tin chi tiết về quy tắc tài liệu</DialogDescription>
+            <DialogDescription>Thông tin chi tiết về quy tắc</DialogDescription>
           </DialogHeader>
           {selectedRule && (
             <div className="space-y-4 py-4">
+              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center mx-auto">
+                <FileText className="w-10 h-10 text-white" />
+              </div>
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div className="flex-1">
-                    <Label className="text-sm text-muted-foreground">Tài liệu liên kết</Label>
-                    <p className="mt-1 font-medium">{selectedRule.documentName}</p>
-                  </div>
-                </div>
-                
                 <div>
                   <Label className="text-sm text-muted-foreground">Tên quy tắc</Label>
-                  <p className="mt-1 font-medium">{selectedRule.ruleName}</p>
+                  <p className="mt-1 font-medium text-lg">{selectedRule.ruleName || 'N/A'}</p>
                 </div>
-
-                <div>
-                  <Label className="text-sm text-muted-foreground">Giá trị quy tắc</Label>
-                  <div className="mt-1">
-                    <Badge variant="outline" className="font-mono">
-                      {selectedRule.ruleValue}
-                    </Badge>
-                  </div>
-                </div>
-
                 <div>
                   <Label className="text-sm text-muted-foreground">Mô tả</Label>
-                  <p className="mt-1">{selectedRule.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>Ngày tạo</span>
-                    </div>
-                    <p className="text-sm font-medium">{selectedRule.createdAt}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>Cập nhật lần cuối</span>
-                    </div>
-                    <p className="text-sm font-medium">{selectedRule.updatedAt}</p>
-                  </div>
+                  <p className="mt-1">{selectedRule.ruleDescription || 'Không có mô tả'}</p>
                 </div>
               </div>
             </div>
@@ -467,14 +434,25 @@ export default function DocumentRulesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa quy tắc</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa quy tắc <span className="font-semibold">{selectedRule?.ruleName}</span> của tài liệu{" "}
-              <span className="font-semibold">{selectedRule?.documentName}</span>? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa quy tắc <span className="font-semibold">{selectedRule?.ruleName}</span>? 
+              Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Xóa
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -482,4 +460,3 @@ export default function DocumentRulesPage() {
     </div>
   );
 }
-

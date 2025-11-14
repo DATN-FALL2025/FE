@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Trash2, Calendar } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Calendar, Loader2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,92 +25,154 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  getAllDocuments,
+  getDocumentById,
+  createDocument,
+  updateDocumentById,
+  deleteDocumentById,
+} from "@/lib/actions/document";
 
 interface Document {
   id: string;
-  name: string;
-  description: string;
-  createdAt: string;
+  documentName: string;
+  documentDescription: string;
+  createdAt?: string;
   updatedAt?: string;
 }
 
 export default function DocumentsManagementPage() {
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: "1",
-      name: "Tài liệu hướng dẫn sử dụng",
-      description: "Hướng dẫn chi tiết về cách sử dụng hệ thống",
-      createdAt: "31/10/2025",
-      updatedAt: "31/10/2025",
-    },
-    {
-      id: "2",
-      name: "Chính sách bảo mật",
-      description: "Các quy định về bảo mật thông tin người dùng",
-      createdAt: "31/10/2025",
-      updatedAt: "31/10/2025",
-    },
-  ]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    documentName: "",
+    documentDescription: "",
   });
 
-  const resetForm = () => {
-    setFormData({ name: "", description: "" });
-  };
+  // Load documents on mount
+  useEffect(() => {
+    loadDocuments();
+  }, []);
 
-  const getCurrentDate = () => {
-    const now = new Date();
-    return `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${now.getFullYear()}`;
-  };
-
-  const handleCreate = () => {
-    const newDoc: Document = {
-      id: String(Date.now()),
-      name: formData.name,
-      description: formData.description,
-      createdAt: getCurrentDate(),
-      updatedAt: getCurrentDate(),
-    };
-    setDocuments([...documents, newDoc]);
-    setIsCreateOpen(false);
-    resetForm();
-  };
-
-  const handleEdit = () => {
-    if (selectedDoc) {
-      setDocuments(
-        documents.map((d) =>
-          d.id === selectedDoc.id
-            ? { ...d, name: formData.name, description: formData.description, updatedAt: getCurrentDate() }
-            : d
-        )
-      );
-      setIsEditOpen(false);
-      resetForm();
-      setSelectedDoc(null);
+  const loadDocuments = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await getAllDocuments();
+      if (result.status === 'success' && result.data) {
+        setDocuments(result.data);
+      } else {
+        setError(result.message || 'Không thể tải danh sách tài liệu');
+      }
+    } catch (err) {
+      setError('Có lỗi xảy ra khi tải dữ liệu');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDelete = () => {
-    if (selectedDoc) {
-      setDocuments(documents.filter((d) => d.id !== selectedDoc.id));
-      setIsDeleteOpen(false);
-      setSelectedDoc(null);
+  const resetForm = () => {
+    setFormData({ documentName: "", documentDescription: "" });
+  };
+
+  const handleCreate = async () => {
+    if (!formData.documentName || !formData.documentDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createDocument({
+        documentName: formData.documentName,
+        documentDescription: formData.documentDescription,
+      });
+
+      if (result.status === 'success') {
+        alert('Tạo tài liệu thành công!');
+        setIsCreateOpen(false);
+        resetForm();
+        loadDocuments();
+      } else {
+        alert(result.message || 'Tạo tài liệu thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedDoc || !formData.documentName || !formData.documentDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await updateDocumentById(selectedDoc.id, {
+        documentName: formData.documentName,
+        documentDescription: formData.documentDescription,
+      });
+
+      if (result.status === 'success') {
+        alert('Cập nhật tài liệu thành công!');
+        setIsEditOpen(false);
+        resetForm();
+        setSelectedDoc(null);
+        loadDocuments();
+      } else {
+        alert(result.message || 'Cập nhật tài liệu thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedDoc) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await deleteDocumentById(selectedDoc.id);
+
+      if (result.status === 'success') {
+        alert('Xóa tài liệu thành công!');
+        setIsDeleteOpen(false);
+        setSelectedDoc(null);
+        loadDocuments();
+      } else {
+        alert(result.message || 'Xóa tài liệu thất bại!');
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const openEditDialog = (doc: Document) => {
     setSelectedDoc(doc);
-    setFormData({ name: doc.name, description: doc.description });
+    setFormData({ 
+      documentName: doc.documentName, 
+      documentDescription: doc.documentDescription 
+    });
     setIsEditOpen(true);
   };
 
@@ -123,6 +185,17 @@ export default function DocumentsManagementPage() {
     setSelectedDoc(doc);
     setIsDeleteOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full">
@@ -140,6 +213,13 @@ export default function DocumentsManagementPage() {
         </Button>
       </div>
 
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Documents Table */}
       <Card className="border shadow-sm">
         <CardContent className="p-0">
@@ -149,54 +229,61 @@ export default function DocumentsManagementPage() {
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên tài liệu</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Mô tả</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Ngày tạo</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
               <tbody>
-                {documents.map((doc) => (
-                  <tr key={doc.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-medium">{doc.name}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-muted-foreground max-w-md">
-                        {doc.description}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-muted-foreground">{doc.createdAt}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openViewDialog(doc)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(doc)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDeleteDialog(doc)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="text-center py-12 text-muted-foreground">
+                      Chưa có tài liệu nào. Hãy tạo tài liệu mới!
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  documents.map((doc) => (
+                    <tr key={doc.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="font-medium">{doc.documentName}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-muted-foreground max-w-md truncate">
+                          {doc.documentDescription}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openViewDialog(doc)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Chi tiết
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(doc)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDeleteDialog(doc)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Xóa
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -212,31 +299,48 @@ export default function DocumentsManagementPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Tên tài liệu</Label>
+              <Label htmlFor="name">Tên tài liệu <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 placeholder="Nhập tên tài liệu..."
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.documentName}
+                onChange={(e) => setFormData({ ...formData, documentName: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Mô tả tài liệu</Label>
+              <Label htmlFor="description">Mô tả tài liệu <span className="text-red-500">*</span></Label>
               <Textarea
                 id="description"
                 placeholder="Nhập mô tả tài liệu..."
                 rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.documentDescription}
+                onChange={(e) => setFormData({ ...formData, documentDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm(); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsCreateOpen(false); resetForm(); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
-            <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
-              Tạo mới
+            <Button 
+              onClick={handleCreate} 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!formData.documentName || !formData.documentDescription || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang tạo...
+                </>
+              ) : (
+                "Tạo mới"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -251,29 +355,46 @@ export default function DocumentsManagementPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Tên tài liệu</Label>
+              <Label htmlFor="edit-name">Tên tài liệu <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.documentName}
+                onChange={(e) => setFormData({ ...formData, documentName: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Mô tả tài liệu</Label>
+              <Label htmlFor="edit-description">Mô tả tài liệu <span className="text-red-500">*</span></Label>
               <Textarea
                 id="edit-description"
                 rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.documentDescription}
+                onChange={(e) => setFormData({ ...formData, documentDescription: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsEditOpen(false); resetForm(); setSelectedDoc(null); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsEditOpen(false); resetForm(); setSelectedDoc(null); }}
+              disabled={isSubmitting}
+            >
               Hủy
             </Button>
-            <Button onClick={handleEdit} className="bg-blue-600 hover:bg-blue-700">
-              Cập nhật
+            <Button 
+              onClick={handleEdit} 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!formData.documentName || !formData.documentDescription || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang cập nhật...
+                </>
+              ) : (
+                "Cập nhật"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -291,27 +412,11 @@ export default function DocumentsManagementPage() {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-muted-foreground">Tên tài liệu</Label>
-                  <p className="mt-1 font-medium">{selectedDoc.name}</p>
+                  <p className="mt-1 font-medium text-lg">{selectedDoc.documentName}</p>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Mô tả</Label>
-                  <p className="mt-1">{selectedDoc.description}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>Ngày tạo</span>
-                    </div>
-                    <p className="text-sm font-medium">{selectedDoc.createdAt}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>Cập nhật lần cuối</span>
-                    </div>
-                    <p className="text-sm font-medium">{selectedDoc.updatedAt}</p>
-                  </div>
+                  <p className="mt-1">{selectedDoc.documentDescription}</p>
                 </div>
               </div>
             </div>
@@ -328,14 +433,25 @@ export default function DocumentsManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa tài liệu</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa tài liệu <span className="font-semibold">{selectedDoc?.name}</span>? 
+              Bạn có chắc chắn muốn xóa tài liệu <span className="font-semibold">{selectedDoc?.documentName}</span>? 
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Xóa
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -343,4 +459,3 @@ export default function DocumentsManagementPage() {
     </div>
   );
 }
-
