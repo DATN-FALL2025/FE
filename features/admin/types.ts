@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "head_of_department" | "input_document_manager" | "student";
+export type UserRole = "admin" | "head_of_department" | "academic_staff" | "training_director" | "trainee";
 
 export type AccountStatus = "active" | "banned" | "pending";
 
@@ -47,7 +47,7 @@ export interface Certificate {
 
 export interface DashboardStats {
   totalUsers: number;
-  totalStudents: number;
+  totalTrainees: number;
   totalDepartments: number;
   totalDocuments: number;
   pendingApprovals: number;
@@ -58,8 +58,8 @@ export interface DashboardStats {
 
 export interface DocumentSubmission {
   id: string;
-  studentName: string;
-  studentCode: string;
+  traineeName: string;
+  traineeCode: string;
   documentType: string;
   status: "pending" | "approved" | "rejected";
   submittedAt: Date;
@@ -74,7 +74,7 @@ export interface TrainingProgram {
   code: string;
   trainingRole: "Pilot" | "Cabin Crew" | "Maintenance";
   department: string;
-  totalStudents: number;
+  totalTrainees: number;
   requiredDocuments: number;
   averageCompletion: number;
 }

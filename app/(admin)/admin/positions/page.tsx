@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Upload, X, Loader2, AlertCircle } from "lucide-react";
+import { getToken } from "@/lib/auth-utils";
 import {
   Dialog,
   DialogContent,
@@ -73,13 +74,26 @@ export default function PositionsPage() {
     setIsLoading(true);
     setError("");
     try {
-      const result = await getAllPositions();
-      if (result.status === 'success' && result.data) {
-        setPositions(result.data);
-      } else {
+      const token = getToken();
+      const result = await getAllPositions(token || undefined);
+
+      console.log('🔍 Load positions result:', result);
+
+      // Check if result has data - API might return {status: "200 OK", data: [...]}
+      if (result && result.data) {
+        console.log('✅ Setting positions:', result.data);
+        setPositions(Array.isArray(result.data) ? result.data : []);
+      } else if (result && Array.isArray(result)) {
+        // In case API returns array directly
+        console.log('✅ Setting positions (direct array):', result);
+        setPositions(result);
+      } else if (result.status && result.status.includes('error')) {
         setError(result.message || 'Không thể tải danh sách vị trí');
+      } else {
+        setError('Không thể tải danh sách vị trí');
       }
     } catch (err) {
+      console.error('❌ Error in loadPositions:', err);
       setError('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setIsLoading(false);
@@ -117,13 +131,15 @@ export default function PositionsPage() {
     setIsSubmitting(true);
 
     try {
+      const token = getToken();
+
       // Upload image first if exists
       let imageUrl = "";
       if (imageFile) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', imageFile);
         const uploadResult = await uploadFile(uploadFormData);
-        
+
         if (uploadResult.status === 'success' && uploadResult.data) {
           imageUrl = uploadResult.data.url || uploadResult.data;
         }
@@ -137,9 +153,12 @@ export default function PositionsPage() {
         positionFormData.append('positionImage', imageFile);
       }
 
-      const result = await createPosition(positionFormData);
+      const result = await createPosition(positionFormData, token || undefined);
 
-      if (result.status === 'success') {
+      console.log('🆕 Create position result:', result);
+
+      // Check if successful - API might return {status: "200 OK", data: {...}}
+      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
         alert('Tạo vị trí thành công!');
         setIsCreateOpen(false);
         resetForm();
@@ -163,6 +182,7 @@ export default function PositionsPage() {
     setIsSubmitting(true);
 
     try {
+      const token = getToken();
       const updateFormData = new FormData();
       updateFormData.append('positionName', formData.positionName);
       updateFormData.append('positionDescription', formData.positionDescription);
@@ -170,9 +190,12 @@ export default function PositionsPage() {
         updateFormData.append('positionImage', imageFile);
       }
 
-      const result = await updatePositionById(selectedPosition.id, updateFormData);
+      const result = await updatePositionById(selectedPosition.id, updateFormData, token || undefined);
 
-      if (result.status === 'success') {
+      console.log('✏️ Update position result:', result);
+
+      // Check if successful
+      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
         alert('Cập nhật vị trí thành công!');
         setIsEditOpen(false);
         resetForm();
@@ -194,9 +217,13 @@ export default function PositionsPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await deletePositionById(selectedPosition.id);
+      const token = getToken();
+      const result = await deletePositionById(selectedPosition.id, token || undefined);
 
-      if (result.status === 'success') {
+      console.log('🗑️ Delete position result:', result);
+
+      // Check if successful
+      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
         alert('Xóa vị trí thành công!');
         setIsDeleteOpen(false);
         setSelectedPosition(null);
@@ -292,18 +319,26 @@ export default function PositionsPage() {
                       <td className="py-4 px-6">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                           {position.positionImage ? (
-                            <Image 
-                              src={position.positionImage} 
-                              alt={position.positionName} 
-                              width={64} 
-                              height={64} 
-                              className="object-cover w-full h-full" 
+                            <Image
+                              src={position.positionImage}
+                              alt={position.positionName}
+                              width={64}
+                              height={64}
+                              className="object-cover w-full h-full"
+                              unoptimized={position.positionImage.includes('cloudinary')}
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <span className="text-white text-xs font-medium">
-                              {position.positionName.charAt(0)}
-                            </span>
-                          )}
+                          ) : null}
+                          <span
+                            className="text-white text-xs font-medium w-full h-full flex items-center justify-center"
+                            style={{ display: position.positionImage ? 'none' : 'flex' }}
+                          >
+                            {position.positionName.charAt(0).toUpperCase()}
+                          </span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -561,21 +596,28 @@ export default function PositionsPage() {
           </DialogHeader>
           {selectedPosition && (
             <div className="space-y-4 py-4">
-              <div className="w-full h-48 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
+              <div className="w-full h-48 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 flex items-center justify-center relative">
                 {selectedPosition.positionImage ? (
-                  <Image 
-                    src={selectedPosition.positionImage} 
-                    alt={selectedPosition.positionName} 
-                    width={500} 
-                    height={200} 
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-white text-4xl font-bold">
-                      {selectedPosition.positionName.charAt(0)}
+                  <>
+                    <Image
+                      src={selectedPosition.positionImage}
+                      alt={selectedPosition.positionName}
+                      width={500}
+                      height={200}
+                      className="w-full h-full object-cover absolute inset-0"
+                      unoptimized={selectedPosition.positionImage.includes('cloudinary')}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <span className="text-white text-4xl font-bold relative z-10">
+                      {selectedPosition.positionName.charAt(0).toUpperCase()}
                     </span>
-                  </div>
+                  </>
+                ) : (
+                  <span className="text-white text-4xl font-bold">
+                    {selectedPosition.positionName.charAt(0).toUpperCase()}
+                  </span>
                 )}
               </div>
               <div className="space-y-3">

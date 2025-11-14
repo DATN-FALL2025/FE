@@ -9,10 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Bell, Mail, Save, User } from "lucide-react";
 
-export default function ManagerSettingsPage() {
+export default function TrainingDirectorSettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [submissionAlerts, setSubmissionAlerts] = useState(true);
-  const [approvalReminders, setApprovalReminders] = useState(true);
+  const [programAlerts, setProgramAlerts] = useState(true);
+  const [instructorUpdates, setInstructorUpdates] = useState(true);
 
   return (
     <div className="space-y-8 w-full max-w-4xl">
@@ -35,15 +35,15 @@ export default function ManagerSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue="Document Manager" />
+              <Input id="name" defaultValue="Training Director" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue="manager@idmawa.edu.vn" />
+              <Input id="email" type="email" defaultValue="training.director@idmawa.edu.vn" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Input id="role" defaultValue="Input Document Manager" disabled />
+              <Input id="role" defaultValue="Training Director" disabled />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
@@ -81,14 +81,14 @@ export default function ManagerSettingsPage() {
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
-                <Label htmlFor="submission-alerts" className="text-base">Submission Alerts</Label>
-                <p className="text-sm text-muted-foreground">Alert for new document submissions</p>
+                <Label htmlFor="program-alerts" className="text-base">Program Status Alerts</Label>
+                <p className="text-sm text-muted-foreground">Alert for program milestone updates</p>
               </div>
             </div>
             <Switch
-              id="submission-alerts"
-              checked={submissionAlerts}
-              onCheckedChange={setSubmissionAlerts}
+              id="program-alerts"
+              checked={programAlerts}
+              onCheckedChange={setProgramAlerts}
             />
           </div>
           <Separator />
@@ -96,14 +96,14 @@ export default function ManagerSettingsPage() {
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
-                <Label htmlFor="approval-reminders" className="text-base">Approval Reminders</Label>
-                <p className="text-sm text-muted-foreground">Daily reminders for pending approvals</p>
+                <Label htmlFor="instructor-updates" className="text-base">Instructor Updates</Label>
+                <p className="text-sm text-muted-foreground">Notifications for instructor changes</p>
               </div>
             </div>
             <Switch
-              id="approval-reminders"
-              checked={approvalReminders}
-              onCheckedChange={setApprovalReminders}
+              id="instructor-updates"
+              checked={instructorUpdates}
+              onCheckedChange={setInstructorUpdates}
             />
           </div>
         </CardContent>
@@ -119,4 +119,3 @@ export default function ManagerSettingsPage() {
     </div>
   );
 }
-

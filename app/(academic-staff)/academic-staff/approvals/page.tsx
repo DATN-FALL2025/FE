@@ -14,60 +14,54 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-export default function ManagerApprovalsPage() {
+export default function AcademicStaffApprovalsPage() {
   const submissions = [
     {
       id: "1",
       studentName: "Tôn Thiện Hoàng Hiệp",
       studentCode: "SE161662",
-      documentType: "TOEIC Certificate",
-      program: "Pilot Training",
-      submittedAt: new Date("2024-10-08T10:30:00"),
+      requestType: "Course Exemption",
+      course: "Aviation Mathematics",
+      submittedAt: new Date("2024-11-14T10:30:00"),
       status: "pending",
       priority: "high",
-      fileSize: "1.2 MB",
-      fileName: "toeic_SE161662.pdf",
+      reason: "Equivalent course completed at previous institution",
     },
     {
       id: "2",
       studentName: "Trần Duy Khanh",
       studentCode: "SE173443",
-      documentType: "Medical Certificate",
-      program: "Pilot Training",
-      submittedAt: new Date("2024-10-08T09:15:00"),
+      requestType: "Grade Appeal",
+      course: "Flight Operations",
+      submittedAt: new Date("2024-11-14T09:15:00"),
       status: "pending",
       priority: "medium",
-      fileSize: "2.4 MB",
-      fileName: "medical_SE173443.pdf",
+      reason: "Request for re-evaluation of final exam",
     },
     {
       id: "3",
       studentName: "Huỳnh Văn Tường",
       studentCode: "SE160853",
-      documentType: "ID Card",
-      program: "Cabin Crew",
-      submittedAt: new Date("2024-10-07T14:20:00"),
+      requestType: "Course Registration",
+      course: "Advanced Navigation",
+      submittedAt: new Date("2024-11-13T14:20:00"),
       status: "approved",
       priority: "low",
-      fileSize: "0.8 MB",
-      fileName: "id_SE160853.pdf",
-      reviewedAt: new Date("2024-10-07T15:00:00"),
-      reviewedBy: "Manager",
+      reviewedAt: new Date("2024-11-13T15:00:00"),
+      reviewedBy: "Academic Staff",
     },
     {
       id: "4",
       studentName: "Nguyễn Thanh Hải",
       studentCode: "SE160636",
-      documentType: "3x4 Photo",
-      program: "Aircraft Maintenance",
-      submittedAt: new Date("2024-10-07T11:30:00"),
+      requestType: "Schedule Change",
+      course: "Aircraft Systems",
+      submittedAt: new Date("2024-11-13T11:30:00"),
       status: "rejected",
       priority: "low",
-      fileSize: "0.5 MB",
-      fileName: "photo_SE160636.jpg",
-      reviewedAt: new Date("2024-10-07T12:00:00"),
-      reviewedBy: "Manager",
-      rejectionReason: "Photo background must be white, current photo has blue background",
+      reviewedAt: new Date("2024-11-13T12:00:00"),
+      reviewedBy: "Academic Staff",
+      rejectionReason: "Course already at full capacity, no available slots",
     },
   ];
 
@@ -104,10 +98,10 @@ export default function ManagerApprovalsPage() {
   const getTimeAgo = (date: Date) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays === 1) return "Yesterday";
     return `${diffInDays} days ago`;
@@ -142,13 +136,10 @@ export default function ManagerApprovalsPage() {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              <p className="text-sm font-medium">{submission.documentType}</p>
+              <p className="text-sm font-medium">{submission.requestType}</p>
             </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{submission.fileName}</span>
-              <span>{submission.fileSize}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Program: {submission.program}</p>
+            <p className="text-sm text-muted-foreground">Course: {submission.course}</p>
+            <p className="text-sm text-muted-foreground">Reason: {submission.reason}</p>
           </div>
 
           {submission.rejectionReason && (
@@ -195,9 +186,9 @@ export default function ManagerApprovalsPage() {
   return (
     <div className="space-y-8 w-full">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Document Approvals</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Student Request Approvals</h1>
         <p className="text-muted-foreground mt-2 text-base">
-          Review and approve student document submissions
+          Review and approve student academic requests
         </p>
       </div>
 
@@ -244,4 +235,3 @@ export default function ManagerApprovalsPage() {
     </div>
   );
 }
-

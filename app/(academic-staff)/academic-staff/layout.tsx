@@ -1,9 +1,9 @@
-export default function ManagerLayout({
+export default function AcademicStaffLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Manager layout completely independent from Admin and Head
+  // Academic Staff layout completely independent from Admin and Head
   // No shared components to avoid CSS conflicts
   return (
     <div className="min-h-screen bg-background">

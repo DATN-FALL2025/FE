@@ -5,86 +5,89 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  FileCheck,
+  GraduationCap,
   Users,
-  CheckCircle2,
-  XCircle,
-  Clock,
+  BookOpen,
   TrendingUp,
   Download,
   Filter,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react";
 
-export default function InputDocumentManagerDashboardPage() {
+export default function AcademicStaffDashboardPage() {
   const stats = [
     {
-      label: "Pending Reviews",
-      value: 156,
-      icon: Clock,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
-      urgent: true,
+      label: "Total Students",
+      value: 342,
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      change: "+12 this month",
     },
     {
-      label: "Approved Today",
-      value: 42,
-      icon: CheckCircle2,
+      label: "Active Courses",
+      value: 18,
+      icon: BookOpen,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      change: "+8 vs yesterday",
+      change: "2 starting soon",
     },
     {
-      label: "Rejected Today",
-      value: 8,
-      icon: XCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-50",
-      change: "-2 vs yesterday",
-    },
-    {
-      label: "Approval Rate",
-      value: "94%",
+      label: "Avg Performance",
+      value: "87%",
       icon: TrendingUp,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      change: "+3% vs last term",
+    },
+    {
+      label: "Graduation Rate",
+      value: "92%",
+      icon: GraduationCap,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
-      change: "+1.5% this week",
+      change: "+5% this year",
     },
   ];
 
-  const recentSubmissions = [
+  const upcomingClasses = [
     {
       id: 1,
-      studentName: "Tôn Thiện Hoàng Hiệp",
-      studentCode: "SE161662",
-      documentType: "TOEIC Certificate",
-      program: "Pilot Training",
-      submittedAt: "10 minutes ago",
-      status: "pending",
+      courseName: "Aviation Safety Management",
+      courseCode: "ASM301",
+      date: "Nov 15, 2025",
+      time: "09:00 AM",
+      room: "Building A - Room 301",
+      students: 28,
+      status: "scheduled",
     },
     {
       id: 2,
-      studentName: "Trần Duy Khanh",
-      studentCode: "SE173443",
-      documentType: "Medical Certificate",
-      program: "Pilot Training",
-      submittedAt: "25 minutes ago",
-      status: "pending",
+      courseName: "Flight Operations & Procedures",
+      courseCode: "FOP401",
+      date: "Nov 15, 2025",
+      time: "02:00 PM",
+      room: "Building B - Room 205",
+      students: 32,
+      status: "scheduled",
     },
     {
       id: 3,
-      studentName: "Huỳnh Văn Tường",
-      studentCode: "SE160853",
-      documentType: "3x4 Photo",
-      program: "Cabin Crew",
-      submittedAt: "1 hour ago",
-      status: "pending",
+      courseName: "Aircraft Systems & Maintenance",
+      courseCode: "ASM201",
+      date: "Nov 16, 2025",
+      time: "10:30 AM",
+      room: "Building A - Room 102",
+      students: 25,
+      status: "scheduled",
     },
   ];
 
   const programProgress = [
-    { name: "Pilot Training", completed: 245, total: 342, percentage: 71.6 },
-    { name: "Cabin Crew", completed: 198, total: 289, percentage: 68.5 },
-    { name: "Aircraft Maintenance", completed: 156, total: 198, percentage: 78.8 },
+    { name: "Pilot Training", enrolled: 245, graduated: 189, percentage: 77.1 },
+    { name: "Cabin Crew", enrolled: 198, graduated: 156, percentage: 78.8 },
+    { name: "Aircraft Maintenance", enrolled: 156, graduated: 132, percentage: 84.6 },
   ];
 
   return (
@@ -92,9 +95,9 @@ export default function InputDocumentManagerDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Document Manager Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Academic Staff Dashboard</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Review and approve student document submissions
+            Manage courses, student performance, and academic programs
           </p>
         </div>
         <div className="flex gap-2">
@@ -124,9 +127,6 @@ export default function InputDocumentManagerDashboardPage() {
                       {stat.change && (
                         <p className="text-xs text-muted-foreground">{stat.change}</p>
                       )}
-                      {stat.urgent && (
-                        <p className="text-xs text-orange-600 font-medium">Requires attention</p>
-                      )}
                     </div>
                   </div>
                   <div className={`${stat.bgColor} p-4 rounded-xl`}>
@@ -141,55 +141,56 @@ export default function InputDocumentManagerDashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
-        {/* Left Column - Recent Submissions */}
+        {/* Left Column - Upcoming Classes */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
           <Card className="border-0 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold">Recent Submissions</CardTitle>
+                  <CardTitle className="text-xl font-bold">Upcoming Classes</CardTitle>
                   <CardDescription className="text-base mt-1.5">
-                    Latest document submissions for review
+                    Your scheduled classes for this week
                   </CardDescription>
                 </div>
                 <Button size="sm">View All</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {recentSubmissions.map((submission) => (
+              {upcomingClasses.map((classItem) => (
                 <div
-                  key={submission.id}
+                  key={classItem.id}
                   className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">
-                      <FileCheck className="w-5 h-5 text-blue-600" />
+                      <BookOpen className="w-5 h-5 text-blue-600" />
                       <div>
-                        <p className="font-semibold">{submission.studentName}</p>
+                        <p className="font-semibold">{classItem.courseName}</p>
                         <p className="text-sm text-muted-foreground font-mono">
-                          {submission.studentCode}
+                          {classItem.courseCode}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{submission.documentType}</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {classItem.date}
+                      </span>
                       <span>•</span>
-                      <span>{submission.program}</span>
+                      <span>{classItem.time}</span>
                       <span>•</span>
-                      <span>{submission.submittedAt}</span>
+                      <span>{classItem.room}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {classItem.students} students enrolled
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline">
-                      View
+                      View Details
                     </Button>
-                    <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Approve
-                    </Button>
-                    <Button size="sm" variant="destructive">
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject
+                    <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                      Start Class
                     </Button>
                   </div>
                 </div>
@@ -204,7 +205,7 @@ export default function InputDocumentManagerDashboardPage() {
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-bold">Program Progress</CardTitle>
               <CardDescription className="text-base mt-1.5">
-                Student completion by program
+                Student graduation rates by program
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -214,7 +215,7 @@ export default function InputDocumentManagerDashboardPage() {
                     <div>
                       <p className="font-semibold">{program.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {program.completed} / {program.total} students
+                        {program.graduated} / {program.enrolled} graduated
                       </p>
                     </div>
                     <span className="text-lg font-bold text-primary">
@@ -235,4 +236,3 @@ export default function InputDocumentManagerDashboardPage() {
     </div>
   );
 }
-

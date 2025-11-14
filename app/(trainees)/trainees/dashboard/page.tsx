@@ -1,6 +1,6 @@
 "use client";
 
-import { useStudentData } from "@/features/students/hooks/use-student-data";
+import { useStudentData } from "@/features/trainees/hooks/use-student-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

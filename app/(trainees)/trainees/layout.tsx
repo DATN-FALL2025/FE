@@ -1,5 +1,5 @@
-import { Navbar } from "@/features/students/components/layout/navbar";
-import { Sidebar } from "@/features/students/components/layout/sidebar";
+import { Navbar } from "@/features/trainees/components/layout/navbar";
+import { Sidebar } from "@/features/trainees/components/layout/sidebar";
 
 export default function StudentLayout({
   children,

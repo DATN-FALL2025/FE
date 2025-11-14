@@ -7,73 +7,76 @@ import {
   LayoutDashboard,
   FileCheck,
   Users,
-  BookOpen,
+  Target,
   Plus,
   Settings,
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
 
-export default function HeadOfDepartmentDashboardPage() {
+export default function TrainingDirectorMatrixPage() {
   const stats = [
     {
-      label: "Training Programs",
-      value: 5,
-      icon: BookOpen,
+      label: "Active Programs",
+      value: 12,
+      icon: Target,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: "+1 this month",
+      change: "+2 this quarter",
     },
     {
       label: "Document Matrices",
-      value: 12,
+      value: 15,
       icon: FileCheck,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      change: "3 pending approval",
+      change: "All active",
     },
     {
-      label: "Total Students",
-      value: 342,
+      label: "Total Trainees",
+      value: 254,
       icon: Users,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
-      change: "+15 this week",
+      change: "+18 this month",
     },
     {
-      label: "Compliance Rate",
-      value: "96%",
+      label: "Completion Rate",
+      value: "89%",
       icon: TrendingUp,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
-      change: "+2% vs last month",
+      change: "+4% vs last quarter",
     },
   ];
 
-  const pendingMatrices = [
+  const activeMatrices = [
     {
       id: 1,
-      program: "Pilot Training - CPL",
-      code: "PT-CPL-2024",
+      program: "Commercial Pilot License (CPL)",
+      code: "CPL-2025",
       documents: 15,
-      createdBy: "Academic Staff",
-      status: "pending_review",
+      trainees: 85,
+      instructors: 12,
+      status: "active",
     },
     {
       id: 2,
-      program: "Cabin Crew Advanced",
-      code: "CC-ADV-2024",
+      program: "Instrument Rating (IR)",
+      code: "IR-2025",
       documents: 12,
-      createdBy: "Academic Staff",
-      status: "pending_review",
+      trainees: 62,
+      instructors: 8,
+      status: "active",
     },
     {
       id: 3,
-      program: "Aircraft Maintenance",
-      code: "AM-BASIC-2024",
-      documents: 18,
-      createdBy: "Academic Staff",
-      status: "pending_review",
+      program: "Flight Instructor Certification",
+      code: "FIC-2025",
+      documents: 20,
+      trainees: 28,
+      instructors: 5,
+      status: "active",
     },
   ];
 
@@ -82,14 +85,14 @@ export default function HeadOfDepartmentDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Department Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Training Program Matrices</h1>
           <p className="text-muted-foreground mt-2 text-base">
             Manage training program requirements and document matrices
           </p>
         </div>
         <Button size="lg" className="gap-2">
           <Plus className="w-5 h-5" />
-          Configure New Matrix
+          Create New Matrix
         </Button>
       </div>
 
@@ -120,24 +123,24 @@ export default function HeadOfDepartmentDashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
-        {/* Left Column - Pending Approvals */}
+        {/* Left Column - Active Matrices */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
           <Card className="border-0 shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold">Pending Matrix Approvals</CardTitle>
+                  <CardTitle className="text-xl font-bold">Active Training Matrices</CardTitle>
                   <CardDescription className="text-base mt-1.5">
-                    Document matrices awaiting your approval
+                    Currently running program document requirements
                   </CardDescription>
                 </div>
-                <Badge className="bg-orange-500 hover:bg-orange-600 text-white h-9 px-4">
-                  {pendingMatrices.length} Pending
+                <Badge className="bg-green-500 hover:bg-green-600 text-white h-9 px-4">
+                  {activeMatrices.length} Active
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingMatrices.map((matrix) => (
+              {activeMatrices.map((matrix) => (
                 <div
                   key={matrix.id}
                   className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
@@ -151,18 +154,20 @@ export default function HeadOfDepartmentDashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{matrix.documents} required documents</span>
+                      <span>{matrix.documents} documents</span>
                       <span>•</span>
-                      <span>Created by {matrix.createdBy}</span>
+                      <span>{matrix.trainees} trainees</span>
+                      <span>•</span>
+                      <span>{matrix.instructors} instructors</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline">
                       <Settings className="w-4 h-4 mr-2" />
-                      Review
+                      Manage
                     </Button>
-                    <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                      Approve
+                    <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                      View Details
                     </Button>
                   </div>
                 </div>
@@ -183,12 +188,12 @@ export default function HeadOfDepartmentDashboardPage() {
                 View All Matrices
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                <BookOpen className="w-5 h-5" />
+                <Target className="w-5 h-5" />
                 Training Programs
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <Users className="w-5 h-5" />
-                Student Overview
+                Instructor Management
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <LayoutDashboard className="w-5 h-5" />
@@ -197,21 +202,21 @@ export default function HeadOfDepartmentDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg border-l-4 border-l-orange-500">
+          <Card className="border-0 shadow-lg border-l-4 border-l-blue-500">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-orange-600" />
-                <CardTitle className="text-lg font-bold">Attention Required</CardTitle>
+                <AlertCircle className="w-5 h-5 text-blue-600" />
+                <CardTitle className="text-lg font-bold">Program Overview</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm space-y-2">
-                <p className="font-medium">3 document matrices pending your review</p>
+                <p className="font-medium">12 active training programs</p>
                 <p className="text-muted-foreground">
-                  Please review and approve to activate for student submissions.
+                  All matrices are configured and ready for trainee submissions.
                 </p>
               </div>
-              <Button className="w-full">Review Now</Button>
+              <Button className="w-full">View Programs</Button>
             </CardContent>
           </Card>
         </div>
@@ -219,4 +224,3 @@ export default function HeadOfDepartmentDashboardPage() {
     </div>
   );
 }
-

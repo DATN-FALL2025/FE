@@ -14,7 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-export default function HeadOfDepartmentDashboardPage() {
+export default function HeadMatrixPage() {
   const stats = [
     {
       label: "Training Programs",
@@ -82,7 +82,7 @@ export default function HeadOfDepartmentDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Department Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Document Matrices</h1>
           <p className="text-muted-foreground mt-2 text-base">
             Manage training program requirements and document matrices
           </p>
@@ -219,4 +219,3 @@ export default function HeadOfDepartmentDashboardPage() {
     </div>
   );
 }
-

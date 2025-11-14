@@ -1,6 +1,6 @@
 "use client";
 
-import { useStudentData } from "@/features/students/hooks/use-student-data";
+import { useStudentData } from "@/features/trainees/hooks/use-student-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

@@ -2,53 +2,52 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
   Download,
   FileText,
   TrendingUp,
-  FileCheck,
-  AlertCircle,
+  Target,
+  Users,
 } from "lucide-react";
 
-export default function ManagerReportsPage() {
+export default function TrainingDirectorReportsPage() {
   const reports = [
     {
       id: "1",
-      name: "Approval Statistics Report",
-      description: "Document approval and rejection analytics",
-      icon: FileCheck,
+      name: "Program Performance Report",
+      description: "Detailed analysis of training program outcomes",
+      icon: Target,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      lastGenerated: "2024-10-08",
+      lastGenerated: "2024-11-12",
     },
     {
       id: "2",
-      name: "Processing Time Analysis",
-      description: "Average time to process document approvals",
-      icon: TrendingUp,
+      name: "Instructor Utilization Report",
+      description: "Track instructor workload and availability",
+      icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      lastGenerated: "2024-10-07",
+      lastGenerated: "2024-11-10",
     },
     {
       id: "3",
-      name: "Document Type Breakdown",
-      description: "Submissions by document type",
+      name: "Training Hours Analytics",
+      description: "Comprehensive training hours breakdown",
       icon: BarChart3,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
-      lastGenerated: "2024-10-06",
+      lastGenerated: "2024-11-08",
     },
     {
       id: "4",
-      name: "Rejection Reasons Report",
-      description: "Common reasons for document rejection",
-      icon: AlertCircle,
+      name: "Program Completion Trends",
+      description: "Long-term completion rate analysis",
+      icon: TrendingUp,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
-      lastGenerated: "2024-10-05",
+      lastGenerated: "2024-11-05",
     },
   ];
 
@@ -56,9 +55,9 @@ export default function ManagerReportsPage() {
     <div className="space-y-8 w-full">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Reports & Analytics</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Training Reports & Analytics</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Generate document management reports
+            Generate reports on training programs and instructor performance
           </p>
         </div>
         <Button className="gap-2">
@@ -71,8 +70,8 @@ export default function ManagerReportsPage() {
         {[
           { label: "Report Templates", value: reports.length, color: "text-blue-600" },
           { label: "Generated Today", value: 1, color: "text-green-600" },
-          { label: "This Month", value: 25, color: "text-purple-600" },
-          { label: "Total", value: 189, color: "text-orange-600" },
+          { label: "This Month", value: 22, color: "text-purple-600" },
+          { label: "Total", value: 312, color: "text-orange-600" },
         ].map((stat, i) => (
           <Card key={i} className="border-0 shadow-md">
             <CardContent className="p-6">
@@ -123,4 +122,3 @@ export default function ManagerReportsPage() {
     </div>
   );
 }
-

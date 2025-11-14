@@ -13,9 +13,6 @@ import {
   Building2,
   FileText,
   Shield,
-  Settings,
-  Award,
-  BarChart3,
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
@@ -32,52 +29,24 @@ const adminNavigation = [
     icon: Users,
   },
   {
-    name: "Departments",
+    name: "Department Management",
     href: "/admin/departments",
     icon: Building2,
   },
   {
-    name: "Positions",
+    name: "Position Management",
     href: "/admin/positions",
     icon: Users,
   },
   {
-    name: "Documents",
+    name: "Document Management",
     href: "/admin/documents",
-    icon: FileText,
-  },
-  {
-    name: "Document Rules",
-    href: "/admin/document-rules",
-    icon: Shield,
-  },
-  {
-    name: "Document Approvals",
-    href: "/admin/approvals",
     icon: FileText,
   },
   {
     name: "Rule Management",
     href: "/admin/rules",
     icon: Shield,
-  },
-  {
-    name: "Certificates",
-    href: "/admin/certificates",
-    icon: Award,
-  },
-  {
-    name: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
-  },
-];
-
-const secondaryNavigation = [
-  {
-    name: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
   },
 ];
 
@@ -131,34 +100,6 @@ export const AdminSidebar = () => {
               </ul>
             </li>
 
-            <li>
-              <Separator />
-            </li>
-
-            {/* Secondary Navigation */}
-            <li>
-              <ul role="list" className="space-y-1">
-                {secondaryNavigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <li key={item.name}>
-                      <Link href={item.href}>
-                        <Button
-                          variant={isActive ? "secondary" : "ghost"}
-                          className={cn(
-                            "w-full justify-start gap-3",
-                            isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          {item.name}
-                        </Button>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
           </ul>
         </nav>
 

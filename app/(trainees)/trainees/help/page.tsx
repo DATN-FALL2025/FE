@@ -28,7 +28,7 @@ export default function HelpPage() {
     {
       question: "Can I update a document after approval?",
       answer:
-        "Once a document is approved, you cannot modify it directly. If you need to update an approved document, please contact the Input Document Manager for assistance.",
+        "Once a document is approved, you cannot modify it directly. If you need to update an approved document, please contact the Academic Staff or administration for assistance.",
     },
     {
       question: "What are the photo requirements for 3x4 photos?",
