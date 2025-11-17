@@ -16,7 +16,7 @@ export const useAdminData = () => {
       // Mock stats
       const mockStats: DashboardStats = {
         totalUsers: 1245,
-        totalStudents: 987,
+        totalTrainees: 987,
         totalDepartments: 12,
         totalDocuments: 6891,
         pendingApprovals: 156,
@@ -29,24 +29,24 @@ export const useAdminData = () => {
       const mockSubmissions: DocumentSubmission[] = [
         {
           id: "1",
-          studentName: "Tôn Thiện Hoàng Hiệp",
-          studentCode: "SE161662",
+          traineeName: "Tôn Thiện Hoàng Hiệp",
+          traineeCode: "SE161662",
           documentType: "TOEIC Certificate",
           status: "pending",
           submittedAt: new Date("2024-10-08T10:30:00"),
         },
         {
           id: "2",
-          studentName: "Trần Duy Khanh",
-          studentCode: "SE173443",
+          traineeName: "Trần Duy Khanh",
+          traineeCode: "SE173443",
           documentType: "Medical Certificate",
           status: "pending",
           submittedAt: new Date("2024-10-08T09:15:00"),
         },
         {
           id: "3",
-          studentName: "Huỳnh Văn Tường",
-          studentCode: "SE160853",
+          traineeName: "Huỳnh Văn Tường",
+          traineeCode: "SE160853",
           documentType: "ID Card",
           status: "approved",
           submittedAt: new Date("2024-10-07T14:20:00"),

@@ -4,35 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
+  Users,
+  Target,
   FileText,
-  User,
-  HelpCircle,
-  Settings,
-  GraduationCap,
+  BarChart3,
 } from "lucide-react";
 
-const navigation = [
-  {
-    name: "Dashboard",
-    href: "/trainees/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "My Documents",
-    href: "/trainees/documents",
-    icon: FileText,
-  },
-  {
-    name: "Profile",
-    href: "/trainees/profile",
-    icon: User,
-  },
+const trainingDirectorNavigation = [
+  { name: "Dashboard", href: "/training-director/dashboard", icon: LayoutDashboard },
+  { name: "Instructors", href: "/training-director/instructors", icon: Users },
+  { name: "Training Matrix", href: "/training-director/matrix", icon: FileText },
+  { name: "Reports", href: "/training-director/reports", icon: BarChart3 },
 ];
 
-export const MobileSidebar = () => {
+export const TrainingDirectorMobileSidebar = () => {
   const pathname = usePathname();
 
   return (
@@ -40,11 +27,11 @@ export const MobileSidebar = () => {
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b px-4">
         <div className="bg-primary rounded-lg p-2">
-          <GraduationCap className="w-6 h-6 text-primary-foreground" />
+          <Target className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Student Portal</p>
+          <p className="text-xs text-muted-foreground">Training Director</p>
         </div>
       </div>
 
@@ -54,10 +41,10 @@ export const MobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Main Menu
+              Training Management
             </p>
             <ul role="list" className="space-y-1">
-              {navigation.map((item) => {
+              {trainingDirectorNavigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.name}>
@@ -83,4 +70,3 @@ export const MobileSidebar = () => {
     </div>
   );
 };
-

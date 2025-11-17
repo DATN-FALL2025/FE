@@ -111,7 +111,7 @@ export default function DocumentsManagementPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await createDocument({
+      const result: any = await createDocument({
         documentName: formData.documentName,
         documentDescription: formData.documentDescription,
       });
@@ -148,7 +148,7 @@ export default function DocumentsManagementPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await updateDocumentById(selectedDoc.id, {
+      const result: any = await updateDocumentById(Number(selectedDoc.id), {
         documentName: formData.documentName,
         documentDescription: formData.documentDescription,
       });
@@ -183,7 +183,7 @@ export default function DocumentsManagementPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await deleteDocumentById(selectedDoc.id);
+      const result: any = await deleteDocumentById(Number(selectedDoc.id));
 
       console.log('🗑️ Delete document result:', result);
 

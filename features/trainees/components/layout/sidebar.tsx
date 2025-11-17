@@ -16,31 +16,18 @@ import {
 const navigation = [
   {
     name: "Dashboard",
-    href: "/students/dashboard",
+    href: "/trainees/dashboard",
     icon: LayoutDashboard,
   },
   {
     name: "My Documents",
-    href: "/students/documents",
+    href: "/trainees/documents",
     icon: FileText,
   },
   {
     name: "Profile",
-    href: "/students/profile",
+    href: "/trainees/profile",
     icon: User,
-  },
-];
-
-const secondaryNavigation = [
-  {
-    name: "Help & Support",
-    href: "/students/help",
-    icon: HelpCircle,
-  },
-  {
-    name: "Settings",
-    href: "/students/settings",
-    icon: Settings,
   },
 ];
 
@@ -56,35 +43,6 @@ export const Sidebar = () => {
             <li>
               <ul role="list" className="space-y-1">
                 {navigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <li key={item.name}>
-                      <Link href={item.href}>
-                        <Button
-                          variant={isActive ? "secondary" : "ghost"}
-                          className={cn(
-                            "w-full justify-start gap-3",
-                            isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          {item.name}
-                        </Button>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-
-            <li>
-              <Separator />
-            </li>
-
-            {/* Secondary Navigation */}
-            <li>
-              <ul role="list" className="space-y-1">
-                {secondaryNavigation.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.name}>

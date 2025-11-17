@@ -4,35 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
-  FileText,
-  User,
-  HelpCircle,
-  Settings,
-  GraduationCap,
+  FileCheck,
+  BookOpen,
 } from "lucide-react";
 
-const navigation = [
-  {
-    name: "Dashboard",
-    href: "/trainees/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "My Documents",
-    href: "/trainees/documents",
-    icon: FileText,
-  },
-  {
-    name: "Profile",
-    href: "/trainees/profile",
-    icon: User,
-  },
+const academicStaffNavigation = [
+  { name: "Dashboard", href: "/academic-staff/dashboard", icon: LayoutDashboard },
+  { name: "Document Approvals", href: "/academic-staff/approvals", icon: FileCheck },
 ];
 
-export const MobileSidebar = () => {
+export const AcademicStaffMobileSidebar = () => {
   const pathname = usePathname();
 
   return (
@@ -40,11 +23,11 @@ export const MobileSidebar = () => {
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b px-4">
         <div className="bg-primary rounded-lg p-2">
-          <GraduationCap className="w-6 h-6 text-primary-foreground" />
+          <BookOpen className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Student Portal</p>
+          <p className="text-xs text-muted-foreground">Academic Staff</p>
         </div>
       </div>
 
@@ -54,10 +37,10 @@ export const MobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Main Menu
+              Academic Management
             </p>
             <ul role="list" className="space-y-1">
-              {navigation.map((item) => {
+              {academicStaffNavigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.name}>
@@ -83,4 +66,3 @@ export const MobileSidebar = () => {
     </div>
   );
 };
-

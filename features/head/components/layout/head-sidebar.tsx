@@ -21,32 +21,9 @@ const headNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "Criteria Matrix",
-    href: "/head/criteria",
+    name: "Document Matrix",
+    href: "/head/matrix",
     icon: FileCheck,
-  },
-  {
-    name: "Students",
-    href: "/head/students",
-    icon: Users,
-  },
-  {
-    name: "Documents",
-    href: "/head/documents",
-    icon: BookOpen,
-  },
-  {
-    name: "Reports",
-    href: "/head/reports",
-    icon: BarChart3,
-  },
-];
-
-const secondaryNavigation = [
-  {
-    name: "Settings",
-    href: "/head/settings",
-    icon: Settings,
   },
 ];
 
@@ -65,35 +42,6 @@ export const HeadSidebar = () => {
               </div>
               <ul role="list" className="space-y-1">
                 {headNavigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <li key={item.name}>
-                      <Link href={item.href}>
-                        <Button
-                          variant={isActive ? "secondary" : "ghost"}
-                          className={cn(
-                            "w-full justify-start gap-3",
-                            isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          {item.name}
-                        </Button>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-
-            <li>
-              <Separator />
-            </li>
-
-            {/* Secondary Navigation */}
-            <li>
-              <ul role="list" className="space-y-1">
-                {secondaryNavigation.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.name}>

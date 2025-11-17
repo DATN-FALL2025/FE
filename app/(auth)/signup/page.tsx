@@ -42,7 +42,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const result = await createUser({
+      const result: any = await createUser({
         userName: formData.userName,
         gmail: formData.gmail,
         password: formData.password,

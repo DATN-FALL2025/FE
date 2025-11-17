@@ -74,9 +74,9 @@ export const PendingApprovals = ({ submissions }: PendingApprovalsProps) => {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">
                       <div>
-                        <p className="font-semibold">{submission.studentName}</p>
+                        <p className="font-semibold">{submission.traineeName}</p>
                         <p className="text-sm text-muted-foreground font-mono">
-                          {submission.studentCode}
+                          {submission.traineeCode}
                         </p>
                       </div>
                     </div>

@@ -1,226 +1,141 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard,
-  FileCheck,
-  Users,
-  Target,
-  Plus,
-  Settings,
-  TrendingUp,
+  Download,
+  Upload,
+  Building2,
   AlertCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function TrainingDirectorMatrixPage() {
-  const stats = [
-    {
-      label: "Active Programs",
-      value: 12,
-      icon: Target,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      change: "+2 this quarter",
-    },
-    {
-      label: "Document Matrices",
-      value: 15,
-      icon: FileCheck,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      change: "All active",
-    },
-    {
-      label: "Total Trainees",
-      value: 254,
-      icon: Users,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      change: "+18 this month",
-    },
-    {
-      label: "Completion Rate",
-      value: "89%",
-      icon: TrendingUp,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      change: "+4% vs last quarter",
-    },
+  // Departments
+  const departments = [
+    { id: "1", code: "GO", name: "Ground Operations", description: "Ground handling and operations" },
+    { id: "2", code: "CC", name: "Cabin Crew", description: "Flight attendant services" },
+    { id: "3", code: "TAM", name: "Technical Aircraft Maintenance", description: "Aircraft maintenance and engineering" },
+    { id: "4", code: "FC", name: "Flight Crew", description: "Pilots and flight officers" },
   ];
 
-  const activeMatrices = [
-    {
-      id: 1,
-      program: "Commercial Pilot License (CPL)",
-      code: "CPL-2025",
-      documents: 15,
-      trainees: 85,
-      instructors: 12,
-      status: "active",
-    },
-    {
-      id: 2,
-      program: "Instrument Rating (IR)",
-      code: "IR-2025",
-      documents: 12,
-      trainees: 62,
-      instructors: 8,
-      status: "active",
-    },
-    {
-      id: 3,
-      program: "Flight Instructor Certification",
-      code: "FIC-2025",
-      documents: 20,
-      trainees: 28,
-      instructors: 5,
-      status: "active",
-    },
-  ];
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
 
   return (
-    <div className="space-y-8 w-full">
+    <div className="space-y-6 w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Training Program Matrices</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Document Matrix Management</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Manage training program requirements and document matrices
+            Configure document requirements for training positions by department
           </p>
         </div>
-        <Button size="lg" className="gap-2">
-          <Plus className="w-5 h-5" />
-          Create New Matrix
-        </Button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                    <div className="space-y-1">
-                      <p className="text-3xl font-bold">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.change}</p>
-                    </div>
-                  </div>
-                  <div className={`${stat.bgColor} p-4 rounded-xl`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
-        {/* Left Column - Active Matrices */}
-        <div className="lg:col-span-3 space-y-6 min-w-0">
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-bold">Active Training Matrices</CardTitle>
-                  <CardDescription className="text-base mt-1.5">
-                    Currently running program document requirements
-                  </CardDescription>
-                </div>
-                <Badge className="bg-green-500 hover:bg-green-600 text-white h-9 px-4">
-                  {activeMatrices.length} Active
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activeMatrices.map((matrix) => (
-                <div
-                  key={matrix.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <FileCheck className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="font-semibold">{matrix.program}</p>
-                        <p className="text-sm text-muted-foreground font-mono">{matrix.code}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{matrix.documents} documents</span>
-                      <span>•</span>
-                      <span>{matrix.trainees} trainees</span>
-                      <span>•</span>
-                      <span>{matrix.instructors} instructors</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Manage
-                    </Button>
-                    <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2">
+            <Upload className="w-4 h-4" />
+            Import
+          </Button>
+          <Button variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
         </div>
+      </div>
 
-        {/* Right Column - Quick Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                <FileCheck className="w-5 h-5" />
-                View All Matrices
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                <Target className="w-5 h-5" />
-                Training Programs
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                <Users className="w-5 h-5" />
-                Instructor Management
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                <LayoutDashboard className="w-5 h-5" />
-                Reports & Analytics
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Department Selection */}
+      <Card className="border-0 shadow-lg">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Building2 className="w-5 h-5" />
+              <span>Select Department</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Choose a department to manage its position-certificate matrix
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              {departments.map((dept) => {
+                const isSelected = selectedDepartmentId === dept.id;
+                const colorMap: Record<string, string> = {
+                  GO: "bg-blue-500",
+                  CC: "bg-purple-500",
+                  TAM: "bg-orange-500",
+                  FC: "bg-red-500",
+                };
 
-          <Card className="border-0 shadow-lg border-l-4 border-l-blue-500">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-blue-600" />
-                <CardTitle className="text-lg font-bold">Program Overview</CardTitle>
+                return (
+                  <button
+                    key={dept.id}
+                    onClick={() => setSelectedDepartmentId(dept.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-all hover:border-primary",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl",
+                        colorMap[dept.code] || "bg-gray-500"
+                      )}
+                    >
+                      {dept.code}
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-sm">{dept.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Code: {dept.code}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Matrix View */}
+      {selectedDepartmentId ? (
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-16 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Building2 className="w-8 h-8 text-primary" />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm space-y-2">
-                <p className="font-medium">12 active training programs</p>
-                <p className="text-muted-foreground">
-                  All matrices are configured and ready for trainee submissions.
+              <div>
+                <h3 className="text-xl font-semibold mb-2">
+                  {departments.find(d => d.id === selectedDepartmentId)?.name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Document matrix configuration will be displayed here.<br />
+                  Integration with API pending.
                 </p>
               </div>
-              <Button className="w-full">View Programs</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-0 shadow-lg bg-muted/20">
+          <CardContent className="p-16 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <AlertCircle className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">No Department Selected</h3>
+                <p className="text-sm text-muted-foreground">
+                  Please select a department above to view and manage its<br />
+                  position-certificate requirement matrix.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

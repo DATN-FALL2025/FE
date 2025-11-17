@@ -19,8 +19,8 @@ export const StatsOverview = ({ stats }: StatsOverviewProps) => {
       change: "+12%",
     },
     {
-      label: "Total Students",
-      value: stats.totalStudents.toLocaleString(),
+      label: "Total Trainees",
+      value: stats.totalTrainees.toLocaleString(),
       icon: GraduationCap,
       color: "text-green-600",
       bgColor: "bg-green-50",

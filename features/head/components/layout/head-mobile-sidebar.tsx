@@ -22,32 +22,9 @@ const headNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "Criteria Matrix",
-    href: "/head/criteria",
+    name: "Document Matrix",
+    href: "/head/matrix",
     icon: FileCheck,
-  },
-  {
-    name: "Students",
-    href: "/head/students",
-    icon: Users,
-  },
-  {
-    name: "Documents",
-    href: "/head/documents",
-    icon: BookOpen,
-  },
-  {
-    name: "Reports",
-    href: "/head/reports",
-    icon: BarChart3,
-  },
-];
-
-const secondaryNavigation = [
-  {
-    name: "Settings",
-    href: "/head/settings",
-    icon: Settings,
   },
 ];
 
@@ -55,9 +32,9 @@ export const HeadMobileSidebar = () => {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col gap-y-5 overflow-y-auto bg-background px-6 py-8">
+    <div className="flex h-full flex-col">
       {/* Logo */}
-      <Link href="/head/dashboard" className="flex items-center gap-2 mb-4">
+      <div className="flex h-16 items-center gap-2 border-b px-4">
         <div className="bg-primary rounded-lg p-2">
           <Building2 className="w-6 h-6 text-primary-foreground" />
         </div>
@@ -65,15 +42,16 @@ export const HeadMobileSidebar = () => {
           <h1 className="font-bold text-lg">IDMAWA</h1>
           <p className="text-xs text-muted-foreground">Head Portal</p>
         </div>
-      </Link>
+      </div>
 
-      {/* Main Navigation */}
-      <nav className="flex flex-1 flex-col">
-        <ul role="list" className="flex flex-1 flex-col gap-y-7">
-          <li>
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto py-4 px-3">
+        <nav className="flex flex-col gap-y-6">
+          {/* Main Navigation */}
+          <div>
+            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               Department Management
-            </div>
+            </p>
             <ul role="list" className="space-y-1">
               {headNavigation.map((item) => {
                 const isActive = pathname === item.href;
@@ -95,38 +73,9 @@ export const HeadMobileSidebar = () => {
                 );
               })}
             </ul>
-          </li>
-
-          <li>
-            <Separator />
-          </li>
-
-          {/* Secondary Navigation */}
-          <li>
-            <ul role="list" className="space-y-1">
-              {secondaryNavigation.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.name}>
-                    <Link href={item.href}>
-                      <Button
-                        variant={isActive ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full justify-start gap-3",
-                          isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.name}
-                      </Button>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </li>
-        </ul>
-      </nav>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };

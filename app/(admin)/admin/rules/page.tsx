@@ -1,308 +1,321 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileCheck } from "lucide-react";
 import {
-  Shield,
-  Plus,
-  Edit,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
-  FileCheck,
-  Settings,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+interface Rule {
+  id: string;
+  ruleName: string;
+  ruleDescription: string;
+}
 
 export default function RulesPage() {
-  const rules = [
-    {
-      id: "1",
-      name: "TOEIC Minimum Score",
-      description: "Minimum TOEIC score requirement for pilot training programs",
-      category: "requirement",
-      value: "600",
-      isActive: true,
-      appliesTo: ["Pilot Training"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "Medical Certificate Validity",
-      description: "Maximum validity period for medical certificates",
-      category: "validation",
-      value: "6 months",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "3",
-      name: "Photo Specifications",
-      description: "Standard photo requirements (3x4 cm, white background)",
-      category: "validation",
-      value: "3x4 cm, white bg",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "4",
-      name: "Guardian Consent Age",
-      description: "Age threshold requiring guardian consent",
-      category: "requirement",
-      value: "< 18 years",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "5",
-      name: "File Size Limit - PDF",
-      description: "Maximum file size for PDF documents",
-      category: "validation",
-      value: "5 MB",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "6",
-      name: "File Size Limit - Images",
-      description: "Maximum file size for image files (JPG/PNG)",
-      category: "validation",
-      value: "1 MB",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "7",
-      name: "Document Resubmission Limit",
-      description: "Maximum number of times a rejected document can be resubmitted",
-      category: "workflow",
-      value: "3 times",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-02-01",
-    },
-    {
-      id: "8",
-      name: "Auto-Rejection on Invalid Format",
-      description: "Automatically reject documents with invalid file formats",
-      category: "workflow",
-      value: "Enabled",
-      isActive: true,
-      appliesTo: ["All Programs"],
-      createdAt: "2024-02-01",
-    },
-  ];
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
 
-  const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case "validation":
-        return <Badge className="bg-blue-500">Validation</Badge>;
-      case "requirement":
-        return <Badge className="bg-purple-500">Requirement</Badge>;
-      case "workflow":
-        return <Badge className="bg-green-500">Workflow</Badge>;
-      default:
-        return <Badge variant="outline">{category}</Badge>;
-    }
+  const [formData, setFormData] = useState({
+    ruleName: "",
+    ruleDescription: "",
+  });
+
+  const resetForm = () => {
+    setFormData({ ruleName: "", ruleDescription: "" });
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "validation":
-        return <FileCheck className="w-5 h-5 text-blue-600" />;
-      case "requirement":
-        return <AlertCircle className="w-5 h-5 text-purple-600" />;
-      case "workflow":
-        return <Settings className="w-5 h-5 text-green-600" />;
-      default:
-        return <Shield className="w-5 h-5" />;
+  const handleCreate = () => {
+    if (!formData.ruleName || !formData.ruleDescription) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
     }
+
+    const newRule: Rule = {
+      id: Date.now().toString(),
+      ruleName: formData.ruleName,
+      ruleDescription: formData.ruleDescription,
+    };
+
+    setRules([...rules, newRule]);
+    setIsCreateOpen(false);
+    resetForm();
+    alert('Tạo rule template thành công!');
   };
 
-  const validationRules = rules.filter(r => r.category === "validation");
-  const requirementRules = rules.filter(r => r.category === "requirement");
-  const workflowRules = rules.filter(r => r.category === "workflow");
+  const handleEdit = () => {
+    if (!selectedRule) return;
+
+    const updatedRules = rules.map((rule) =>
+      rule.id === selectedRule.id
+        ? { ...rule, ruleName: formData.ruleName, ruleDescription: formData.ruleDescription }
+        : rule
+    );
+
+    setRules(updatedRules);
+    setIsEditOpen(false);
+    resetForm();
+    setSelectedRule(null);
+    alert('Cập nhật rule template thành công!');
+  };
+
+  const handleDelete = () => {
+    if (!selectedRule) return;
+
+    const filteredRules = rules.filter((rule) => rule.id !== selectedRule.id);
+    setRules(filteredRules);
+    setIsDeleteOpen(false);
+    setSelectedRule(null);
+    alert('Xóa rule template thành công!');
+  };
+
+  const openEditDialog = (rule: Rule) => {
+    setSelectedRule(rule);
+    setFormData({
+      ruleName: rule.ruleName,
+      ruleDescription: rule.ruleDescription,
+    });
+    setIsEditOpen(true);
+  };
+
+  const openViewDialog = (rule: Rule) => {
+    setSelectedRule(rule);
+    setIsViewOpen(true);
+  };
+
+  const openDeleteDialog = (rule: Rule) => {
+    setSelectedRule(rule);
+    setIsDeleteOpen(true);
+  };
 
   return (
-    <div className="space-y-8 w-full">
-      {/* Page Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="p-8 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Rule Management</h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Configure validation rules and requirements
-          </p>
+          <h1 className="text-3xl font-bold">Rules Template</h1>
+          <p className="text-muted-foreground mt-1">Quản lý các template quy tắc hệ thống</p>
         </div>
-        <Button size="lg" className="gap-2">
-          <Plus className="w-5 h-5" />
-          Add New Rule
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Tạo Rule Template
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: "Total Rules", value: rules.length, color: "text-blue-600" },
-          { label: "Validation", value: validationRules.length, color: "text-purple-600" },
-          { label: "Requirements", value: requirementRules.length, color: "text-green-600" },
-          { label: "Workflow", value: workflowRules.length, color: "text-orange-600" },
-        ].map((stat, i) => (
-          <Card key={i} className="border-0 shadow-md">
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              <p className={`text-3xl font-bold mt-2 ${stat.color}`}>{stat.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Validation Rules */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <FileCheck className="w-6 h-6 text-blue-600" />
-          Validation Rules
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {validationRules.map((rule) => (
-            <Card key={rule.id} className="border-0 shadow-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">{rule.name}</CardTitle>
-                      {getCategoryBadge(rule.category)}
-                    </div>
-                    <CardDescription>{rule.description}</CardDescription>
-                  </div>
-                  <Switch checked={rule.isActive} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Value</p>
-                  <p className="text-lg font-semibold mt-1">{rule.value}</p>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Applies to: {rule.appliesTo.join(", ")}
-                  </span>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="rounded-md border">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left p-4 font-medium">Tên Rule</th>
+                <th className="text-left p-4 font-medium">Mô tả</th>
+                <th className="text-right p-4 font-medium">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {rules.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-8 text-muted-foreground">
+                    Chưa có rule template nào. Nhấn &quot;Tạo Rule Template&quot; để thêm mới.
+                  </td>
+                </tr>
+              ) : (
+                rules.map((rule) => (
+                  <tr key={rule.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <FileCheck className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{rule.ruleName}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {rule.ruleDescription}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openViewDialog(rule)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(rule)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openDeleteDialog(rule)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Requirement Rules */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <AlertCircle className="w-6 h-6 text-purple-600" />
-          Requirement Rules
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {requirementRules.map((rule) => (
-            <Card key={rule.id} className="border-0 shadow-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">{rule.name}</CardTitle>
-                      {getCategoryBadge(rule.category)}
-                    </div>
-                    <CardDescription>{rule.description}</CardDescription>
-                  </div>
-                  <Switch checked={rule.isActive} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Value</p>
-                  <p className="text-lg font-semibold mt-1">{rule.value}</p>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Applies to: {rule.appliesTo.join(", ")}
-                  </span>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      {/* Create Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tạo Rule Template Mới</DialogTitle>
+            <DialogDescription>
+              Nhập thông tin cho rule template mới
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="ruleName">Tên Rule</Label>
+              <Input
+                id="ruleName"
+                value={formData.ruleName}
+                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                placeholder="Nhập tên rule"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ruleDescription">Mô tả</Label>
+              <Textarea
+                id="ruleDescription"
+                value={formData.ruleDescription}
+                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                placeholder="Nhập mô tả rule"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Hủy
+            </Button>
+            <Button onClick={handleCreate}>
+              Tạo Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Workflow Rules */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <Settings className="w-6 h-6 text-green-600" />
-          Workflow Rules
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {workflowRules.map((rule) => (
-            <Card key={rule.id} className="border-0 shadow-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">{rule.name}</CardTitle>
-                      {getCategoryBadge(rule.category)}
-                    </div>
-                    <CardDescription>{rule.description}</CardDescription>
-                  </div>
-                  <Switch checked={rule.isActive} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Value</p>
-                  <p className="text-lg font-semibold mt-1">{rule.value}</p>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Applies to: {rule.appliesTo.join(", ")}
-                  </span>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chỉnh Sửa Rule Template</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin rule template
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-ruleName">Tên Rule</Label>
+              <Input
+                id="edit-ruleName"
+                value={formData.ruleName}
+                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                placeholder="Nhập tên rule"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-ruleDescription">Mô tả</Label>
+              <Textarea
+                id="edit-ruleDescription"
+                value={formData.ruleDescription}
+                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                placeholder="Nhập mô tả rule"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Hủy
+            </Button>
+            <Button onClick={handleEdit}>
+              Cập Nhật
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chi Tiết Rule Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Tên Rule</Label>
+              <p className="font-medium">{selectedRule?.ruleName}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Mô tả</Label>
+              <p className="text-sm">{selectedRule?.ruleDescription}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsViewOpen(false)}>Đóng</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa rule template &quot;{selectedRule?.ruleName}&quot;?
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-

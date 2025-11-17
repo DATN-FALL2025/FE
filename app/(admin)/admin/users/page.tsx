@@ -42,8 +42,14 @@ export default function UsersPage() {
     setIsLoading(true);
     setError("");
     try {
-      const result = await getAllUsers();
-      if (result.status === 'success' && result.data) {
+      const result: any = await getAllUsers();
+
+      // Check multiple possible response formats
+      if (result.data && Array.isArray(result.data)) {
+        setUsers(result.data);
+      } else if (Array.isArray(result)) {
+        setUsers(result);
+      } else if (result.status === 'success' && result.data) {
         setUsers(result.data);
       } else {
         setError(result.message || 'Không thể tải danh sách người dùng');
@@ -118,13 +124,13 @@ export default function UsersPage() {
                     <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                          {user.accountImage ? (
-                            <Image 
-                              src={user.accountImage} 
-                              alt={user.userName} 
-                              width={48} 
-                              height={48} 
-                              className="object-cover w-full h-full" 
+                          {user.accountImage && (user.accountImage.startsWith('http://') || user.accountImage.startsWith('https://')) ? (
+                            <Image
+                              src={user.accountImage}
+                              alt={user.userName}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
                             />
                           ) : (
                             <User className="w-6 h-6 text-white" />
@@ -142,10 +148,10 @@ export default function UsersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex gap-1 flex-wrap">
-                          {user.roles && user.roles.length > 0 ? (
-                            user.roles.map((role: any, index: number) => (
+                          {(user.authorities || user.roles) && (user.authorities || user.roles).length > 0 ? (
+                            (user.authorities || user.roles).map((role: any, index: number) => (
                               <Badge key={index} variant="outline" className="text-xs">
-                                {role.roleName || role.name || 'User'}
+                                {role.authority || role.roleName || role.name || 'User'}
                               </Badge>
                             ))
                           ) : (
@@ -186,13 +192,13 @@ export default function UsersPage() {
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-4">
-                  {selectedUser.accountImage ? (
-                    <Image 
-                      src={selectedUser.accountImage} 
-                      alt={selectedUser.userName} 
-                      width={96} 
-                      height={96} 
-                      className="object-cover w-full h-full" 
+                  {selectedUser.accountImage && (selectedUser.accountImage.startsWith('http://') || selectedUser.accountImage.startsWith('https://')) ? (
+                    <Image
+                      src={selectedUser.accountImage}
+                      alt={selectedUser.userName}
+                      width={96}
+                      height={96}
+                      className="object-cover w-full h-full"
                     />
                   ) : (
                     <User className="w-12 h-12 text-white" />
@@ -214,10 +220,10 @@ export default function UsersPage() {
                 <div>
                   <Label className="text-sm text-muted-foreground">Vai trò</Label>
                   <div className="mt-2 flex gap-2 flex-wrap">
-                    {selectedUser.roles && selectedUser.roles.length > 0 ? (
-                      selectedUser.roles.map((role: any, index: number) => (
+                    {(selectedUser.authorities || selectedUser.roles) && (selectedUser.authorities || selectedUser.roles).length > 0 ? (
+                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => (
                         <Badge key={index} variant="secondary">
-                          {role.roleName || role.name || 'User'}
+                          {role.authority || role.roleName || role.name || 'User'}
                         </Badge>
                       ))
                     ) : (

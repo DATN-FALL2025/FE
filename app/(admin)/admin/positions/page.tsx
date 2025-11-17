@@ -104,7 +104,7 @@ export default function PositionsPage() {
     setError("");
     try {
       const token = getToken();
-      const result = await getAllPositions(token || undefined);
+      const result: any = await getAllPositions(token || undefined);
 
       console.log('🔍 Load positions result:', result);
 
@@ -143,8 +143,7 @@ export default function PositionsPage() {
 
   const loadDepartments = async () => {
     try {
-      const token = getToken();
-      const result = await getAllDepartments(token || undefined);
+      const result: any = await getAllDepartments();
       console.log('🏢 Load departments result:', result);
 
       if (result && (result as any).data) {
@@ -211,7 +210,7 @@ export default function PositionsPage() {
       if (imageFile) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', imageFile);
-        const uploadResult = await uploadFile(uploadFormData);
+        const uploadResult: any = await uploadFile(uploadFormData);
 
         if (uploadResult.status === 'success' && uploadResult.data) {
           imageUrl = uploadResult.data.url || uploadResult.data;
@@ -229,7 +228,7 @@ export default function PositionsPage() {
 
       console.log('📤 Sending to API - departmentID:', formData.departmentID);
 
-      const result = await createPosition(positionFormData, token || undefined);
+      const result: any = await createPosition(positionFormData, token || undefined);
 
       console.log('🆕 Create position result:', result);
       console.log('🆕 result.status:', result?.status);
@@ -277,7 +276,7 @@ export default function PositionsPage() {
         updateFormData.append('positionImage', imageFile);
       }
 
-      const result = await updatePositionById(selectedPosition.id, updateFormData, token || undefined);
+      const result: any = await updatePositionById(Number(selectedPosition.id), updateFormData, token || undefined);
 
       console.log('✏️ Update position result:', result);
       console.log('✏️ result.status:', result?.status);
@@ -315,7 +314,7 @@ export default function PositionsPage() {
 
     try {
       const token = getToken();
-      const result = await deletePositionById(selectedPosition.id, token || undefined);
+      const result: any = await deletePositionById(Number(selectedPosition.id), token || undefined);
 
       console.log('🗑️ Delete position result:', result);
 
@@ -436,7 +435,7 @@ export default function PositionsPage() {
                               unoptimized={position.positionImage.includes('cloudinary')}
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.nextElementSibling;
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                                 if (fallback) fallback.style.display = 'flex';
                               }}
                             />
