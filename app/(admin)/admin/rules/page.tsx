@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ interface Rule {
 }
 
 export default function RulesPage() {
+  const { toast } = useToast();
   const [rules, setRules] = useState<Rule[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -52,7 +54,11 @@ export default function RulesPage() {
 
   const handleCreate = () => {
     if (!formData.ruleName || !formData.ruleDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -65,7 +71,10 @@ export default function RulesPage() {
     setRules([...rules, newRule]);
     setIsCreateOpen(false);
     resetForm();
-    alert('Tạo rule template thành công!');
+    toast({
+      title: "Thành công",
+      description: "Tạo rule template thành công!",
+    });
   };
 
   const handleEdit = () => {
@@ -81,7 +90,10 @@ export default function RulesPage() {
     setIsEditOpen(false);
     resetForm();
     setSelectedRule(null);
-    alert('Cập nhật rule template thành công!');
+    toast({
+      title: "Thành công",
+      description: "Cập nhật rule template thành công!",
+    });
   };
 
   const handleDelete = () => {
@@ -91,7 +103,10 @@ export default function RulesPage() {
     setRules(filteredRules);
     setIsDeleteOpen(false);
     setSelectedRule(null);
-    alert('Xóa rule template thành công!');
+    toast({
+      title: "Thành công",
+      description: "Xóa rule template thành công!",
+    });
   };
 
   const openEditDialog = (rule: Rule) => {

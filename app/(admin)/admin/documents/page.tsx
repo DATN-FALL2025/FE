@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Trash2, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ interface Document {
 }
 
 export default function DocumentsManagementPage() {
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -104,7 +106,11 @@ export default function DocumentsManagementPage() {
 
   const handleCreate = async () => {
     if (!formData.documentName || !formData.documentDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -128,12 +134,23 @@ export default function DocumentsManagementPage() {
         setIsCreateOpen(false);
         resetForm();
         await loadDocuments();
-        alert('Tạo tài liệu thành công!');
+        toast({
+          title: "Thành công",
+          description: "Tạo tài liệu thành công!",
+        });
       } else {
-        alert(result?.message || 'Tạo tài liệu thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result?.message || "Tạo tài liệu thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -141,7 +158,11 @@ export default function DocumentsManagementPage() {
 
   const handleEdit = async () => {
     if (!selectedDoc || !formData.documentName || !formData.documentDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -166,12 +187,23 @@ export default function DocumentsManagementPage() {
         resetForm();
         setSelectedDoc(null);
         await loadDocuments();
-        alert('Cập nhật tài liệu thành công!');
+        toast({
+          title: "Thành công",
+          description: "Cập nhật tài liệu thành công!",
+        });
       } else {
-        alert(result?.message || 'Cập nhật tài liệu thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result?.message || "Cập nhật tài liệu thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -197,12 +229,23 @@ export default function DocumentsManagementPage() {
         setIsDeleteOpen(false);
         setSelectedDoc(null);
         await loadDocuments();
-        alert('Xóa tài liệu thành công!');
+        toast({
+          title: "Thành công",
+          description: "Xóa tài liệu thành công!",
+        });
       } else {
-        alert(result?.message || 'Xóa tài liệu thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result?.message || "Xóa tài liệu thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

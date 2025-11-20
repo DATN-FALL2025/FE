@@ -17,11 +17,11 @@ export default function TrainingDirectorLayout({
         <TrainingDirectorSidebar />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-64">
+        
           <div className="container mx-auto p-6 lg:p-8">
             {children}
           </div>
-        </main>
+        
       </div>
 
       {/* Toast Notifications */}

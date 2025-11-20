@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ interface DocumentRule {
 }
 
 export default function DocumentRulesPage() {
+  const { toast } = useToast();
   const [documentRules, setDocumentRules] = useState<DocumentRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -86,7 +88,11 @@ export default function DocumentRulesPage() {
 
   const handleCreate = async () => {
     if (!formData.ruleName || !formData.ruleDescription) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -99,12 +105,23 @@ export default function DocumentRulesPage() {
         setIsCreateOpen(false);
         resetForm();
         await loadDocumentRules();
-        alert('Tạo quy tắc thành công!');
+        toast({
+          title: "Thành công",
+          description: "Tạo quy tắc thành công!",
+        });
       } else {
-        alert(result.message || 'Tạo quy tắc thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result.message || "Tạo quy tắc thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +129,11 @@ export default function DocumentRulesPage() {
 
   const handleEdit = async () => {
     if (!selectedRule) {
-      alert("Không tìm thấy quy tắc!");
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy quy tắc!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -126,12 +147,23 @@ export default function DocumentRulesPage() {
         resetForm();
         setSelectedRule(null);
         await loadDocumentRules();
-        alert('Cập nhật quy tắc thành công!');
+        toast({
+          title: "Thành công",
+          description: "Cập nhật quy tắc thành công!",
+        });
       } else {
-        alert(result.message || 'Cập nhật quy tắc thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result.message || "Cập nhật quy tắc thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -149,12 +181,23 @@ export default function DocumentRulesPage() {
         setIsDeleteOpen(false);
         setSelectedRule(null);
         await loadDocumentRules();
-        alert('Xóa quy tắc thành công!');
+        toast({
+          title: "Thành công",
+          description: "Xóa quy tắc thành công!",
+        });
       } else {
-        alert(result.message || 'Xóa quy tắc thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result.message || "Xóa quy tắc thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

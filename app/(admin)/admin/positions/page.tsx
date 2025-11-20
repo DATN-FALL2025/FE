@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Upload, X, Loader2, AlertCircle } from "lucide-react";
 import { getToken } from "@/lib/auth-utils";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,7 @@ interface Department {
 }
 
 export default function PositionsPage() {
+  const { toast } = useToast();
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -196,7 +198,11 @@ export default function PositionsPage() {
     console.log('🔍 handleCreate - departmentID:', formData.departmentID);
 
     if (!formData.positionName || !formData.positionDescription || !formData.departmentID) {
-      alert("Vui lòng điền đầy đủ thông tin và chọn phòng ban!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -247,12 +253,23 @@ export default function PositionsPage() {
         setIsCreateOpen(false);
         resetForm();
         await loadPositions(); // Reload list
-        alert('Tạo vị trí thành công!');
+        toast({
+          title: "Thành công",
+          description: "Tạo vị trí thành công!",
+        });
       } else {
-        alert(result?.message || 'Tạo vị trí thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result?.message || "Tạo vị trí thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -260,7 +277,11 @@ export default function PositionsPage() {
 
   const handleEdit = async () => {
     if (!selectedPosition || !formData.positionName || !formData.positionDescription || !formData.departmentID) {
-      alert("Vui lòng điền đầy đủ thông tin và chọn phòng ban!");
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -296,12 +317,23 @@ export default function PositionsPage() {
         resetForm();
         setSelectedPosition(null);
         await loadPositions();
-        alert('Cập nhật vị trí thành công!');
+        toast({
+          title: "Thành công",
+          description: "Cập nhật vị trí thành công!",
+        });
       } else {
-        alert(result?.message || 'Cập nhật vị trí thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result?.message || "Cập nhật vị trí thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -323,12 +355,23 @@ export default function PositionsPage() {
         setIsDeleteOpen(false);
         setSelectedPosition(null);
         await loadPositions();
-        alert('Xóa vị trí thành công!');
+        toast({
+          title: "Thành công",
+          description: "Xóa vị trí thành công!",
+        });
       } else {
-        alert(result.message || 'Xóa vị trí thất bại!');
+        toast({
+          title: "Lỗi",
+          description: result.message || "Xóa vị trí thất bại!",
+          variant: "destructive",
+        });
       }
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
