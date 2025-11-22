@@ -25,7 +25,7 @@ const trainingDirectorNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "Training Matrix",
+    name: "Document Matrix",
     href: "/training-director/matrix",
     icon: FileText,
   },

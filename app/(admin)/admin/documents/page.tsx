@@ -386,9 +386,18 @@ export default function DocumentsManagementPage() {
               <Label htmlFor="name">Tên tài liệu <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
+                type="text"
                 placeholder="Nhập tên tài liệu..."
                 value={formData.documentName}
                 onChange={(e) => setFormData({ ...formData, documentName: e.target.value })}
+                onClick={(e) => {
+                  const input = e.currentTarget;
+                  const len = input.value.length;
+                  setTimeout(() => {
+                    input.setSelectionRange(len, len);
+                  }, 0);
+                }}
+                autoComplete="off"
                 disabled={isSubmitting}
               />
             </div>
@@ -442,8 +451,17 @@ export default function DocumentsManagementPage() {
               <Label htmlFor="edit-name">Tên tài liệu <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
+                type="text"
                 value={formData.documentName}
                 onChange={(e) => setFormData({ ...formData, documentName: e.target.value })}
+                onClick={(e) => {
+                  const input = e.currentTarget;
+                  const len = input.value.length;
+                  setTimeout(() => {
+                    input.setSelectionRange(len, len);
+                  }, 0);
+                }}
+                autoComplete="off"
                 disabled={isSubmitting}
               />
             </div>

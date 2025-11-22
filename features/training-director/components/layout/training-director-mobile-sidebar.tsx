@@ -14,7 +14,7 @@ import {
 
 const trainingDirectorNavigation = [
   { name: "Dashboard", href: "/training-director/dashboard", icon: LayoutDashboard },
-  { name: "Training Matrix", href: "/training-director/matrix", icon: FileText },
+  { name: "Document Matrix", href: "/training-director/matrix", icon: FileText },
 ];
 
 export const TrainingDirectorMobileSidebar = () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   Filter,
   Plus,
   Trash2,
+  MoreVertical,
 } from "lucide-react";
 import {
   Select,
@@ -20,6 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -36,8 +43,14 @@ import {
   getMatrixByDepartment,
   addMatrixRow,
   addMatrixColumn,
+  addMatrixMultipleRows,
+  addMatrixMultipleColumns,
   deleteMatrixRow,
-  deleteMatrixColumn
+  deleteMatrixColumn,
+  deleteAllMatrixRows,
+  deleteAllMatrixColumns,
+  clearMatrix,
+  clickToCellMatrix
 } from "@/lib/actions/matrix";
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
@@ -47,241 +60,254 @@ import { useToast } from "@/hooks/use-toast";
 export default function TrainingDirectorMatrixPage() {
   const { toast } = useToast();
   const [departments, setDepartments] = useState<any[]>([]);
-  const [matrixData, setMatrixData] = useState<any>(null);
+  const [allMatrixData, setAllMatrixData] = useState<any>(null); // Store all data from API
   const [filterDepartmentId, setFilterDepartmentId] = useState<string>("all");
+  const [searchPositionName, setSearchPositionName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [isAddRowDialogOpen, setIsAddRowDialogOpen] = useState(false);
   const [availablePositions, setAvailablePositions] = useState<any[]>([]);
   const [selectedPositionId, setSelectedPositionId] = useState<string>("");
+  const [selectedPositionIds, setSelectedPositionIds] = useState<string[]>([]);
+  const [addRowMode, setAddRowMode] = useState<"single" | "multiple">("single");
   const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
   const [availableDocuments, setAvailableDocuments] = useState<any[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("");
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
+  const [addColumnMode, setAddColumnMode] = useState<"single" | "multiple">("single");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load departments and positions on mount
-  useEffect(() => {
-    const loadDepartments = async () => {
-      try {
-        const deptResult: any = await getAllDepartments();
-        if (deptResult && deptResult.data) {
-          const deptArray = Array.isArray(deptResult.data) ? deptResult.data : [];
-          setDepartments(deptArray);
-        }
-      } catch (err: any) {
-        console.error('Failed to load departments:', err);
-      }
-    };
+  // Client-side filtered data based on department selection and search
+  const matrixData = useMemo(() => {
+    let filtered = filterDepartmentId === "all"
+      ? allMatrixData
+      : allMatrixData?.filter((position: any) => position.departmentId === Number(filterDepartmentId));
 
-    const loadPositions = async () => {
-      try {
-        const posResult: any = await getAllPositions();
-        if (posResult && posResult.data) {
-          const posArray = Array.isArray(posResult.data) ? posResult.data : [];
-          setAvailablePositions(posArray);
-        }
-      } catch (err: any) {
-        console.error('Failed to load positions:', err);
-      }
-    };
+    // Apply position name search filter
+    if (searchPositionName && filtered) {
+      const searchLower = searchPositionName.toLowerCase();
+      filtered = filtered.filter((position: any) =>
+        position.positionName?.toLowerCase().includes(searchLower) ||
+        position.positionCode?.toLowerCase().includes(searchLower)
+      );
+    }
 
-    const loadDocuments = async () => {
-      try {
-        const docResult: any = await getAllDocuments();
-        if (docResult && docResult.data) {
-          const docArray = Array.isArray(docResult.data) ? docResult.data : [];
-          setAvailableDocuments(docArray);
-        }
-      } catch (err: any) {
-        console.error('Failed to load documents:', err);
-      }
-    };
+    return filtered;
+  }, [allMatrixData, filterDepartmentId, searchPositionName]);
 
-    loadDepartments();
-    loadPositions();
-    loadDocuments();
-  }, []);
-
-  // Load matrix data on mount (all data)
+  // Load ALL matrix data once on mount
   useEffect(() => {
     const loadAllMatrix = async () => {
       setIsLoading(true);
       setError("");
 
       try {
-        console.log('🎯 Loading all matrix data');
         const matrixResult: any = await getAllMatrix();
-        console.log('📊 Matrix result:', matrixResult);
 
         if (matrixResult.status === 'error') {
-          console.error('❌ Error from API:', matrixResult.message);
           setError(matrixResult.message);
-          setMatrixData(null);
-        } else if (matrixResult.data === null || matrixResult.data === undefined) {
-          console.warn('⚠️ No data returned from API');
-          setError('No matrix data found');
-          setMatrixData(null);
+          setAllMatrixData(null);
         } else {
-          console.log('✅ Matrix data loaded successfully:', matrixResult.data);
-          setMatrixData(matrixResult.data);
+          setAllMatrixData(matrixResult.data);
         }
       } catch (err: any) {
-        console.error('💥 Exception during load:', err);
-        setError(err.message || 'Failed to load data');
+        setError(err.message || 'Failed to load matrix data');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadAllMatrix();
-  }, []);
+  }, []); // Only run once on mount
 
-  // Load matrix data when filter changes
+  // Load departments, positions, documents AFTER matrix data loads
   useEffect(() => {
-    if (filterDepartmentId === "all") {
-      // Load all matrix data
-      const loadAllMatrix = async () => {
-        setIsFilterLoading(true);
-        setError("");
-
+    if (allMatrixData) {
+      const loadSupportingData = async () => {
         try {
-          console.log('🔄 Filtering: Loading all matrix data');
-          const matrixResult: any = await getAllMatrix();
-          console.log('📊 All matrix result:', matrixResult);
+          const [deptResult, posResult, docResult] = await Promise.all([
+            getAllDepartments(),
+            getAllPositions(),
+            getAllDocuments(),
+          ]);
 
-          if (matrixResult.status === 'error') {
-            setError(matrixResult.message);
-            setMatrixData(null);
-          } else {
-            setMatrixData(matrixResult.data);
+          if (deptResult?.data) {
+            setDepartments(Array.isArray(deptResult.data) ? deptResult.data : []);
+          }
+          if (posResult?.data) {
+            setAvailablePositions(Array.isArray(posResult.data) ? posResult.data : []);
+          }
+          if (docResult?.data) {
+            setAvailableDocuments(Array.isArray(docResult.data) ? docResult.data : []);
           }
         } catch (err: any) {
-          setError(err.message || 'Failed to load matrix data');
-        } finally {
-          setIsFilterLoading(false);
+          // Silent error handling
         }
       };
-
-      loadAllMatrix();
-    } else {
-      // Load matrix data for specific department
-      const loadDepartmentMatrix = async () => {
-        setIsFilterLoading(true);
-        setError("");
-
-        try {
-          const deptId = Number(filterDepartmentId);
-          console.log('🔄 Filtering: Loading matrix for department ID:', deptId);
-
-          const matrixResult: any = await getMatrixByDepartment(deptId);
-          console.log('📊 Department matrix result:', matrixResult);
-
-          if (matrixResult.status === 'error') {
-            setError(matrixResult.message);
-            setMatrixData(null);
-          } else if (matrixResult.data === null || matrixResult.data === undefined) {
-            setError(`No matrix data found for department ${deptId}`);
-            setMatrixData(null);
-          } else {
-            setMatrixData(matrixResult.data);
-          }
-        } catch (err: any) {
-          setError(err.message || 'Failed to load matrix data');
-        } finally {
-          setIsFilterLoading(false);
-        }
-      };
-
-      loadDepartmentMatrix();
+      loadSupportingData();
     }
-  }, [filterDepartmentId]);
+  }, [allMatrixData]);
 
   const reloadMatrix = async () => {
-    if (filterDepartmentId === "all") {
-      const result: any = await getAllMatrix();
-      if (result.status !== 'error') {
-        setMatrixData(result.data);
-      }
-    } else {
-      const result: any = await getMatrixByDepartment(Number(filterDepartmentId));
-      if (result.status !== 'error') {
-        setMatrixData(result.data);
-      }
+    const result: any = await getAllMatrix();
+    if (result.status !== 'error') {
+      setAllMatrixData(result.data);
     }
   };
 
   const handleAddRow = async () => {
-    if (!selectedPositionId || isSubmitting) return;
+    if (isSubmitting) return;
 
-    setIsSubmitting(true);
-    try {
-      const result = await addMatrixRow(Number(selectedPositionId));
+    if (addRowMode === "single") {
+      if (!selectedPositionId) return;
 
-      if (result.status === 'error') {
+      setIsSubmitting(true);
+      try {
+        const result = await addMatrixRow(Number(selectedPositionId));
+
+        if (result.status === 'error') {
+          toast({
+            title: "Lỗi",
+            description: result.message || "Không thể thêm vị trí vào ma trận",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Thành công",
+            description: "Đã thêm vị trí vào ma trận",
+          });
+
+          // Reload matrix data
+          await reloadMatrix();
+
+          // Close dialog and reset
+          setIsAddRowDialogOpen(false);
+          setSelectedPositionId("");
+        }
+      } catch (error: any) {
         toast({
           title: "Lỗi",
-          description: result.message || "Không thể thêm vị trí vào ma trận",
+          description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Thành công",
-          description: "Đã thêm vị trí vào ma trận",
-        });
-
-        // Reload matrix data
-        await reloadMatrix();
-
-        // Close dialog and reset
-        setIsAddRowDialogOpen(false);
-        setSelectedPositionId("");
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      // Multiple mode
+      if (selectedPositionIds.length === 0) return;
+
+      setIsSubmitting(true);
+      try {
+        const positionIdsAsNumbers = selectedPositionIds.map(id => Number(id));
+        const result = await addMatrixMultipleRows(positionIdsAsNumbers);
+
+        if (result.status === 'error') {
+          toast({
+            title: "Lỗi",
+            description: result.message || "Không thể thêm vị trí vào ma trận",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Thành công",
+            description: `Đã thêm ${selectedPositionIds.length} vị trí vào ma trận`,
+          });
+
+          // Reload matrix data
+          await reloadMatrix();
+
+          // Close dialog and reset
+          setIsAddRowDialogOpen(false);
+          setSelectedPositionIds([]);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Đã xảy ra lỗi",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleAddColumn = async () => {
-    if (!selectedDocumentId || isSubmitting) return;
+    if (isSubmitting) return;
 
-    setIsSubmitting(true);
-    try {
-      const result = await addMatrixColumn(Number(selectedDocumentId));
+    if (addColumnMode === "single") {
+      if (!selectedDocumentId) return;
 
-      if (result.status === 'error') {
+      setIsSubmitting(true);
+      try {
+        const result = await addMatrixColumn(Number(selectedDocumentId));
+
+        if (result.status === 'error') {
+          toast({
+            title: "Lỗi",
+            description: result.message || "Không thể thêm tài liệu vào ma trận",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Thành công",
+            description: "Đã thêm tài liệu vào ma trận",
+          });
+
+          // Reload matrix data
+          await reloadMatrix();
+
+          // Close dialog and reset
+          setIsAddColumnDialogOpen(false);
+          setSelectedDocumentId("");
+        }
+      } catch (error: any) {
         toast({
           title: "Lỗi",
-          description: result.message || "Không thể thêm tài liệu vào ma trận",
+          description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Thành công",
-          description: "Đã thêm tài liệu vào ma trận",
-        });
-
-        // Reload matrix data
-        await reloadMatrix();
-
-        // Close dialog and reset
-        setIsAddColumnDialogOpen(false);
-        setSelectedDocumentId("");
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      // Multiple mode
+      if (selectedDocumentIds.length === 0) return;
+
+      setIsSubmitting(true);
+      try {
+        const documentIdsAsNumbers = selectedDocumentIds.map(id => Number(id));
+        const result = await addMatrixMultipleColumns(documentIdsAsNumbers);
+
+        if (result.status === 'error') {
+          toast({
+            title: "Lỗi",
+            description: result.message || "Không thể thêm tài liệu vào ma trận",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Thành công",
+            description: `Đã thêm ${selectedDocumentIds.length} tài liệu vào ma trận`,
+          });
+
+          // Reload matrix data
+          await reloadMatrix();
+
+          // Close dialog and reset
+          setIsAddColumnDialogOpen(false);
+          setSelectedDocumentIds([]);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Đã xảy ra lỗi",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -337,6 +363,208 @@ export default function TrainingDirectorMatrixPage() {
         await reloadMatrix();
       }
     } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAllRows = async () => {
+    if (!confirm("Bạn có chắc muốn xóa TẤT CẢ vị trí khỏi ma trận?")) return;
+
+    try {
+      const result = await deleteAllMatrixRows();
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể xóa tất cả vị trí",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: "Đã xóa tất cả vị trí khỏi ma trận",
+        });
+
+        // Reload matrix data
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAllColumns = async () => {
+    if (!confirm("Bạn có chắc muốn xóa TẤT CẢ tài liệu khỏi ma trận?")) return;
+
+    try {
+      const result = await deleteAllMatrixColumns();
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể xóa tất cả tài liệu",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: "Đã xóa tất cả tài liệu khỏi ma trận",
+        });
+
+        // Reload matrix data
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClearMatrix = async () => {
+    if (!confirm("⚠️ BẠN CÓ CHẮC CHẮN muốn XÓA TOÀN BỘ MA TRẬN? Hành động này không thể hoàn tác!")) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await clearMatrix();
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể xóa ma trận",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: "Đã xóa toàn bộ ma trận",
+        });
+
+        // Reload matrix data
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCellClick = async (matrixId: number, currentRequired: boolean) => {
+    // OPTIMISTIC UPDATE: Update UI first (tick immediately)
+    const newRequired = !currentRequired;
+    console.log('🔘 Cell Click:', { matrixId, currentRequired, newRequired });
+
+    // Update local state immediately for instant UI feedback
+    setAllMatrixData((prevData: any) => {
+      if (!prevData || !Array.isArray(prevData)) {
+        console.log('⚠️ prevData is invalid:', prevData);
+        return prevData;
+      }
+
+      const updatedData = prevData.map((position: any) => ({
+        ...position,
+        // Update both possible field names
+        documents: position.documents && Array.isArray(position.documents)
+          ? position.documents.map((doc: any) => {
+              if (doc.matrixId === matrixId) {
+                console.log('✅ Updating doc (documents):', { docId: doc.matrixId, oldRequired: doc.required, newRequired });
+                return { ...doc, required: newRequired };
+              }
+              return doc;
+            })
+          : position.documents,
+        documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
+          ? position.documentCollumResponseList.map((doc: any) => {
+              if (doc.matrixId === matrixId) {
+                console.log('✅ Updating doc (documentCollumResponseList):', { docId: doc.matrixId, oldRequired: doc.required, newRequired });
+                return { ...doc, required: newRequired };
+              }
+              return doc;
+            })
+          : position.documentCollumResponseList
+      }));
+
+      console.log('📊 Updated matrix data:', updatedData);
+      return updatedData;
+    });
+
+    // Then call API in background (no await for reload)
+    try {
+      const result = await clickToCellMatrix({
+        matrixId: matrixId,
+        required: newRequired
+      });
+
+      if (result.status === 'error') {
+        // REVERT on error: restore original state
+        setAllMatrixData((prevData: any) => {
+          if (!prevData || !Array.isArray(prevData)) return prevData;
+
+          return prevData.map((position: any) => ({
+            ...position,
+            documents: position.documents && Array.isArray(position.documents)
+              ? position.documents.map((doc: any) =>
+                  doc.matrixId === matrixId
+                    ? { ...doc, required: currentRequired } // Revert to original
+                    : doc
+                )
+              : position.documents,
+            documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
+              ? position.documentCollumResponseList.map((doc: any) =>
+                  doc.matrixId === matrixId
+                    ? { ...doc, required: currentRequired } // Revert to original
+                    : doc
+                )
+              : position.documentCollumResponseList
+          }));
+        });
+
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể cập nhật trạng thái",
+          variant: "destructive",
+        });
+      }
+      // Success: No need to reload - state already updated optimistically
+    } catch (error: any) {
+      // REVERT on exception: restore original state
+      setAllMatrixData((prevData: any) => {
+        if (!prevData || !Array.isArray(prevData)) return prevData;
+
+        return prevData.map((position: any) => ({
+          ...position,
+          documents: position.documents && Array.isArray(position.documents)
+            ? position.documents.map((doc: any) =>
+                doc.matrixId === matrixId
+                  ? { ...doc, required: currentRequired } // Revert to original
+                  : doc
+              )
+            : position.documents,
+          documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
+            ? position.documentCollumResponseList.map((doc: any) =>
+                doc.matrixId === matrixId
+                  ? { ...doc, required: currentRequired } // Revert to original
+                  : doc
+              )
+            : position.documentCollumResponseList
+        }));
+      });
+
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -404,12 +632,11 @@ export default function TrainingDirectorMatrixPage() {
             <div className="space-y-6">
               {/* Filter and Actions Bar */}
               <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                   <Filter className="w-5 h-5 text-muted-foreground" />
                   <Select
                     value={filterDepartmentId}
                     onValueChange={setFilterDepartmentId}
-                    disabled={isFilterLoading}
                   >
                     <SelectTrigger className="w-[250px]">
                       <SelectValue placeholder="Filter by department" />
@@ -423,28 +650,45 @@ export default function TrainingDirectorMatrixPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {isFilterLoading && (
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  )}
+
+                  {/* Search Position Name */}
+                  <Input
+                    type="text"
+                    placeholder="Search position name..."
+                    value={searchPositionName}
+                    onChange={(e) => setSearchPositionName(e.target.value)}
+                    className="w-[250px]"
+                  />
                 </div>
+
+                {/* More Options Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" disabled={isSubmitting}>
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={handleClearMatrix}
+                      className="text-red-600 focus:text-red-600"
+                      disabled={isSubmitting}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear Matrix
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Matrix Grid Display */}
-              {isFilterLoading ? (
-                <div className="border rounded-lg overflow-auto">
-                  <div className="p-8 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Loading matrix data...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-auto">
+              <div className="border rounded-lg overflow-auto">
                   {(() => {
-                    // Extract unique documents from all positions
+                    // Extract unique documents from all positions, chỉ lấy những document có document_id không null
                     const allDocuments = new Map();
                     matrixData.forEach((position: any) => {
                       position.documentCollumResponseList?.forEach((doc: any) => {
-                        if (!allDocuments.has(doc.document_id)) {
+                        if (doc.document_id !== null && !allDocuments.has(doc.document_id)) {
                           allDocuments.set(doc.document_id, doc.document_name);
                         }
                       });
@@ -475,48 +719,157 @@ export default function TrainingDirectorMatrixPage() {
                               </th>
                             ))}
                             <th className="p-4 text-center font-semibold w-[100px] border-l-2 bg-muted/50">
+                              {documentColumns.length > 0 ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="gap-2"
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setIsAddColumnDialogOpen(true)}>
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Thêm tài liệu
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={handleDeleteAllColumns}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Xóa tất cả
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={() => setIsAddColumnDialogOpen(true)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-2"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle>Thêm Tài Liệu vào Ma Trận</DialogTitle>
                                     <DialogDescription>
-                                      Chọn tài liệu để thêm vào ma trận
+                                      Chọn chế độ và tài liệu để thêm vào ma trận
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="document">Tài Liệu</Label>
-                                      <Select value={selectedDocumentId} onValueChange={setSelectedDocumentId}>
-                                        <SelectTrigger id="document">
-                                          <SelectValue placeholder="Chọn tài liệu..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
+                                    {/* Mode Selection */}
+                                    <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                                      <Button
+                                        type="button"
+                                        variant={addColumnMode === "single" ? "default" : "ghost"}
+                                        className="flex-1"
+                                        onClick={() => {
+                                          setAddColumnMode("single");
+                                          setSelectedDocumentIds([]);
+                                        }}
+                                      >
+                                        Thêm 1
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant={addColumnMode === "multiple" ? "default" : "ghost"}
+                                        className="flex-1"
+                                        onClick={() => {
+                                          setAddColumnMode("multiple");
+                                          setSelectedDocumentId("");
+                                        }}
+                                      >
+                                        Thêm nhiều
+                                      </Button>
+                                    </div>
+
+                                    {/* Single Selection */}
+                                    {addColumnMode === "single" && (
+                                      <div className="space-y-2">
+                                        <Label htmlFor="document">Tài Liệu</Label>
+                                        <Select value={selectedDocumentId} onValueChange={setSelectedDocumentId}>
+                                          <SelectTrigger id="document">
+                                            <SelectValue placeholder="Chọn tài liệu..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableDocuments
+                                              .filter(doc => !documentColumns.some(([docId]) => docId === doc.id))
+                                              .map((doc) => (
+                                                <SelectItem key={doc.id} value={String(doc.id)}>
+                                                  {doc.documentName || doc.name || "Unknown"}
+                                                </SelectItem>
+                                              ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+
+                                    {/* Multiple Selection */}
+                                    {addColumnMode === "multiple" && (
+                                      <div className="space-y-2">
+                                        <Label>Tài Liệu (Chọn nhiều)</Label>
+                                        <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto space-y-2">
                                           {availableDocuments
                                             .filter(doc => !documentColumns.some(([docId]) => docId === doc.id))
                                             .map((doc) => (
-                                              <SelectItem key={doc.id} value={String(doc.id)}>
-                                                {doc.documentName || doc.name || "Unknown"}
-                                              </SelectItem>
+                                              <div key={doc.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                  id={`doc-${doc.id}`}
+                                                  checked={selectedDocumentIds.includes(String(doc.id))}
+                                                  onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                      setSelectedDocumentIds([...selectedDocumentIds, String(doc.id)]);
+                                                    } else {
+                                                      setSelectedDocumentIds(selectedDocumentIds.filter(id => id !== String(doc.id)));
+                                                    }
+                                                  }}
+                                                />
+                                                <label
+                                                  htmlFor={`doc-${doc.id}`}
+                                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                >
+                                                  {doc.documentName || doc.name || "Unknown"}
+                                                </label>
+                                              </div>
                                             ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
+                                        </div>
+                                        {selectedDocumentIds.length > 0 && (
+                                          <p className="text-sm text-muted-foreground">
+                                            Đã chọn: {selectedDocumentIds.length} tài liệu
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                   <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
+                                    <Button variant="outline" onClick={() => {
+                                      setIsAddColumnDialogOpen(false);
+                                      setSelectedDocumentId("");
+                                      setSelectedDocumentIds([]);
+                                    }}>
                                       Hủy
                                     </Button>
-                                    <Button onClick={handleAddColumn} disabled={!selectedDocumentId}>
-                                      Thêm
+                                    <Button
+                                      onClick={handleAddColumn}
+                                      disabled={
+                                        isSubmitting ||
+                                        (addColumnMode === "single" ? !selectedDocumentId : selectedDocumentIds.length === 0)
+                                      }
+                                    >
+                                      {isSubmitting ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Đang thêm...
+                                        </>
+                                      ) : (
+                                        `Thêm${addColumnMode === "multiple" && selectedDocumentIds.length > 0 ? ` (${selectedDocumentIds.length})` : ""}`
+                                      )}
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
@@ -525,7 +878,9 @@ export default function TrainingDirectorMatrixPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {matrixData.map((position: any) => {
+                          {matrixData
+                            .filter((position: any) => position.positionId !== null)
+                            .map((position: any) => {
                             // Create a map of document IDs to their data for this position
                             const positionDocuments = new Map();
                             position.documentCollumResponseList?.forEach((doc: any) => {
@@ -555,7 +910,8 @@ export default function TrainingDirectorMatrixPage() {
                                         <div className="flex items-center justify-center gap-2">
                                           <Checkbox
                                             checked={doc.required}
-                                            className="h-5 w-5"
+                                            className="h-5 w-5 cursor-pointer"
+                                            onCheckedChange={() => handleCellClick(doc.matrixId, doc.required)}
                                           />
                                         </div>
                                       ) : (
@@ -573,48 +929,157 @@ export default function TrainingDirectorMatrixPage() {
                           {/* Add Row */}
                           <tr className="border-t-2 bg-muted/10">
                             <td className="p-4 text-center border-r-2">
+                              {matrixData.filter((p: any) => p.positionId !== null).length > 0 ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="gap-2"
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuItem onClick={() => setIsAddRowDialogOpen(true)}>
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Thêm vị trí
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={handleDeleteAllRows}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Xóa tất cả
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={() => setIsAddRowDialogOpen(true)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Dialog open={isAddRowDialogOpen} onOpenChange={setIsAddRowDialogOpen}>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-2"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle>Thêm Vị Trí vào Ma Trận</DialogTitle>
                                     <DialogDescription>
-                                      Chọn vị trí để thêm vào ma trận tài liệu
+                                      Chọn chế độ và vị trí để thêm vào ma trận tài liệu
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="position">Vị Trí</Label>
-                                      <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
-                                        <SelectTrigger id="position">
-                                          <SelectValue placeholder="Chọn vị trí..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
+                                    {/* Mode Selection */}
+                                    <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                                      <Button
+                                        type="button"
+                                        variant={addRowMode === "single" ? "default" : "ghost"}
+                                        className="flex-1"
+                                        onClick={() => {
+                                          setAddRowMode("single");
+                                          setSelectedPositionIds([]);
+                                        }}
+                                      >
+                                        Thêm 1
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant={addRowMode === "multiple" ? "default" : "ghost"}
+                                        className="flex-1"
+                                        onClick={() => {
+                                          setAddRowMode("multiple");
+                                          setSelectedPositionId("");
+                                        }}
+                                      >
+                                        Thêm nhiều
+                                      </Button>
+                                    </div>
+
+                                    {/* Single Selection */}
+                                    {addRowMode === "single" && (
+                                      <div className="space-y-2">
+                                        <Label htmlFor="position">Vị Trí</Label>
+                                        <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
+                                          <SelectTrigger id="position">
+                                            <SelectValue placeholder="Chọn vị trí..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availablePositions
+                                              .filter(pos => !matrixData?.some((m: any) => m.positionId === pos.id))
+                                              .map((pos) => (
+                                                <SelectItem key={pos.id} value={String(pos.id)}>
+                                                  {pos.positionName || pos.name || "Unknown"}
+                                                </SelectItem>
+                                              ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+
+                                    {/* Multiple Selection */}
+                                    {addRowMode === "multiple" && (
+                                      <div className="space-y-2">
+                                        <Label>Vị Trí (Chọn nhiều)</Label>
+                                        <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto space-y-2">
                                           {availablePositions
                                             .filter(pos => !matrixData?.some((m: any) => m.positionId === pos.id))
                                             .map((pos) => (
-                                              <SelectItem key={pos.id} value={String(pos.id)}>
-                                                {pos.positionName || pos.name || "Unknown"}
-                                              </SelectItem>
+                                              <div key={pos.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                  id={`pos-${pos.id}`}
+                                                  checked={selectedPositionIds.includes(String(pos.id))}
+                                                  onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                      setSelectedPositionIds([...selectedPositionIds, String(pos.id)]);
+                                                    } else {
+                                                      setSelectedPositionIds(selectedPositionIds.filter(id => id !== String(pos.id)));
+                                                    }
+                                                  }}
+                                                />
+                                                <label
+                                                  htmlFor={`pos-${pos.id}`}
+                                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                >
+                                                  {pos.positionName || pos.name || "Unknown"}
+                                                </label>
+                                              </div>
                                             ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
+                                        </div>
+                                        {selectedPositionIds.length > 0 && (
+                                          <p className="text-sm text-muted-foreground">
+                                            Đã chọn: {selectedPositionIds.length} vị trí
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                   <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsAddRowDialogOpen(false)}>
+                                    <Button variant="outline" onClick={() => {
+                                      setIsAddRowDialogOpen(false);
+                                      setSelectedPositionId("");
+                                      setSelectedPositionIds([]);
+                                    }}>
                                       Hủy
                                     </Button>
-                                    <Button onClick={handleAddRow} disabled={!selectedPositionId}>
-                                      Thêm
+                                    <Button
+                                      onClick={handleAddRow}
+                                      disabled={
+                                        isSubmitting ||
+                                        (addRowMode === "single" ? !selectedPositionId : selectedPositionIds.length === 0)
+                                      }
+                                    >
+                                      {isSubmitting ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Đang thêm...
+                                        </>
+                                      ) : (
+                                        `Thêm${addRowMode === "multiple" && selectedPositionIds.length > 0 ? ` (${selectedPositionIds.length})` : ""}`
+                                      )}
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
@@ -634,7 +1099,6 @@ export default function TrainingDirectorMatrixPage() {
                     );
                   })()}
                 </div>
-              )}
             </div>
           </CardContent>
         </Card>

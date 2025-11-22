@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,109 +24,298 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  getAllDocumentRules,
+  createDocumentRule,
+  updateDocumentRuleById,
+  deleteDocumentRuleById
+} from "@/lib/actions/document-rule";
+import { getAllDocuments } from "@/lib/actions/document";
 
-interface Rule {
-  id: string;
-  ruleName: string;
-  ruleDescription: string;
+interface DocumentRule {
+  id?: number;
+  documentRuleId?: number;
+  documentRuleName: string;
+  documentRuleDescription: string;
+  documentId: number;
+  documentRuleValueIds?: number[];
+  document?: {
+    documentId: number;
+    documentName: string;
+    documentCode: string;
+  };
+}
+
+interface Document {
+  documentId: number;
+  documentName: string;
+  documentCode: string;
+  documentDescription: string;
 }
 
 export default function RulesPage() {
   const { toast } = useToast();
-  const [rules, setRules] = useState<Rule[]>([]);
+  const [rules, setRules] = useState<DocumentRule[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
+  const [selectedRule, setSelectedRule] = useState<DocumentRule | null>(null);
 
   const [formData, setFormData] = useState({
-    ruleName: "",
-    ruleDescription: "",
+    documentRuleName: "",
+    documentRuleDescription: "",
+    documentId: "",
   });
 
-  const resetForm = () => {
-    setFormData({ ruleName: "", ruleDescription: "" });
+  // Load rules and documents on mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const [rulesResult, documentsResult] = await Promise.all([
+        getAllDocumentRules(),
+        getAllDocuments()
+      ]) as any[];
+
+      if (rulesResult.status === 'error') {
+        setError(rulesResult.message);
+      } else {
+        setRules(Array.isArray(rulesResult.data) ? rulesResult.data : []);
+      }
+
+      if (documentsResult.status !== 'error') {
+        setDocuments(Array.isArray(documentsResult.data) ? documentsResult.data : []);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    if (!formData.ruleName || !formData.ruleDescription) {
+  const reloadRules = async () => {
+    try {
+      const rulesResult = await getAllDocumentRules() as any;
+      if (rulesResult.status === 'error') {
+        setError(rulesResult.message);
+      } else {
+        setRules(Array.isArray(rulesResult.data) ? rulesResult.data : []);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to reload rules');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      documentRuleName: "",
+      documentRuleDescription: "",
+      documentId: ""
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!formData.documentRuleName || !formData.documentRuleDescription || !formData.documentId) {
       toast({
         title: "Thông tin thiếu",
-        description: "Vui lòng điền đầy đủ thông tin!",
+        description: "Vui lòng điền đầy đủ thông tin và chọn tài liệu!",
         variant: "destructive",
       });
       return;
     }
 
-    const newRule: Rule = {
-      id: Date.now().toString(),
-      ruleName: formData.ruleName,
-      ruleDescription: formData.ruleDescription,
-    };
+    setIsSubmitting(true);
 
-    setRules([...rules, newRule]);
-    setIsCreateOpen(false);
-    resetForm();
-    toast({
-      title: "Thành công",
-      description: "Tạo rule template thành công!",
-    });
+    try {
+      const result = await createDocumentRule({
+        documentRuleName: formData.documentRuleName,
+        documentRuleDescription: formData.documentRuleDescription,
+        documentId: Number(formData.documentId)
+      });
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Tạo rule template thất bại!",
+          variant: "destructive",
+        });
+      } else {
+        setIsCreateOpen(false);
+        resetForm();
+        await reloadRules();
+        toast({
+          title: "Thành công",
+          description: "Tạo rule template thành công!",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: err instanceof Error ? err.message : "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
+    if (!selectedRule || !formData.documentRuleName || !formData.documentRuleDescription || !formData.documentId) {
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng điền đầy đủ thông tin và chọn tài liệu!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const ruleId = selectedRule.id || selectedRule.documentRuleId;
+      const result = await updateDocumentRuleById(ruleId!, {
+        documentRuleName: formData.documentRuleName,
+        documentRuleDescription: formData.documentRuleDescription,
+        documentId: Number(formData.documentId)
+      });
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Cập nhật rule template thất bại!",
+          variant: "destructive",
+        });
+      } else {
+        setIsEditOpen(false);
+        resetForm();
+        setSelectedRule(null);
+        await reloadRules();
+        toast({
+          title: "Thành công",
+          description: "Cập nhật rule template thành công!",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
     if (!selectedRule) return;
 
-    const updatedRules = rules.map((rule) =>
-      rule.id === selectedRule.id
-        ? { ...rule, ruleName: formData.ruleName, ruleDescription: formData.ruleDescription }
-        : rule
-    );
+    setIsSubmitting(true);
 
-    setRules(updatedRules);
-    setIsEditOpen(false);
-    resetForm();
-    setSelectedRule(null);
-    toast({
-      title: "Thành công",
-      description: "Cập nhật rule template thành công!",
-    });
+    try {
+      const ruleId = selectedRule.id || selectedRule.documentRuleId;
+      const result = await deleteDocumentRuleById(ruleId!);
+
+      if (result.status === 'error') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Xóa rule template thất bại!",
+          variant: "destructive",
+        });
+      } else {
+        setIsDeleteOpen(false);
+        setSelectedRule(null);
+        await reloadRules();
+        toast({
+          title: "Thành công",
+          description: "Xóa rule template thành công!",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra!",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (!selectedRule) return;
-
-    const filteredRules = rules.filter((rule) => rule.id !== selectedRule.id);
-    setRules(filteredRules);
-    setIsDeleteOpen(false);
-    setSelectedRule(null);
-    toast({
-      title: "Thành công",
-      description: "Xóa rule template thành công!",
-    });
-  };
-
-  const openEditDialog = (rule: Rule) => {
+  const openEditDialog = (rule: DocumentRule) => {
     setSelectedRule(rule);
     setFormData({
-      ruleName: rule.ruleName,
-      ruleDescription: rule.ruleDescription,
+      documentRuleName: rule.documentRuleName,
+      documentRuleDescription: rule.documentRuleDescription,
+      documentId: String(rule.documentId),
     });
     setIsEditOpen(true);
   };
 
-  const openViewDialog = (rule: Rule) => {
+  const openViewDialog = (rule: DocumentRule) => {
     setSelectedRule(rule);
     setIsViewOpen(true);
   };
 
-  const openDeleteDialog = (rule: Rule) => {
+  const openDeleteDialog = (rule: DocumentRule) => {
     setSelectedRule(rule);
     setIsDeleteOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center py-16">
+              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-red-600">Error Loading Rules</h3>
+              <p className="text-sm text-muted-foreground text-center max-w-md">
+                {error}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => loadData()}
+              >
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -147,6 +336,7 @@ export default function RulesPage() {
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left p-4 font-medium">Tên Rule</th>
+                <th className="text-left p-4 font-medium">Tài liệu</th>
                 <th className="text-left p-4 font-medium">Mô tả</th>
                 <th className="text-right p-4 font-medium">Thao tác</th>
               </tr>
@@ -154,22 +344,27 @@ export default function RulesPage() {
             <tbody className="divide-y">
               {rules.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={4} className="text-center py-8 text-muted-foreground">
                     Chưa có rule template nào. Nhấn &quot;Tạo Rule Template&quot; để thêm mới.
                   </td>
                 </tr>
               ) : (
                 rules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-muted/50 transition-colors">
+                  <tr key={rule.id || rule.documentRuleId} className="hover:bg-muted/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <FileCheck className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{rule.ruleName}</span>
+                        <span className="font-medium">{rule.documentRuleName}</span>
                       </div>
                     </td>
                     <td className="p-4">
+                      <Badge variant="outline">
+                        {rule.document?.documentCode || `Doc #${rule.documentId}`}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
                       <div className="text-sm text-muted-foreground line-clamp-2">
-                        {rule.ruleDescription}
+                        {rule.documentRuleDescription}
                       </div>
                     </td>
                     <td className="p-4">
@@ -217,31 +412,69 @@ export default function RulesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="ruleName">Tên Rule</Label>
+              <Label htmlFor="documentId">Tài liệu <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.documentId}
+                onValueChange={(value) => setFormData({ ...formData, documentId: value })}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="documentId">
+                  <SelectValue placeholder="Chọn tài liệu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {documents.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Không có tài liệu
+                    </div>
+                  ) : (
+                    documents.map((doc, index) => {
+                      const docId = (doc as any).documentId || (doc as any).id || (doc as any).documentID;
+                      const docCode = (doc as any).documentCode || (doc as any).code;
+                      const docName = (doc as any).documentName || (doc as any).name;
+
+                      return (
+                        <SelectItem key={docId || index} value={String(docId)}>
+                          {docCode ? `${docCode} - ${docName || 'N/A'}` : (docName || 'N/A')}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documentRuleName">Tên Rule <span className="text-red-500">*</span></Label>
               <Input
-                id="ruleName"
-                value={formData.ruleName}
-                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                id="documentRuleName"
+                value={formData.documentRuleName}
+                onChange={(e) => setFormData({ ...formData, documentRuleName: e.target.value })}
                 placeholder="Nhập tên rule"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ruleDescription">Mô tả</Label>
+              <Label htmlFor="documentRuleDescription">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
-                id="ruleDescription"
-                value={formData.ruleDescription}
-                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                id="documentRuleDescription"
+                value={formData.documentRuleDescription}
+                onChange={(e) => setFormData({ ...formData, documentRuleDescription: e.target.value })}
                 placeholder="Nhập mô tả rule"
                 rows={4}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={handleCreate}>
-              Tạo Rule
+            <Button onClick={handleCreate} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang tạo...
+                </>
+              ) : (
+                "Tạo Rule"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -258,31 +491,69 @@ export default function RulesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-ruleName">Tên Rule</Label>
+              <Label htmlFor="edit-documentId">Tài liệu <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.documentId}
+                onValueChange={(value) => setFormData({ ...formData, documentId: value })}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="edit-documentId">
+                  <SelectValue placeholder="Chọn tài liệu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {documents.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Không có tài liệu
+                    </div>
+                  ) : (
+                    documents.map((doc, index) => {
+                      const docId = (doc as any).documentId || (doc as any).id || (doc as any).documentID;
+                      const docCode = (doc as any).documentCode || (doc as any).code;
+                      const docName = (doc as any).documentName || (doc as any).name;
+
+                      return (
+                        <SelectItem key={docId || index} value={String(docId)}>
+                          {docCode ? `${docCode} - ${docName || 'N/A'}` : (docName || 'N/A')}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-documentRuleName">Tên Rule <span className="text-red-500">*</span></Label>
               <Input
-                id="edit-ruleName"
-                value={formData.ruleName}
-                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+                id="edit-documentRuleName"
+                value={formData.documentRuleName}
+                onChange={(e) => setFormData({ ...formData, documentRuleName: e.target.value })}
                 placeholder="Nhập tên rule"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-ruleDescription">Mô tả</Label>
+              <Label htmlFor="edit-documentRuleDescription">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
-                id="edit-ruleDescription"
-                value={formData.ruleDescription}
-                onChange={(e) => setFormData({ ...formData, ruleDescription: e.target.value })}
+                id="edit-documentRuleDescription"
+                value={formData.documentRuleDescription}
+                onChange={(e) => setFormData({ ...formData, documentRuleDescription: e.target.value })}
                 placeholder="Nhập mô tả rule"
                 rows={4}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={handleEdit}>
-              Cập Nhật
+            <Button onClick={handleEdit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang cập nhật...
+                </>
+              ) : (
+                "Cập Nhật"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -296,12 +567,18 @@ export default function RulesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label className="text-muted-foreground">Tài liệu</Label>
+              <p className="font-medium">
+                {selectedRule?.document?.documentCode} - {selectedRule?.document?.documentName}
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label className="text-muted-foreground">Tên Rule</Label>
-              <p className="font-medium">{selectedRule?.ruleName}</p>
+              <p className="font-medium">{selectedRule?.documentRuleName}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground">Mô tả</Label>
-              <p className="text-sm">{selectedRule?.ruleDescription}</p>
+              <p className="text-sm">{selectedRule?.documentRuleDescription}</p>
             </div>
           </div>
           <DialogFooter>
@@ -316,17 +593,25 @@ export default function RulesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa rule template &quot;{selectedRule?.ruleName}&quot;?
+              Bạn có chắc chắn muốn xóa rule template &quot;{selectedRule?.documentRuleName}&quot;?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isSubmitting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Xóa
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
