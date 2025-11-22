@@ -129,7 +129,7 @@ export default function TrainingDirectorMatrixPage() {
             getAllDepartments(),
             getAllPositions(),
             getAllDocuments(),
-          ]);
+          ]) as any[];
 
           if (deptResult?.data) {
             setDepartments(Array.isArray(deptResult.data) ? deptResult.data : []);

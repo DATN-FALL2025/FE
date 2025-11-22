@@ -152,7 +152,7 @@ export default function RulesPage() {
         documentRuleName: formData.documentRuleName,
         documentRuleDescription: formData.documentRuleDescription,
         documentId: Number(formData.documentId)
-      });
+      }) as any;
 
       if (result.status === 'error') {
         toast({
@@ -198,7 +198,7 @@ export default function RulesPage() {
         documentRuleName: formData.documentRuleName,
         documentRuleDescription: formData.documentRuleDescription,
         documentId: Number(formData.documentId)
-      });
+      }) as any;
 
       if (result.status === 'error') {
         toast({
@@ -234,7 +234,7 @@ export default function RulesPage() {
 
     try {
       const ruleId = selectedRule.id || selectedRule.documentRuleId;
-      const result = await deleteDocumentRuleById(ruleId!);
+      const result = await deleteDocumentRuleById(ruleId!) as any;
 
       if (result.status === 'error') {
         toast({
