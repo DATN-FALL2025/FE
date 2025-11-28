@@ -63,9 +63,6 @@ export async function getAllMatrix() {
 // Get matrix by department ID
 export async function getMatrixByDepartment(departmentID: number) {
   try {
-    console.log('🔍 Fetching matrix for department ID:', departmentID);
-    console.log('📍 URL:', `${API_BASE_URL}/api/matrix/department/${departmentID}`);
-
     const response = await fetchWithTimeout(`${API_BASE_URL}/api/matrix/department/${departmentID}`, {
       method: 'GET',
       headers: {
@@ -75,10 +72,7 @@ export async function getMatrixByDepartment(departmentID: number) {
       next: { revalidate: 30 }
     });
 
-    console.log('📡 Response status:', response.status);
-
     const data = await response.json();
-    console.log('📦 Response data:', data);
 
     if (!response.ok) {
       return {
@@ -99,7 +93,6 @@ export async function getMatrixByDepartment(departmentID: number) {
       data: data,
     };
   } catch (error: any) {
-    console.error('❌ Matrix fetch error:', error);
     return {
       status: 'error',
       message: error.message || 'Error connecting to server',
@@ -434,6 +427,111 @@ export async function clickToCellMatrix(data: any) {
       return {
         status: 'error',
         message: result.message || 'Failed to update cell',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+// Create document rule value
+export async function createDocumentRuleValue(data: {
+  matrixID: number;
+  documentRuleValueDTOList: Array<{
+    document_rule_Id: number;
+    document_rule_value: string;
+  }>;
+}) {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/document_rule_value/create_document_rule_value`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to create document rule value',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+// Get document with rules by ID
+export async function getDocumentWithRules(documentId: number) {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/documents/${documentId}/with-rules`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to get document with rules',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+// Update document rule value
+export async function updateDocumentRuleValue(data: {
+  matrixID: number;
+  documentRuleValueDTOList: Array<{
+    document_rule_Id: number;
+    document_rule_value: string;
+  }>;
+}) {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/document_rule_value/update_document_rule_value`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to update document rule value',
         data: null,
       };
     }

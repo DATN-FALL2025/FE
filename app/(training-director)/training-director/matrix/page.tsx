@@ -50,12 +50,18 @@ import {
   deleteAllMatrixRows,
   deleteAllMatrixColumns,
   clearMatrix,
-  clickToCellMatrix
+  clickToCellMatrix,
+  createDocumentRuleValue,
+  getDocumentWithRules,
+  updateDocumentRuleValue
 } from "@/lib/actions/matrix";
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
 import { getAllDocuments } from "@/lib/actions/document";
 import { useToast } from "@/hooks/use-toast";
+import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
+import type { ApiResponse as PositionApiResponse, Position } from "@/types/position";
+import type { ApiResponse as DocumentApiResponse, Document } from "@/types/document";
 
 export default function TrainingDirectorMatrixPage() {
   const { toast } = useToast();
@@ -76,6 +82,17 @@ export default function TrainingDirectorMatrixPage() {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [addColumnMode, setAddColumnMode] = useState<"single" | "multiple">("single");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRuleFormOpen, setIsRuleFormOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<{
+    matrixId: number;
+    documentRuleId: number | null;
+    documentId: number;
+    positionName: string;
+    documentName: string;
+  } | null>(null);
+  const [documentRules, setDocumentRules] = useState<any[]>([]);
+  const [ruleValues, setRuleValues] = useState<Record<number, string>>({});
+  const [isLoadingRules, setIsLoadingRules] = useState(false);
 
   // Client-side filtered data based on department selection and search
   const matrixData = useMemo(() => {
@@ -129,7 +146,7 @@ export default function TrainingDirectorMatrixPage() {
             getAllDepartments(),
             getAllPositions(),
             getAllDocuments(),
-          ]) as any[];
+          ]) as [DepartmentApiResponse<Department[]>, PositionApiResponse<Position[]>, DocumentApiResponse<Document[]>];
 
           if (deptResult?.data) {
             setDepartments(Array.isArray(deptResult.data) ? deptResult.data : []);
@@ -149,9 +166,13 @@ export default function TrainingDirectorMatrixPage() {
   }, [allMatrixData]);
 
   const reloadMatrix = async () => {
-    const result: any = await getAllMatrix();
-    if (result.status !== 'error') {
-      setAllMatrixData(result.data);
+    try {
+      const result: any = await getAllMatrix();
+      if (result.status !== 'error' && result.data) {
+        setAllMatrixData(result.data);
+      }
+    } catch (error) {
+      // Silent error handling
     }
   };
 
@@ -165,6 +186,9 @@ export default function TrainingDirectorMatrixPage() {
       try {
         const result = await addMatrixRow(Number(selectedPositionId));
 
+        // Always reload to get fresh data
+        await reloadMatrix();
+
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
@@ -177,14 +201,13 @@ export default function TrainingDirectorMatrixPage() {
             description: "Đã thêm vị trí vào ma trận",
           });
 
-          // Reload matrix data
-          await reloadMatrix();
-
           // Close dialog and reset
           setIsAddRowDialogOpen(false);
           setSelectedPositionId("");
         }
       } catch (error: any) {
+        // Still reload even on error
+        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
@@ -202,6 +225,9 @@ export default function TrainingDirectorMatrixPage() {
         const positionIdsAsNumbers = selectedPositionIds.map(id => Number(id));
         const result = await addMatrixMultipleRows(positionIdsAsNumbers);
 
+        // Always reload to get fresh data
+        await reloadMatrix();
+
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
@@ -214,14 +240,13 @@ export default function TrainingDirectorMatrixPage() {
             description: `Đã thêm ${selectedPositionIds.length} vị trí vào ma trận`,
           });
 
-          // Reload matrix data
-          await reloadMatrix();
-
           // Close dialog and reset
           setIsAddRowDialogOpen(false);
           setSelectedPositionIds([]);
         }
       } catch (error: any) {
+        // Still reload even on error
+        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
@@ -243,6 +268,9 @@ export default function TrainingDirectorMatrixPage() {
       try {
         const result = await addMatrixColumn(Number(selectedDocumentId));
 
+        // Always reload to get fresh data
+        await reloadMatrix();
+
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
@@ -255,14 +283,13 @@ export default function TrainingDirectorMatrixPage() {
             description: "Đã thêm tài liệu vào ma trận",
           });
 
-          // Reload matrix data
-          await reloadMatrix();
-
           // Close dialog and reset
           setIsAddColumnDialogOpen(false);
           setSelectedDocumentId("");
         }
       } catch (error: any) {
+        // Still reload even on error
+        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
@@ -280,6 +307,9 @@ export default function TrainingDirectorMatrixPage() {
         const documentIdsAsNumbers = selectedDocumentIds.map(id => Number(id));
         const result = await addMatrixMultipleColumns(documentIdsAsNumbers);
 
+        // Always reload to get fresh data
+        await reloadMatrix();
+
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
@@ -292,14 +322,13 @@ export default function TrainingDirectorMatrixPage() {
             description: `Đã thêm ${selectedDocumentIds.length} tài liệu vào ma trận`,
           });
 
-          // Reload matrix data
-          await reloadMatrix();
-
           // Close dialog and reset
           setIsAddColumnDialogOpen(false);
           setSelectedDocumentIds([]);
         }
       } catch (error: any) {
+        // Still reload even on error
+        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
@@ -314,10 +343,19 @@ export default function TrainingDirectorMatrixPage() {
   const handleDeleteRow = async (positionId: number) => {
     if (!confirm("Bạn có chắc muốn xóa vị trí này khỏi ma trận?")) return;
 
+    // OPTIMISTIC UPDATE: Remove from UI first
+    const previousData = allMatrixData;
+    setAllMatrixData((prevData: any) => {
+      if (!prevData || !Array.isArray(prevData)) return prevData;
+      return prevData.filter((position: any) => position.positionId !== positionId);
+    });
+
     try {
       const result = await deleteMatrixRow(positionId);
 
       if (result.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa vị trí",
@@ -328,11 +366,10 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa vị trí khỏi ma trận",
         });
-
-        // Reload matrix data
-        await reloadMatrix();
       }
     } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -344,10 +381,24 @@ export default function TrainingDirectorMatrixPage() {
   const handleDeleteColumn = async (documentId: number) => {
     if (!confirm("Bạn có chắc muốn xóa tài liệu này khỏi ma trận?")) return;
 
+    // OPTIMISTIC UPDATE: Remove from UI first
+    const previousData = allMatrixData;
+    setAllMatrixData((prevData: any) => {
+      if (!prevData || !Array.isArray(prevData)) return prevData;
+      return prevData.map((position: any) => ({
+        ...position,
+        documentCollumResponseList: position.documentCollumResponseList?.filter(
+          (doc: any) => doc.document_id !== documentId
+        ) || []
+      }));
+    });
+
     try {
       const result = await deleteMatrixColumn(documentId);
 
       if (result.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tài liệu",
@@ -358,11 +409,10 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tài liệu khỏi ma trận",
         });
-
-        // Reload matrix data
-        await reloadMatrix();
       }
     } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -374,10 +424,16 @@ export default function TrainingDirectorMatrixPage() {
   const handleDeleteAllRows = async () => {
     if (!confirm("Bạn có chắc muốn xóa TẤT CẢ vị trí khỏi ma trận?")) return;
 
+    // OPTIMISTIC UPDATE: Clear all rows from UI first
+    const previousData = allMatrixData;
+    setAllMatrixData([]);
+
     try {
       const result = await deleteAllMatrixRows();
 
       if (result.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tất cả vị trí",
@@ -388,11 +444,10 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tất cả vị trí khỏi ma trận",
         });
-
-        // Reload matrix data
-        await reloadMatrix();
       }
     } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -404,10 +459,22 @@ export default function TrainingDirectorMatrixPage() {
   const handleDeleteAllColumns = async () => {
     if (!confirm("Bạn có chắc muốn xóa TẤT CẢ tài liệu khỏi ma trận?")) return;
 
+    // OPTIMISTIC UPDATE: Clear all columns from UI first
+    const previousData = allMatrixData;
+    setAllMatrixData((prevData: any) => {
+      if (!prevData || !Array.isArray(prevData)) return prevData;
+      return prevData.map((position: any) => ({
+        ...position,
+        documentCollumResponseList: []
+      }));
+    });
+
     try {
       const result = await deleteAllMatrixColumns();
 
       if (result.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tất cả tài liệu",
@@ -418,11 +485,10 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tất cả tài liệu khỏi ma trận",
         });
-
-        // Reload matrix data
-        await reloadMatrix();
       }
     } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -434,11 +500,17 @@ export default function TrainingDirectorMatrixPage() {
   const handleClearMatrix = async () => {
     if (!confirm("⚠️ BẠN CÓ CHẮC CHẮN muốn XÓA TOÀN BỘ MA TRẬN? Hành động này không thể hoàn tác!")) return;
 
+    // OPTIMISTIC UPDATE: Clear entire matrix from UI first
+    const previousData = allMatrixData;
+    setAllMatrixData(null);
     setIsSubmitting(true);
+
     try {
       const result = await clearMatrix();
 
       if (result.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa ma trận",
@@ -449,11 +521,10 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa toàn bộ ma trận",
         });
-
-        // Reload matrix data
-        await reloadMatrix();
       }
     } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -464,112 +535,211 @@ export default function TrainingDirectorMatrixPage() {
     }
   };
 
-  const handleCellClick = async (matrixId: number, currentRequired: boolean) => {
-    // OPTIMISTIC UPDATE: Update UI first (tick immediately)
-    const newRequired = !currentRequired;
-    console.log('🔘 Cell Click:', { matrixId, currentRequired, newRequired });
-
-    // Update local state immediately for instant UI feedback
-    setAllMatrixData((prevData: any) => {
-      if (!prevData || !Array.isArray(prevData)) {
-        console.log('⚠️ prevData is invalid:', prevData);
-        return prevData;
-      }
-
-      const updatedData = prevData.map((position: any) => ({
-        ...position,
-        // Update both possible field names
-        documents: position.documents && Array.isArray(position.documents)
-          ? position.documents.map((doc: any) => {
-              if (doc.matrixId === matrixId) {
-                console.log('✅ Updating doc (documents):', { docId: doc.matrixId, oldRequired: doc.required, newRequired });
-                return { ...doc, required: newRequired };
-              }
-              return doc;
-            })
-          : position.documents,
-        documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
-          ? position.documentCollumResponseList.map((doc: any) => {
-              if (doc.matrixId === matrixId) {
-                console.log('✅ Updating doc (documentCollumResponseList):', { docId: doc.matrixId, oldRequired: doc.required, newRequired });
-                return { ...doc, required: newRequired };
-              }
-              return doc;
-            })
-          : position.documentCollumResponseList
-      }));
-
-      console.log('📊 Updated matrix data:', updatedData);
-      return updatedData;
-    });
-
-    // Then call API in background (no await for reload)
-    try {
-      const result = await clickToCellMatrix({
-        matrixId: matrixId,
-        required: newRequired
-      });
-
-      if (result.status === 'error') {
-        // REVERT on error: restore original state
-        setAllMatrixData((prevData: any) => {
-          if (!prevData || !Array.isArray(prevData)) return prevData;
-
-          return prevData.map((position: any) => ({
-            ...position,
-            documents: position.documents && Array.isArray(position.documents)
-              ? position.documents.map((doc: any) =>
-                  doc.matrixId === matrixId
-                    ? { ...doc, required: currentRequired } // Revert to original
-                    : doc
-                )
-              : position.documents,
-            documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
-              ? position.documentCollumResponseList.map((doc: any) =>
-                  doc.matrixId === matrixId
-                    ? { ...doc, required: currentRequired } // Revert to original
-                    : doc
-                )
-              : position.documentCollumResponseList
-          }));
-        });
-
-        toast({
-          title: "Lỗi",
-          description: result.message || "Không thể cập nhật trạng thái",
-          variant: "destructive",
-        });
-      }
-      // Success: No need to reload - state already updated optimistically
-    } catch (error: any) {
-      // REVERT on exception: restore original state
+  const handleCellClick = async (
+    matrixId: number,
+    currentRequired: boolean,
+    positionName: string,
+    documentName: string,
+    documentRuleId: number | null,
+    documentId: number
+  ) => {
+    // If already checked, just toggle it off (no confirmation)
+    if (currentRequired) {
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const previousData = allMatrixData;
       setAllMatrixData((prevData: any) => {
         if (!prevData || !Array.isArray(prevData)) return prevData;
-
         return prevData.map((position: any) => ({
           ...position,
-          documents: position.documents && Array.isArray(position.documents)
-            ? position.documents.map((doc: any) =>
-                doc.matrixId === matrixId
-                  ? { ...doc, required: currentRequired } // Revert to original
-                  : doc
-              )
-            : position.documents,
-          documentCollumResponseList: position.documentCollumResponseList && Array.isArray(position.documentCollumResponseList)
-            ? position.documentCollumResponseList.map((doc: any) =>
-                doc.matrixId === matrixId
-                  ? { ...doc, required: currentRequired } // Revert to original
-                  : doc
-              )
-            : position.documentCollumResponseList
+          documentCollumResponseList: position.documentCollumResponseList?.map((doc: any) =>
+            doc.matrixId === matrixId ? { ...doc, required: false } : doc
+          ) || []
         }));
       });
 
+      try {
+        const result = await clickToCellMatrix({
+          matrixId,
+          required: false
+        });
+
+        if (result.status === 'error') {
+          // REVERT on error
+          setAllMatrixData(previousData);
+          toast({
+            title: "Lỗi",
+            description: result.message || "Không thể cập nhật trạng thái",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        // REVERT on exception
+        setAllMatrixData(previousData);
+        toast({
+          title: "Lỗi",
+          description: error.message || "Đã xảy ra lỗi",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // If not checked, open form to enter rule values
+    setSelectedCell({
+      matrixId,
+      documentRuleId,
+      documentId,
+      positionName,
+      documentName
+    });
+    setRuleValues({});
+    setDocumentRules([]);
+    setIsRuleFormOpen(true);
+
+    // Fetch document rules with values
+    setIsLoadingRules(true);
+    try {
+      const result = await getDocumentWithRules(documentId);
+
+      if (result.status !== 'error') {
+        // Handle different response structures
+        let rules: any[] = [];
+
+        // Try multiple possible paths for the rules array
+        if (result.documentRules && Array.isArray(result.documentRules)) {
+          // Response structure: { documentRules: [...] }
+          rules = result.documentRules;
+        } else if (result.data) {
+          if (result.data.documentRules && Array.isArray(result.data.documentRules)) {
+            rules = result.data.documentRules;
+          } else if (result.data.documentRuleList && Array.isArray(result.data.documentRuleList)) {
+            rules = result.data.documentRuleList;
+          } else if (Array.isArray(result.data)) {
+            rules = result.data;
+          }
+        } else if (result.documentRuleList && Array.isArray(result.documentRuleList)) {
+          rules = result.documentRuleList;
+        } else if (Array.isArray(result)) {
+          rules = result;
+        }
+
+        setDocumentRules(rules);
+
+        if (rules.length === 0) {
+          toast({
+            title: "Thông báo",
+            description: "Tài liệu này chưa có document rules",
+            variant: "default",
+          });
+        }
+      } else {
+        toast({
+          title: "Thông báo",
+          description: result.message || "Không thể tải document rules",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi tải document rules",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingRules(false);
+    }
+  };
+
+  const handleSubmitRuleForm = async () => {
+    if (!selectedCell) return;
+
+    // Build list of rule values that have been filled in
+    const documentRuleValueDTOList = Object.entries(ruleValues)
+      .filter(([_, value]) => value.trim() !== "")
+      .map(([ruleId, value]) => ({
+        document_rule_Id: Number(ruleId),
+        document_rule_value: value
+      }));
+
+    if (documentRuleValueDTOList.length === 0) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập ít nhất một giá trị rule",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // OPTIMISTIC UPDATE: Tick checkbox immediately
+    const previousData = allMatrixData;
+    setAllMatrixData((prevData: any) => {
+      if (!prevData || !Array.isArray(prevData)) return prevData;
+      return prevData.map((position: any) => ({
+        ...position,
+        documentCollumResponseList: position.documentCollumResponseList?.map((doc: any) =>
+          doc.matrixId === selectedCell.matrixId ? { ...doc, required: true } : doc
+        ) || []
+      }));
+    });
+
+    // Close dialog immediately for smooth UX
+    setIsRuleFormOpen(false);
+    const tempCell = selectedCell;
+    setSelectedCell(null);
+    setRuleValues({});
+    setDocumentRules([]);
+
+    setIsSubmitting(true);
+    try {
+      // Step 1: Create document rule values
+      const payload = {
+        matrixID: tempCell.matrixId,
+        documentRuleValueDTOList
+      };
+
+      const ruleResult = await createDocumentRuleValue(payload);
+
+      if (ruleResult.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
+        toast({
+          title: "Lỗi",
+          description: ruleResult.message || "Không thể lưu rule values",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 2: Tick the checkbox (call clickToCellMatrix API)
+      const checkboxResult = await clickToCellMatrix({
+        matrixId: tempCell.matrixId,
+        required: true
+      });
+
+      if (checkboxResult.status === 'error') {
+        // REVERT on error
+        setAllMatrixData(previousData);
+        toast({
+          title: "Lỗi",
+          description: "Đã lưu rule values nhưng không thể cập nhật checkbox",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: `Đã lưu ${documentRuleValueDTOList.length} rule value(s)`,
+        });
+      }
+    } catch (error: any) {
+      // REVERT on exception
+      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -902,7 +1072,7 @@ export default function TrainingDirectorMatrixPage() {
                                     </Button>
                                   </div>
                                 </td>
-                                {documentColumns.map(([docId]) => {
+                                {documentColumns.map(([docId, docName]) => {
                                   const doc = positionDocuments.get(docId);
                                   return (
                                     <td key={docId} className="p-4 text-center border-l">
@@ -911,7 +1081,14 @@ export default function TrainingDirectorMatrixPage() {
                                           <Checkbox
                                             checked={doc.required}
                                             className="h-5 w-5 cursor-pointer"
-                                            onCheckedChange={() => handleCellClick(doc.matrixId, doc.required)}
+                                            onCheckedChange={() => handleCellClick(
+                                              doc.matrixId,
+                                              doc.required,
+                                              position.positionName,
+                                              docName,
+                                              doc.document_rule_id || null,
+                                              docId
+                                            )}
                                           />
                                         </div>
                                       ) : (
@@ -1120,6 +1297,99 @@ export default function TrainingDirectorMatrixPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Rule Value Form Dialog */}
+      <Dialog open={isRuleFormOpen} onOpenChange={setIsRuleFormOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Nhập Rule Values</DialogTitle>
+            <DialogDescription className="text-sm">
+              {selectedCell?.positionName} - {selectedCell?.documentName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {isLoadingRules ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : documentRules.length > 0 ? (
+              <div className="space-y-4">
+                {documentRules.map((rule: any, index: number) => (
+                  <div key={rule.documentRuleId} className="space-y-2">
+                    <Label htmlFor={`rule-${rule.documentRuleId}`} className="text-sm font-medium">
+                      {rule.documentRuleName}
+                      {rule.documentRuleDescription && (
+                        <span className="text-xs text-muted-foreground block mt-0.5">
+                          {rule.documentRuleDescription}
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id={`rule-${rule.documentRuleId}`}
+                      type="text"
+                      value={ruleValues[rule.documentRuleId] || ""}
+                      onChange={(e) => {
+                        setRuleValues(prev => ({
+                          ...prev,
+                          [rule.documentRuleId]: e.target.value
+                        }));
+                      }}
+                      placeholder={`Nhập ${rule.documentRuleName.toLowerCase()}...`}
+                      disabled={isSubmitting}
+                      className="w-full"
+                    />
+                  </div>
+                ))}
+
+                {documentRules.length > 1 && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      Đã nhập: {Object.values(ruleValues).filter(v => v.trim()).length} / {documentRules.length}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <AlertCircle className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
+                <p className="text-sm font-medium text-muted-foreground">Không tìm thấy rules</p>
+                <p className="text-xs text-muted-foreground mt-1">Tài liệu chưa có document rules</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsRuleFormOpen(false);
+                setSelectedCell(null);
+                setRuleValues({});
+                setDocumentRules([]);
+              }}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              onClick={handleSubmitRuleForm}
+              disabled={isSubmitting || Object.values(ruleValues).filter(v => v.trim()).length === 0}
+              className="flex-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

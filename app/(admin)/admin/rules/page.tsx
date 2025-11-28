@@ -41,27 +41,8 @@ import {
   deleteDocumentRuleById
 } from "@/lib/actions/document-rule";
 import { getAllDocuments } from "@/lib/actions/document";
-
-interface DocumentRule {
-  id?: number;
-  documentRuleId?: number;
-  documentRuleName: string;
-  documentRuleDescription: string;
-  documentId: number;
-  documentRuleValueIds?: number[];
-  document?: {
-    documentId: number;
-    documentName: string;
-    documentCode: string;
-  };
-}
-
-interface Document {
-  documentId: number;
-  documentName: string;
-  documentCode: string;
-  documentDescription: string;
-}
+import { DocumentRule } from "@/types/document-rule";
+import { Document } from "@/types/document";
 
 export default function RulesPage() {
   const { toast } = useToast();
@@ -321,7 +302,7 @@ export default function RulesPage() {
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Rules Template</h1>
+          <h1 className="text-3xl font-bold">Rules Management</h1>
           <p className="text-muted-foreground mt-1">Quản lý các template quy tắc hệ thống</p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)} className="gap-2">

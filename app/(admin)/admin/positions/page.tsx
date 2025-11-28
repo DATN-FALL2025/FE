@@ -91,28 +91,19 @@ export default function PositionsPage() {
 
   // Fetch positions and departments on mount
   useEffect(() => {
-    console.log('🔵 useEffect running - mounting component');
     loadPositions();
     loadDepartments();
-
-    return () => {
-      console.log('🔴 useEffect cleanup - unmounting component');
-    };
   }, []);
 
   const loadPositions = async () => {
-    console.log('📍 loadPositions called - stack trace:', new Error().stack);
     setIsLoading(true);
     setError("");
     try {
       const token = getToken();
       const result: any = await getAllPositions(token || undefined);
 
-      console.log('🔍 Load positions result:', result);
-
       // Check if result has data - API might return {status: "200 OK", data: [...]}
       if (result && result.data) {
-        console.log('✅ Setting positions:', result.data);
         // Map department.id to departmentID for easier access
         const positionsWithDeptId = Array.isArray(result.data)
           ? result.data.map((pos: any) => ({
@@ -120,11 +111,9 @@ export default function PositionsPage() {
               departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
             }))
           : [];
-        console.log('✅ Positions mapped with departmentID:', positionsWithDeptId);
         setPositions(positionsWithDeptId);
       } else if (result && Array.isArray(result)) {
         // In case API returns array directly
-        console.log('✅ Setting positions (direct array):', result);
         const positionsWithDeptId = result.map((pos: any) => ({
           ...pos,
           departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
@@ -136,7 +125,6 @@ export default function PositionsPage() {
         setError('Không thể tải danh sách vị trí');
       }
     } catch (err) {
-      console.error('❌ Error in loadPositions:', err);
       setError('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setIsLoading(false);
@@ -146,25 +134,16 @@ export default function PositionsPage() {
   const loadDepartments = async () => {
     try {
       const result: any = await getAllDepartments();
-      console.log('🏢 Load departments result:', result);
 
       if (result && (result as any).data) {
         const deptArray = Array.isArray((result as any).data) ? (result as any).data : [];
-        console.log('🏢 Departments array:', deptArray);
-        console.log('🏢 Number of departments:', deptArray.length);
-        if (deptArray.length > 0) {
-          console.log('🏢 First department:', deptArray[0]);
-        }
         setDepartments(deptArray);
       } else if (result && Array.isArray(result)) {
-        console.log('🏢 Departments array (direct):', result);
         setDepartments(result);
       } else {
-        console.warn('⚠️ No departments data found');
         setDepartments([]);
       }
     } catch (err) {
-      console.error('❌ Error loading departments:', err);
       setDepartments([]);
     }
   };
@@ -193,10 +172,6 @@ export default function PositionsPage() {
   };
 
   const handleCreate = async () => {
-    console.log('🔍 handleCreate - formData:', formData);
-    console.log('🔍 handleCreate - departments:', departments);
-    console.log('🔍 handleCreate - departmentID:', formData.departmentID);
-
     if (!formData.positionName || !formData.positionDescription || !formData.departmentID) {
       toast({
         title: "Thông tin thiếu",
@@ -232,31 +207,24 @@ export default function PositionsPage() {
         positionFormData.append('positionImage', imageFile);
       }
 
-      console.log('📤 Sending to API - departmentID:', formData.departmentID);
-
       const result: any = await createPosition(positionFormData, token || undefined);
-
-      console.log('🆕 Create position result:', result);
-      console.log('🆕 result.status:', result?.status);
-      console.log('🆕 result.message:', result?.message);
 
       // Check if successful - API might return {status: "200 OK", data: {...}}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
-        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+        (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK')
       );
 
-      console.log('🆕 isSuccess:', isSuccess);
-
       if (isSuccess) {
-        setIsCreateOpen(false);
-        resetForm();
-        await loadPositions(); // Reload list
         toast({
           title: "Thành công",
           description: "Tạo vị trí thành công!",
         });
+        setIsCreateOpen(false);
+        resetForm();
+        await loadPositions(); // Reload list
       } else {
         toast({
           title: "Lỗi",
@@ -299,28 +267,23 @@ export default function PositionsPage() {
 
       const result: any = await updatePositionById(Number(selectedPosition.id), updateFormData, token || undefined);
 
-      console.log('✏️ Update position result:', result);
-      console.log('✏️ result.status:', result?.status);
-      console.log('✏️ result.message:', result?.message);
-
       // Check if successful
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
-        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+        (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK')
       );
 
-      console.log('✏️ isSuccess:', isSuccess);
-
       if (isSuccess) {
-        setIsEditOpen(false);
-        resetForm();
-        setSelectedPosition(null);
-        await loadPositions();
         toast({
           title: "Thành công",
           description: "Cập nhật vị trí thành công!",
         });
+        setIsEditOpen(false);
+        resetForm();
+        setSelectedPosition(null);
+        await loadPositions();
       } else {
         toast({
           title: "Lỗi",
@@ -348,17 +311,22 @@ export default function PositionsPage() {
       const token = getToken();
       const result: any = await deletePositionById(Number(selectedPosition.id), token || undefined);
 
-      console.log('🗑️ Delete position result:', result);
-
       // Check if successful
-      if (result && (result.status === 'success' || (result.status && result.status.includes('OK')))) {
-        setIsDeleteOpen(false);
-        setSelectedPosition(null);
-        await loadPositions();
+      const isSuccess = result && (
+        result.status === 'success' ||
+        (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+      );
+
+      if (isSuccess) {
         toast({
           title: "Thành công",
           description: "Xóa vị trí thành công!",
         });
+        setIsDeleteOpen(false);
+        setSelectedPosition(null);
+        await loadPositions();
       } else {
         toast({
           title: "Lỗi",
@@ -378,15 +346,9 @@ export default function PositionsPage() {
   };
 
   const openEditDialog = (position: Position) => {
-    console.log('🔧 openEditDialog - position:', position);
-    console.log('🔧 openEditDialog - position.department:', position.department);
-    console.log('🔧 openEditDialog - position.departmentID:', position.departmentID);
-
     // Get departmentID from either position.departmentID (already mapped) or position.department.id
     const deptId = position.departmentID ||
                    (position.department?.id ? String(position.department.id) : "");
-
-    console.log('🔧 openEditDialog - final departmentID:', deptId);
 
     setSelectedPosition(position);
     setFormData({
@@ -572,10 +534,7 @@ export default function PositionsPage() {
               <Label htmlFor="department">Phòng ban <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
-                onValueChange={(value) => {
-                  console.log('🔄 Selected department ID:', value);
-                  setFormData({ ...formData, departmentID: value });
-                }}
+                onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="department">
@@ -586,11 +545,8 @@ export default function PositionsPage() {
                     <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
                   ) : (
                     departments.map((dept, index) => {
-                      console.log(`🔍 CREATE - Dept ${index}:`, dept);
-                      console.log(`🔍 CREATE - Keys:`, Object.keys(dept));
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
                       const deptName = (dept as any).departmentName || (dept as any).name;
-                      console.log(`🔍 CREATE - ID: ${deptId}, Name: ${deptName}`);
 
                       return (
                         <SelectItem key={deptId || index} value={String(deptId)}>
@@ -704,10 +660,7 @@ export default function PositionsPage() {
               <Label htmlFor="edit-department">Phòng ban <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
-                onValueChange={(value) => {
-                  console.log('🔄 Selected department ID (Edit):', value);
-                  setFormData({ ...formData, departmentID: value });
-                }}
+                onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="edit-department">

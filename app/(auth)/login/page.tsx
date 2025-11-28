@@ -11,6 +11,7 @@ import { GraduationCap, Loader2, AlertCircle } from "lucide-react";
 import { authenticateAccount } from "@/lib/actions/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { setUser, getRoleRedirectPath } from "@/lib/auth-utils";
+import type { ApiResponse, AuthData } from "@/types/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
       const result = await authenticateAccount({
         userName: formData.userName,
         password: formData.password,
-      }) as any;
+      }) as ApiResponse<AuthData>;
 
       if (result.status === 'error') {
         setError(result.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');

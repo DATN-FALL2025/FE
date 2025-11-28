@@ -114,7 +114,7 @@ export function getRoleRedirectPath(role?: string | null): string {
     'ACADEMIC_STAFF_AFFAIR': '/admin/dashboard',
     'HEAD_OF_DEPARTMENT': '/head/dashboard',
     'TRAINING_DIRECTOR': '/manager/dashboard',
-    'TRAINEE': '/students/dashboard',
+    'TRAINEE': '/trainees/dashboard',
   };
 
   return userRole ? (roleRedirectMap[userRole] || '/admin/dashboard') : '/admin/dashboard';
