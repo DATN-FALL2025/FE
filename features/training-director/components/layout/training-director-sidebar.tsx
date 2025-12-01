@@ -15,6 +15,9 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Trophy,
+  User,
+  Shield,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 
@@ -28,6 +31,26 @@ const trainingDirectorNavigation = [
     name: "Training Matrix",
     href: "/training-director/matrix",
     icon: FileText,
+  },
+  {
+    name: "Reports",
+    href: "/training-director/reports",
+    icon: BarChart3,
+  },
+  {
+    name: "Admission Results",
+    href: "/training-director/results",
+    icon: Trophy,
+  },
+  {
+    name: "Profile",
+    href: "/training-director/profile",
+    icon: User,
+  },
+  {
+    name: "Security Settings",
+    href: "/training-director/settings",
+    icon: Shield,
   },
 ];
 
