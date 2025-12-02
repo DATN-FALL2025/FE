@@ -9,8 +9,10 @@ import {
   LayoutDashboard,
   FileText,
   User,
-  HelpCircle,
-  Settings,
+  Bell,
+  Trophy,
+  Grid3x3,
+  Shield,
 } from "lucide-react";
 
 const navigation = [
@@ -25,9 +27,29 @@ const navigation = [
     icon: FileText,
   },
   {
+    name: "Notifications",
+    href: "/trainees/notifications",
+    icon: Bell,
+  },
+  {
+    name: "Admission Result",
+    href: "/trainees/result",
+    icon: Trophy,
+  },
+  {
+    name: "Document Matrix",
+    href: "/trainees/matrix",
+    icon: Grid3x3,
+  },
+  {
     name: "Profile",
     href: "/trainees/profile",
     icon: User,
+  },
+  {
+    name: "Security Settings",
+    href: "/trainees/settings",
+    icon: Shield,
   },
 ];
 
