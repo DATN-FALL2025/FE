@@ -1,4 +1,6 @@
-export type UserRole = "admin" | "head_of_department" | "academic_staff" | "training_director" | "trainee";
+import { UserRole as UserRoleType } from '@/constants/roles';
+
+export type UserRole = UserRoleType;
 
 export type AccountStatus = "active" | "banned" | "pending";
 

@@ -340,7 +340,7 @@ export default function RulesPage() {
                     </td>
                     <td className="p-4">
                       <Badge variant="outline">
-                        {rule.document?.documentCode || `Doc #${rule.documentId}`}
+                        {rule.document?.documentCode || `${rule.documentName}`}
                       </Badge>
                     </td>
                     <td className="p-4">

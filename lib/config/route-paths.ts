@@ -24,26 +24,26 @@ export const TRAINING_DIRECTOR_ROUTES = {
 } as const;
 
 /**
- * Head Routes
+ * Head of Department Routes
  */
-export const HEAD_ROUTES = {
+export const HEAD_OF_DEPARTMENT_ROUTES = {
   DASHBOARD: '/head/dashboard',
   MATRIX: '/head/matrix',
 } as const;
 
 /**
- * Academic Staff Routes
+ * Academic Staff Affair Routes
  */
-export const ACADEMIC_STAFF_ROUTES = {
+export const ACADEMIC_STAFF_AFFAIR_ROUTES = {
   DASHBOARD: '/academic-staff/dashboard',
   DOCUMENTS: '/academic-staff/documents',
   PROFILE: '/academic-staff/profile',
 } as const;
 
 /**
- * Trainees (Students) Routes
+ * Trainee Routes
  */
-export const TRAINEES_ROUTES = {
+export const TRAINEE_ROUTES = {
   DASHBOARD: '/trainees/dashboard',
   DOCUMENTS: '/trainees/documents',
   PROFILE: '/trainees/profile',
@@ -74,9 +74,9 @@ export const PUBLIC_ROUTES = {
 export const ROUTES = {
   ADMIN: ADMIN_ROUTES,
   TRAINING_DIRECTOR: TRAINING_DIRECTOR_ROUTES,
-  HEAD: HEAD_ROUTES,
-  ACADEMIC_STAFF: ACADEMIC_STAFF_ROUTES,
-  TRAINEES: TRAINEES_ROUTES,
+  HEAD_OF_DEPARTMENT: HEAD_OF_DEPARTMENT_ROUTES,
+  ACADEMIC_STAFF_AFFAIR: ACADEMIC_STAFF_AFFAIR_ROUTES,
+  TRAINEE: TRAINEE_ROUTES,
   AUTH: AUTH_ROUTES,
   PUBLIC: PUBLIC_ROUTES,
 } as const;
@@ -105,18 +105,18 @@ export function isActiveRoute(currentPath: string, routePath: string): boolean {
 /**
  * Get all routes for a specific role
  */
-export function getRoutesByRole(role: 'ADMIN' | 'TRAINING_DIRECTOR' | 'HEAD' | 'ACADEMIC_STAFF' | 'TRAINEES') {
+export function getRoutesByRole(role: 'ADMIN' | 'TRAINING_DIRECTOR' | 'HEAD_OF_DEPARTMENT' | 'ACADEMIC_STAFF_AFFAIR' | 'TRAINEE') {
   switch (role) {
     case 'ADMIN':
       return ADMIN_ROUTES;
     case 'TRAINING_DIRECTOR':
       return TRAINING_DIRECTOR_ROUTES;
-    case 'HEAD':
-      return HEAD_ROUTES;
-    case 'ACADEMIC_STAFF':
-      return ACADEMIC_STAFF_ROUTES;
-    case 'TRAINEES':
-      return TRAINEES_ROUTES;
+    case 'HEAD_OF_DEPARTMENT':
+      return HEAD_OF_DEPARTMENT_ROUTES;
+    case 'ACADEMIC_STAFF_AFFAIR':
+      return ACADEMIC_STAFF_AFFAIR_ROUTES;
+    case 'TRAINEE':
+      return TRAINEE_ROUTES;
     default:
       return PUBLIC_ROUTES;
   }
@@ -198,66 +198,66 @@ export const ROUTE_METADATA: Record<string, RouteMetadata> = {
     allowedRoles: ['TRAINING_DIRECTOR'],
   },
 
-  // Head routes
-  [HEAD_ROUTES.DASHBOARD]: {
-    path: HEAD_ROUTES.DASHBOARD,
-    title: 'Head Dashboard',
+  // Head of Department routes
+  [HEAD_OF_DEPARTMENT_ROUTES.DASHBOARD]: {
+    path: HEAD_OF_DEPARTMENT_ROUTES.DASHBOARD,
+    title: 'Head of Department Dashboard',
     description: 'Department overview',
     requiresAuth: true,
-    allowedRoles: ['HEAD'],
+    allowedRoles: ['HEAD_OF_DEPARTMENT'],
   },
-  [HEAD_ROUTES.MATRIX]: {
-    path: HEAD_ROUTES.MATRIX,
+  [HEAD_OF_DEPARTMENT_ROUTES.MATRIX]: {
+    path: HEAD_OF_DEPARTMENT_ROUTES.MATRIX,
     title: 'Document Matrix',
     description: 'View position-document matrix',
     requiresAuth: true,
-    allowedRoles: ['HEAD'],
+    allowedRoles: ['HEAD_OF_DEPARTMENT'],
   },
 
-  // Academic Staff routes
-  [ACADEMIC_STAFF_ROUTES.DASHBOARD]: {
-    path: ACADEMIC_STAFF_ROUTES.DASHBOARD,
-    title: 'Academic Staff Dashboard',
-    description: 'Academic staff overview',
+  // Academic Staff Affair routes
+  [ACADEMIC_STAFF_AFFAIR_ROUTES.DASHBOARD]: {
+    path: ACADEMIC_STAFF_AFFAIR_ROUTES.DASHBOARD,
+    title: 'Academic Staff Affair Dashboard',
+    description: 'Academic staff affair overview',
     requiresAuth: true,
-    allowedRoles: ['ACADEMIC_STAFF'],
+    allowedRoles: ['ACADEMIC_STAFF_AFFAIR'],
   },
-  [ACADEMIC_STAFF_ROUTES.DOCUMENTS]: {
-    path: ACADEMIC_STAFF_ROUTES.DOCUMENTS,
+  [ACADEMIC_STAFF_AFFAIR_ROUTES.DOCUMENTS]: {
+    path: ACADEMIC_STAFF_AFFAIR_ROUTES.DOCUMENTS,
     title: 'My Documents',
     description: 'View and manage documents',
     requiresAuth: true,
-    allowedRoles: ['ACADEMIC_STAFF'],
+    allowedRoles: ['ACADEMIC_STAFF_AFFAIR'],
   },
-  [ACADEMIC_STAFF_ROUTES.PROFILE]: {
-    path: ACADEMIC_STAFF_ROUTES.PROFILE,
+  [ACADEMIC_STAFF_AFFAIR_ROUTES.PROFILE]: {
+    path: ACADEMIC_STAFF_AFFAIR_ROUTES.PROFILE,
     title: 'Profile',
     description: 'View and edit profile',
     requiresAuth: true,
-    allowedRoles: ['ACADEMIC_STAFF'],
+    allowedRoles: ['ACADEMIC_STAFF_AFFAIR'],
   },
 
-  // Trainees routes
-  [TRAINEES_ROUTES.DASHBOARD]: {
-    path: TRAINEES_ROUTES.DASHBOARD,
+  // Trainee routes
+  [TRAINEE_ROUTES.DASHBOARD]: {
+    path: TRAINEE_ROUTES.DASHBOARD,
     title: 'Trainee Dashboard',
     description: 'Trainee overview',
     requiresAuth: true,
-    allowedRoles: ['TRAINEES'],
+    allowedRoles: ['TRAINEE'],
   },
-  [TRAINEES_ROUTES.DOCUMENTS]: {
-    path: TRAINEES_ROUTES.DOCUMENTS,
+  [TRAINEE_ROUTES.DOCUMENTS]: {
+    path: TRAINEE_ROUTES.DOCUMENTS,
     title: 'My Documents',
     description: 'View training documents',
     requiresAuth: true,
-    allowedRoles: ['TRAINEES'],
+    allowedRoles: ['TRAINEE'],
   },
-  [TRAINEES_ROUTES.PROFILE]: {
-    path: TRAINEES_ROUTES.PROFILE,
+  [TRAINEE_ROUTES.PROFILE]: {
+    path: TRAINEE_ROUTES.PROFILE,
     title: 'Profile',
     description: 'View and edit profile',
     requiresAuth: true,
-    allowedRoles: ['TRAINEES'],
+    allowedRoles: ['TRAINEE'],
   },
 };
 

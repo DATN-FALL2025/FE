@@ -80,9 +80,9 @@ const routes = getRoutesByRole('TRAINING_DIRECTOR');
 
 - `ADMIN_ROUTES` - Admin panel routes
 - `TRAINING_DIRECTOR_ROUTES` - Training Director routes
-- `HEAD_ROUTES` - Department Head routes
-- `ACADEMIC_STAFF_ROUTES` - Academic Staff routes
-- `TRAINEES_ROUTES` - Trainee routes
+- `HEAD_OF_DEPARTMENT_ROUTES` - Head of Department routes
+- `ACADEMIC_STAFF_AFFAIR_ROUTES` - Academic Staff Affair routes
+- `TRAINEE_ROUTES` - Trainee routes
 - `AUTH_ROUTES` - Authentication routes
 - `PUBLIC_ROUTES` - Public routes
 

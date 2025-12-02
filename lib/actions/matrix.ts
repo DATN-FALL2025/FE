@@ -31,13 +31,16 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
 // Get all matrix data
 export async function getAllMatrix() {
   try {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/api/matrix/getAllMatrix`, {
+    // Add timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/matrix/getAllMatrix?_t=${timestamp}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
-      cache: 'no-store',
-      next: { revalidate: 30 }
+      cache: 'no-store'
     });
 
     const data = await response.json();
@@ -532,6 +535,118 @@ export async function updateDocumentRuleValue(data: {
       return {
         status: 'error',
         message: result.message || 'Failed to update document rule value',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Set status (Approve/Reject) for department matrix
+ * Only succeeds if department matrix setup progress is 100%
+ */
+export async function setMatrixStatusByDepartment(
+  departmentId: number,
+  status: 'Approve' | 'Rejected'
+) {
+  try {
+    const formData = new FormData();
+    formData.append('statusEnum', status);
+
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/set-status/department/${departmentId}`,
+      {
+        method: 'PUT',
+        body: formData,
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to set matrix status',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Activate all matrices
+ * Sets StatusEnum of all InputDocumentMatrix to Active
+ */
+export async function setActiveAllMatrix() {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/set-active-all`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to activate all matrices',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Set complete status to active
+ * Sets matrix status from Complete to Active
+ */
+export async function setCompleteStatusToActive() {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/setCompletestatusToActive`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to set complete status to active',
         data: null,
       };
     }

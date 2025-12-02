@@ -1,249 +1,401 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Target,
-  Users,
-  Award,
-  TrendingUp,
-  Download,
-  Filter,
-  BookOpen,
+  FileText,
+  Briefcase,
   CheckCircle2,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  Building2,
+  Loader2,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
-export default function TrainingDirectorDashboardPage() {
-  const stats = [
-    {
-      label: "Active Programs",
-      value: 12,
-      icon: Target,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      change: "+2 this quarter",
+// TODO: Replace with actual API calls
+async function getMatrixOverviewStats() {
+  // Mock data - replace with actual API call
+  return {
+    status: "success",
+    data: {
+      positions: {
+        total: 50,
+        pending: 10,
+        inProgress: 25,
+        completed: 15,
+      },
+      documents: {
+        total: 30,
+        assigned: 25,
+        unassigned: 5,
+      },
+      matrix: {
+        totalCells: 1500,
+        requiredCells: 800,
+        completionRate: 65.5,
+      },
     },
-    {
-      label: "Total Instructors",
-      value: 45,
-      icon: Users,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      change: "3 new this month",
-    },
-    {
-      label: "Training Hours",
-      value: "2,845",
-      icon: BookOpen,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      change: "+12% vs last month",
-    },
-    {
-      label: "Completion Rate",
-      value: "89%",
-      icon: Award,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      change: "+4% this quarter",
-    },
-  ];
+  };
+}
 
-  const activePrograms = [
-    {
-      id: 1,
-      programName: "Commercial Pilot License (CPL)",
-      programCode: "CPL-2025",
-      students: 85,
-      instructors: 12,
-      startDate: "Jan 2025",
-      endDate: "Dec 2025",
-      progress: 45,
-      status: "in-progress",
-    },
-    {
-      id: 2,
-      programName: "Instrument Rating (IR)",
-      programCode: "IR-2025",
-      students: 62,
-      instructors: 8,
-      startDate: "Feb 2025",
-      endDate: "Aug 2025",
-      progress: 68,
-      status: "in-progress",
-    },
-    {
-      id: 3,
-      programName: "Flight Instructor Certification",
-      programCode: "FIC-2025",
-      students: 28,
-      instructors: 5,
-      startDate: "Mar 2025",
-      endDate: "Sep 2025",
-      progress: 35,
-      status: "in-progress",
-    },
-  ];
+// TODO: Replace with actual API calls
+async function getMatrixStatsByDepartment() {
+  // Mock data - replace with actual API call
+  return {
+    status: "success",
+    data: [
+      {
+        departmentId: 1,
+        departmentName: "Ground Operations",
+        departmentCode: "GO",
+        positions: { total: 12, pending: 2, inProgress: 6, completed: 4 },
+        documents: { totalAssigned: 8, averagePerPosition: 6.5 },
+        completionRate: 70.5,
+        status: "IN_PROGRESS",
+      },
+      {
+        departmentId: 2,
+        departmentName: "Cabin Crew",
+        departmentCode: "CC",
+        positions: { total: 15, pending: 0, inProgress: 5, completed: 10 },
+        documents: { totalAssigned: 12, averagePerPosition: 8.2 },
+        completionRate: 85.3,
+        status: "IN_PROGRESS",
+      },
+      {
+        departmentId: 3,
+        departmentName: "Technical Aircraft Maintenance",
+        departmentCode: "TAM",
+        positions: { total: 18, pending: 5, inProgress: 10, completed: 3 },
+        documents: { totalAssigned: 10, averagePerPosition: 5.5 },
+        completionRate: 45.8,
+        status: "PENDING",
+      },
+      {
+        departmentId: 4,
+        departmentName: "Flight Crew",
+        departmentCode: "FC",
+        positions: { total: 5, pending: 0, inProgress: 0, completed: 5 },
+        documents: { totalAssigned: 15, averagePerPosition: 15.0 },
+        completionRate: 100.0,
+        status: "COMPLETED",
+      },
+    ],
+  };
+}
 
-  const instructorPerformance = [
-    { name: "Flight Training", instructors: 18, avgRating: 4.7, totalHours: 1245 },
-    { name: "Ground School", instructors: 15, avgRating: 4.5, totalHours: 856 },
-    { name: "Simulator Training", instructors: 12, avgRating: 4.8, totalHours: 744 },
-  ];
+export default function TrainingDirectorDashboard() {
+  const [overviewStats, setOverviewStats] = useState<any>(null);
+  const [departmentStats, setDepartmentStats] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      setIsLoading(true);
+      try {
+        const [overview, departments] = await Promise.all([
+          getMatrixOverviewStats(),
+          getMatrixStatsByDepartment(),
+        ]);
+
+        if (overview.status === "success") {
+          setOverviewStats(overview.data);
+        }
+
+        if (departments.status === "success") {
+          setDepartmentStats(departments.data);
+        }
+      } catch (error) {
+        console.error("Error loading stats:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return <Badge className="bg-green-500">Hoàn thành</Badge>;
+      case "IN_PROGRESS":
+        return <Badge className="bg-blue-500">Đang xử lý</Badge>;
+      case "PENDING":
+        return <Badge variant="secondary">Chờ xử lý</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getDepartmentColor = (code: string) => {
+    const colors: Record<string, string> = {
+      GO: "bg-blue-500",
+      CC: "bg-purple-500",
+      TAM: "bg-orange-500",
+      FC: "bg-red-500",
+    };
+    return colors[code] || "bg-gray-500";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 w-full">
-      {/* Page Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight">Training Director Dashboard</h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Oversee training programs, instructors, and performance metrics
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export Report
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Tổng quan về ma trận tài liệu và vị trí đào tạo
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all">
-              <CardContent className="p-6">
+      {/* Overview Stats */}
+      {overviewStats && (
+        <>
+          {/* Position Stats */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Tổng số vị trí
+                </CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {overviewStats.positions.total}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tất cả vị trí trong hệ thống
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chờ xử lý</CardTitle>
+                <AlertCircle className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-500">
+                  {overviewStats.positions.pending}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vị trí chưa được setup
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Đang xử lý
+                </CardTitle>
+                <Clock className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-500">
+                  {overviewStats.positions.inProgress}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vị trí đang setup
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Hoàn thành
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-500">
+                  {overviewStats.positions.completed}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vị trí đã hoàn thành
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Document & Matrix Stats */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Thống kê tài liệu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                    <div className="space-y-1">
-                      <p className="text-3xl font-bold">{stat.value}</p>
-                      {stat.change && (
-                        <p className="text-xs text-muted-foreground">{stat.change}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className={`${stat.bgColor} p-4 rounded-xl`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    Tổng số tài liệu
+                  </span>
+                  <span className="text-2xl font-bold">
+                    {overviewStats.documents.total}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Đã phân bổ
+                  </span>
+                  <span className="text-lg font-semibold text-green-600">
+                    {overviewStats.documents.assigned}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Chưa phân bổ
+                  </span>
+                  <span className="text-lg font-semibold text-orange-600">
+                    {overviewStats.documents.unassigned}
+                  </span>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 w-full">
-        {/* Left Column - Active Programs */}
-        <div className="lg:col-span-3 space-y-6 min-w-0">
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Tiến độ ma trận
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
-                  <CardTitle className="text-xl font-bold">Active Training Programs</CardTitle>
-                  <CardDescription className="text-base mt-1.5">
-                    Currently running programs and their progress
-                  </CardDescription>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      Tỷ lệ hoàn thành
+                    </span>
+                    <span className="text-2xl font-bold">
+                      {overviewStats.matrix.completionRate.toFixed(1)}%
+                    </span>
+                  </div>
+                  <Progress value={overviewStats.matrix.completionRate} />
                 </div>
-                <Button size="sm">View All</Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Tổng số ô ma trận
+                  </span>
+                  <span className="text-lg font-semibold">
+                    {overviewStats.matrix.totalCells}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Ô bắt buộc
+                  </span>
+                  <span className="text-lg font-semibold text-blue-600">
+                    {overviewStats.matrix.requiredCells}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* Department Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Thống kê theo khoa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {departmentStats.map((dept) => (
+              <div
+                key={dept.departmentId}
+                className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${getDepartmentColor(
+                        dept.departmentCode
+                      )}`}
+                    >
+                      {dept.departmentCode}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{dept.departmentName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dept.positions.total} vị trí •{" "}
+                        {dept.documents.totalAssigned} tài liệu
+                      </p>
+                    </div>
+                  </div>
+                  {getStatusBadge(dept.status)}
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-3">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-500">
+                      {dept.positions.pending}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Chờ xử lý
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-500">
+                      {dept.positions.inProgress}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Đang xử lý
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-500">
+                      {dept.positions.completed}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Hoàn thành
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      Tiến độ hoàn thành
+                    </span>
+                    <span className="text-sm font-semibold">
+                      {dept.completionRate.toFixed(1)}%
+                    </span>
+                  </div>
+                  <Progress value={dept.completionRate} />
+                </div>
+
+                <div className="mt-3 pt-3 border-t flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Trung bình tài liệu/vị trí
+                  </span>
+                  <span className="font-semibold">
+                    {dept.documents.averagePerPosition.toFixed(1)}
+                  </span>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activePrograms.map((program) => (
-                <div
-                  key={program.id}
-                  className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Target className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="font-semibold">{program.programName}</p>
-                        <p className="text-sm text-muted-foreground font-mono">
-                          {program.programCode}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className="bg-blue-500">In Progress</Badge>
-                  </div>
-
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>{program.students} students</span>
-                    <span>•</span>
-                    <span>{program.instructors} instructors</span>
-                    <span>•</span>
-                    <span>{program.startDate} - {program.endDate}</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-semibold">{program.progress}%</span>
-                    </div>
-                    <Progress value={program.progress} className="h-2 [&>div]:bg-blue-500" />
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      View Details
-                    </Button>
-                    <Button size="sm" className="bg-blue-500 hover:bg-blue-600 flex-1">
-                      Manage Program
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Instructor Performance */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold">Instructor Performance</CardTitle>
-              <CardDescription className="text-base mt-1.5">
-                Performance metrics by training category
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {instructorPerformance.map((category, index) => (
-                <div key={index} className="space-y-3">
-                  <div>
-                    <p className="font-semibold">{category.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {category.instructors} instructors
-                    </p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Avg Rating</span>
-                      <span className="font-semibold text-yellow-600">
-                        ⭐ {category.avgRating}/5.0
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Total Hours</span>
-                      <span className="font-semibold">{category.totalHours}h</span>
-                    </div>
-                  </div>
-                  {index < instructorPerformance.length - 1 && <div className="border-b pt-2" />}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

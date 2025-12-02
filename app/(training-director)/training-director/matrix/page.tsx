@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Download,
   Upload,
@@ -12,6 +15,7 @@ import {
   Plus,
   Trash2,
   MoreVertical,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Select,
@@ -20,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,13 +37,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   getAllMatrix,
-  getMatrixByDepartment,
   addMatrixRow,
   addMatrixColumn,
   addMatrixMultipleRows,
@@ -50,10 +49,6 @@ import {
   deleteAllMatrixRows,
   deleteAllMatrixColumns,
   clearMatrix,
-  clickToCellMatrix,
-  createDocumentRuleValue,
-  getDocumentWithRules,
-  updateDocumentRuleValue
 } from "@/lib/actions/matrix";
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
@@ -62,6 +57,16 @@ import { useToast } from "@/hooks/use-toast";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
 import type { ApiResponse as PositionApiResponse, Position } from "@/types/position";
 import type { ApiResponse as DocumentApiResponse, Document } from "@/types/document";
+
+// Helper function to remove Vietnamese accents for search
+function removeVietnameseAccents(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
 
 export default function TrainingDirectorMatrixPage() {
   const { toast } = useToast();
@@ -82,35 +87,22 @@ export default function TrainingDirectorMatrixPage() {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [addColumnMode, setAddColumnMode] = useState<"single" | "multiple">("single");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isRuleFormOpen, setIsRuleFormOpen] = useState(false);
-  const [selectedCell, setSelectedCell] = useState<{
-    matrixId: number;
-    documentRuleId: number | null;
-    documentId: number;
-    positionName: string;
-    documentName: string;
-  } | null>(null);
-  const [documentRules, setDocumentRules] = useState<any[]>([]);
-  const [ruleValues, setRuleValues] = useState<Record<number, string>>({});
-  const [isLoadingRules, setIsLoadingRules] = useState(false);
 
   // Client-side filtered data based on department selection and search
-  const matrixData = useMemo(() => {
-    let filtered = filterDepartmentId === "all"
-      ? allMatrixData
-      : allMatrixData?.filter((position: any) => position.departmentId === Number(filterDepartmentId));
+  let matrixData = filterDepartmentId === "all"
+    ? allMatrixData
+    : allMatrixData?.filter((position: any) => position.departmentId === Number(filterDepartmentId));
 
-    // Apply position name search filter
-    if (searchPositionName && filtered) {
-      const searchLower = searchPositionName.toLowerCase();
-      filtered = filtered.filter((position: any) =>
-        position.positionName?.toLowerCase().includes(searchLower) ||
-        position.positionCode?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [allMatrixData, filterDepartmentId, searchPositionName]);
+  // Apply position name search filter (with Vietnamese accent removal)
+  if (searchPositionName && matrixData) {
+    const searchNormalized = removeVietnameseAccents(searchPositionName);
+    matrixData = matrixData.filter((position: any) => {
+      const positionNameNormalized = removeVietnameseAccents(position.positionName || '');
+      const positionCodeNormalized = removeVietnameseAccents(position.positionCode || '');
+      return positionNameNormalized.includes(searchNormalized) ||
+             positionCodeNormalized.includes(searchNormalized);
+    });
+  }
 
   // Load ALL matrix data once on mount
   useEffect(() => {
@@ -165,15 +157,50 @@ export default function TrainingDirectorMatrixPage() {
     }
   }, [allMatrixData]);
 
-  const reloadMatrix = async () => {
-    try {
-      const result: any = await getAllMatrix();
-      if (result.status !== 'error' && result.data) {
-        setAllMatrixData(result.data);
+  const reloadMatrix = async (maxRetries: number = 3) => {
+    setIsLoading(true);
+    
+    let retries = 0;
+    
+    while (retries < maxRetries) {
+      try {
+        const result: any = await getAllMatrix();
+        
+        console.log(`🔄 Reload Matrix Attempt ${retries + 1}/${maxRetries}:`, result);
+        
+        if (result.status === 'error') {
+          setError(result.message);
+          setAllMatrixData(null);
+          break;
+        } else {
+          // Kiểm tra xem data có khác với data cũ không
+          const newDataString = JSON.stringify(result.data);
+          const oldDataString = JSON.stringify(allMatrixData);
+          
+          if (newDataString !== oldDataString || retries === maxRetries - 1) {
+            // Data đã thay đổi hoặc đã hết retry
+            setAllMatrixData(result.data);
+            setError("");
+            console.log('✅ Matrix data updated successfully');
+            break;
+          } else {
+            // Data chưa thay đổi, retry sau 1 giây
+            console.log('⏳ Data unchanged, retrying in 1s...');
+            retries++;
+            if (retries < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+        }
+      } catch (error: any) {
+        console.error('❌ Reload Matrix Error:', error);
+        setError(error.message || 'Failed to reload matrix');
+        setAllMatrixData(null);
+        break;
       }
-    } catch (error) {
-      // Silent error handling
     }
+    
+    setIsLoading(false);
   };
 
   const handleAddRow = async () => {
@@ -184,10 +211,9 @@ export default function TrainingDirectorMatrixPage() {
 
       setIsSubmitting(true);
       try {
+        console.log('➕ Adding row, position ID:', selectedPositionId);
         const result = await addMatrixRow(Number(selectedPositionId));
-
-        // Always reload to get fresh data
-        await reloadMatrix();
+        console.log('➕ Add row result:', result);
 
         if (result.status === 'error') {
           toast({
@@ -195,6 +221,7 @@ export default function TrainingDirectorMatrixPage() {
             description: result.message || "Không thể thêm vị trí vào ma trận",
             variant: "destructive",
           });
+          setIsSubmitting(false);
         } else {
           toast({
             title: "Thành công",
@@ -204,16 +231,19 @@ export default function TrainingDirectorMatrixPage() {
           // Close dialog and reset
           setIsAddRowDialogOpen(false);
           setSelectedPositionId("");
+          
+          // Reload sau khi thành công
+          console.log('🔄 Starting reload after add row...');
+          await reloadMatrix();
+          setIsSubmitting(false);
         }
       } catch (error: any) {
-        // Still reload even on error
-        await reloadMatrix();
+        console.error('❌ Add row error:', error);
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } finally {
         setIsSubmitting(false);
       }
     } else {
@@ -225,15 +255,13 @@ export default function TrainingDirectorMatrixPage() {
         const positionIdsAsNumbers = selectedPositionIds.map(id => Number(id));
         const result = await addMatrixMultipleRows(positionIdsAsNumbers);
 
-        // Always reload to get fresh data
-        await reloadMatrix();
-
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
             description: result.message || "Không thể thêm vị trí vào ma trận",
             variant: "destructive",
           });
+          setIsSubmitting(false);
         } else {
           toast({
             title: "Thành công",
@@ -243,16 +271,17 @@ export default function TrainingDirectorMatrixPage() {
           // Close dialog and reset
           setIsAddRowDialogOpen(false);
           setSelectedPositionIds([]);
+          
+          // Reload sau khi thành công
+          await reloadMatrix();
+          setIsSubmitting(false);
         }
       } catch (error: any) {
-        // Still reload even on error
-        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } finally {
         setIsSubmitting(false);
       }
     }
@@ -268,15 +297,13 @@ export default function TrainingDirectorMatrixPage() {
       try {
         const result = await addMatrixColumn(Number(selectedDocumentId));
 
-        // Always reload to get fresh data
-        await reloadMatrix();
-
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
             description: result.message || "Không thể thêm tài liệu vào ma trận",
             variant: "destructive",
           });
+          setIsSubmitting(false);
         } else {
           toast({
             title: "Thành công",
@@ -286,16 +313,17 @@ export default function TrainingDirectorMatrixPage() {
           // Close dialog and reset
           setIsAddColumnDialogOpen(false);
           setSelectedDocumentId("");
+          
+          // Reload sau khi thành công
+          await reloadMatrix();
+          setIsSubmitting(false);
         }
       } catch (error: any) {
-        // Still reload even on error
-        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } finally {
         setIsSubmitting(false);
       }
     } else {
@@ -307,15 +335,13 @@ export default function TrainingDirectorMatrixPage() {
         const documentIdsAsNumbers = selectedDocumentIds.map(id => Number(id));
         const result = await addMatrixMultipleColumns(documentIdsAsNumbers);
 
-        // Always reload to get fresh data
-        await reloadMatrix();
-
         if (result.status === 'error') {
           toast({
             title: "Lỗi",
             description: result.message || "Không thể thêm tài liệu vào ma trận",
             variant: "destructive",
           });
+          setIsSubmitting(false);
         } else {
           toast({
             title: "Thành công",
@@ -325,16 +351,17 @@ export default function TrainingDirectorMatrixPage() {
           // Close dialog and reset
           setIsAddColumnDialogOpen(false);
           setSelectedDocumentIds([]);
+          
+          // Reload sau khi thành công
+          await reloadMatrix();
+          setIsSubmitting(false);
         }
       } catch (error: any) {
-        // Still reload even on error
-        await reloadMatrix();
         toast({
           title: "Lỗi",
           description: error.message || "Đã xảy ra lỗi",
           variant: "destructive",
         });
-      } finally {
         setIsSubmitting(false);
       }
     }
@@ -343,19 +370,11 @@ export default function TrainingDirectorMatrixPage() {
   const handleDeleteRow = async (positionId: number) => {
     if (!confirm("Bạn có chắc muốn xóa vị trí này khỏi ma trận?")) return;
 
-    // OPTIMISTIC UPDATE: Remove from UI first
-    const previousData = allMatrixData;
-    setAllMatrixData((prevData: any) => {
-      if (!prevData || !Array.isArray(prevData)) return prevData;
-      return prevData.filter((position: any) => position.positionId !== positionId);
-    });
-
+    setIsSubmitting(true);
     try {
       const result = await deleteMatrixRow(positionId);
 
       if (result.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa vị trí",
@@ -366,39 +385,27 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa vị trí khỏi ma trận",
         });
+        await reloadMatrix();
       }
     } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteColumn = async (documentId: number) => {
     if (!confirm("Bạn có chắc muốn xóa tài liệu này khỏi ma trận?")) return;
 
-    // OPTIMISTIC UPDATE: Remove from UI first
-    const previousData = allMatrixData;
-    setAllMatrixData((prevData: any) => {
-      if (!prevData || !Array.isArray(prevData)) return prevData;
-      return prevData.map((position: any) => ({
-        ...position,
-        documentCollumResponseList: position.documentCollumResponseList?.filter(
-          (doc: any) => doc.document_id !== documentId
-        ) || []
-      }));
-    });
-
+    setIsSubmitting(true);
     try {
       const result = await deleteMatrixColumn(documentId);
 
       if (result.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tài liệu",
@@ -409,31 +416,27 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tài liệu khỏi ma trận",
         });
+        await reloadMatrix();
       }
     } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteAllRows = async () => {
     if (!confirm("Bạn có chắc muốn xóa TẤT CẢ vị trí khỏi ma trận?")) return;
 
-    // OPTIMISTIC UPDATE: Clear all rows from UI first
-    const previousData = allMatrixData;
-    setAllMatrixData([]);
-
+    setIsSubmitting(true);
     try {
       const result = await deleteAllMatrixRows();
 
       if (result.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tất cả vị trí",
@@ -444,37 +447,27 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tất cả vị trí khỏi ma trận",
         });
+        await reloadMatrix();
       }
     } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteAllColumns = async () => {
     if (!confirm("Bạn có chắc muốn xóa TẤT CẢ tài liệu khỏi ma trận?")) return;
 
-    // OPTIMISTIC UPDATE: Clear all columns from UI first
-    const previousData = allMatrixData;
-    setAllMatrixData((prevData: any) => {
-      if (!prevData || !Array.isArray(prevData)) return prevData;
-      return prevData.map((position: any) => ({
-        ...position,
-        documentCollumResponseList: []
-      }));
-    });
-
+    setIsSubmitting(true);
     try {
       const result = await deleteAllMatrixColumns();
 
       if (result.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa tất cả tài liệu",
@@ -485,32 +478,27 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa tất cả tài liệu khỏi ma trận",
         });
+        await reloadMatrix();
       }
     } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleClearMatrix = async () => {
     if (!confirm("⚠️ BẠN CÓ CHẮC CHẮN muốn XÓA TOÀN BỘ MA TRẬN? Hành động này không thể hoàn tác!")) return;
 
-    // OPTIMISTIC UPDATE: Clear entire matrix from UI first
-    const previousData = allMatrixData;
-    setAllMatrixData(null);
     setIsSubmitting(true);
-
     try {
       const result = await clearMatrix();
 
       if (result.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
         toast({
           title: "Lỗi",
           description: result.message || "Không thể xóa ma trận",
@@ -521,10 +509,9 @@ export default function TrainingDirectorMatrixPage() {
           title: "Thành công",
           description: "Đã xóa toàn bộ ma trận",
         });
+        await reloadMatrix();
       }
     } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
       toast({
         title: "Lỗi",
         description: error.message || "Đã xảy ra lỗi",
@@ -535,213 +522,7 @@ export default function TrainingDirectorMatrixPage() {
     }
   };
 
-  const handleCellClick = async (
-    matrixId: number,
-    currentRequired: boolean,
-    positionName: string,
-    documentName: string,
-    documentRuleId: number | null,
-    documentId: number
-  ) => {
-    // If already checked, just toggle it off (no confirmation)
-    if (currentRequired) {
-      // OPTIMISTIC UPDATE: Update UI immediately
-      const previousData = allMatrixData;
-      setAllMatrixData((prevData: any) => {
-        if (!prevData || !Array.isArray(prevData)) return prevData;
-        return prevData.map((position: any) => ({
-          ...position,
-          documentCollumResponseList: position.documentCollumResponseList?.map((doc: any) =>
-            doc.matrixId === matrixId ? { ...doc, required: false } : doc
-          ) || []
-        }));
-      });
 
-      try {
-        const result = await clickToCellMatrix({
-          matrixId,
-          required: false
-        });
-
-        if (result.status === 'error') {
-          // REVERT on error
-          setAllMatrixData(previousData);
-          toast({
-            title: "Lỗi",
-            description: result.message || "Không thể cập nhật trạng thái",
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        // REVERT on exception
-        setAllMatrixData(previousData);
-        toast({
-          title: "Lỗi",
-          description: error.message || "Đã xảy ra lỗi",
-          variant: "destructive",
-        });
-      }
-      return;
-    }
-
-    // If not checked, open form to enter rule values
-    setSelectedCell({
-      matrixId,
-      documentRuleId,
-      documentId,
-      positionName,
-      documentName
-    });
-    setRuleValues({});
-    setDocumentRules([]);
-    setIsRuleFormOpen(true);
-
-    // Fetch document rules with values
-    setIsLoadingRules(true);
-    try {
-      const result = await getDocumentWithRules(documentId);
-
-      if (result.status !== 'error') {
-        // Handle different response structures
-        let rules: any[] = [];
-
-        // Try multiple possible paths for the rules array
-        if (result.documentRules && Array.isArray(result.documentRules)) {
-          // Response structure: { documentRules: [...] }
-          rules = result.documentRules;
-        } else if (result.data) {
-          if (result.data.documentRules && Array.isArray(result.data.documentRules)) {
-            rules = result.data.documentRules;
-          } else if (result.data.documentRuleList && Array.isArray(result.data.documentRuleList)) {
-            rules = result.data.documentRuleList;
-          } else if (Array.isArray(result.data)) {
-            rules = result.data;
-          }
-        } else if (result.documentRuleList && Array.isArray(result.documentRuleList)) {
-          rules = result.documentRuleList;
-        } else if (Array.isArray(result)) {
-          rules = result;
-        }
-
-        setDocumentRules(rules);
-
-        if (rules.length === 0) {
-          toast({
-            title: "Thông báo",
-            description: "Tài liệu này chưa có document rules",
-            variant: "default",
-          });
-        }
-      } else {
-        toast({
-          title: "Thông báo",
-          description: result.message || "Không thể tải document rules",
-          variant: "default",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Đã xảy ra lỗi khi tải document rules",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingRules(false);
-    }
-  };
-
-  const handleSubmitRuleForm = async () => {
-    if (!selectedCell) return;
-
-    // Build list of rule values that have been filled in
-    const documentRuleValueDTOList = Object.entries(ruleValues)
-      .filter(([_, value]) => value.trim() !== "")
-      .map(([ruleId, value]) => ({
-        document_rule_Id: Number(ruleId),
-        document_rule_value: value
-      }));
-
-    if (documentRuleValueDTOList.length === 0) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập ít nhất một giá trị rule",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // OPTIMISTIC UPDATE: Tick checkbox immediately
-    const previousData = allMatrixData;
-    setAllMatrixData((prevData: any) => {
-      if (!prevData || !Array.isArray(prevData)) return prevData;
-      return prevData.map((position: any) => ({
-        ...position,
-        documentCollumResponseList: position.documentCollumResponseList?.map((doc: any) =>
-          doc.matrixId === selectedCell.matrixId ? { ...doc, required: true } : doc
-        ) || []
-      }));
-    });
-
-    // Close dialog immediately for smooth UX
-    setIsRuleFormOpen(false);
-    const tempCell = selectedCell;
-    setSelectedCell(null);
-    setRuleValues({});
-    setDocumentRules([]);
-
-    setIsSubmitting(true);
-    try {
-      // Step 1: Create document rule values
-      const payload = {
-        matrixID: tempCell.matrixId,
-        documentRuleValueDTOList
-      };
-
-      const ruleResult = await createDocumentRuleValue(payload);
-
-      if (ruleResult.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
-        toast({
-          title: "Lỗi",
-          description: ruleResult.message || "Không thể lưu rule values",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Step 2: Tick the checkbox (call clickToCellMatrix API)
-      const checkboxResult = await clickToCellMatrix({
-        matrixId: tempCell.matrixId,
-        required: true
-      });
-
-      if (checkboxResult.status === 'error') {
-        // REVERT on error
-        setAllMatrixData(previousData);
-        toast({
-          title: "Lỗi",
-          description: "Đã lưu rule values nhưng không thể cập nhật checkbox",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Thành công",
-          description: `Đã lưu ${documentRuleValueDTOList.length} rule value(s)`,
-        });
-      }
-    } catch (error: any) {
-      // REVERT on exception
-      setAllMatrixData(previousData);
-      toast({
-        title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="space-y-6 w-full">
@@ -1078,18 +859,11 @@ export default function TrainingDirectorMatrixPage() {
                                     <td key={docId} className="p-4 text-center border-l">
                                       {doc ? (
                                         <div className="flex items-center justify-center gap-2">
-                                          <Checkbox
-                                            checked={doc.required}
-                                            className="h-5 w-5 cursor-pointer"
-                                            onCheckedChange={() => handleCellClick(
-                                              doc.matrixId,
-                                              doc.required,
-                                              position.positionName,
-                                              docName,
-                                              doc.document_rule_id || null,
-                                              docId
-                                            )}
-                                          />
+                                          {doc.required ? (
+                                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                          ) : (
+                                            <div className="h-5 w-5 rounded border-2 border-muted-foreground/30" />
+                                          )}
                                         </div>
                                       ) : (
                                         <div className="text-muted-foreground">—</div>
@@ -1297,99 +1071,6 @@ export default function TrainingDirectorMatrixPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Rule Value Form Dialog */}
-      <Dialog open={isRuleFormOpen} onOpenChange={setIsRuleFormOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Nhập Rule Values</DialogTitle>
-            <DialogDescription className="text-sm">
-              {selectedCell?.positionName} - {selectedCell?.documentName}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {isLoadingRules ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : documentRules.length > 0 ? (
-              <div className="space-y-4">
-                {documentRules.map((rule: any, index: number) => (
-                  <div key={rule.documentRuleId} className="space-y-2">
-                    <Label htmlFor={`rule-${rule.documentRuleId}`} className="text-sm font-medium">
-                      {rule.documentRuleName}
-                      {rule.documentRuleDescription && (
-                        <span className="text-xs text-muted-foreground block mt-0.5">
-                          {rule.documentRuleDescription}
-                        </span>
-                      )}
-                    </Label>
-                    <Input
-                      id={`rule-${rule.documentRuleId}`}
-                      type="text"
-                      value={ruleValues[rule.documentRuleId] || ""}
-                      onChange={(e) => {
-                        setRuleValues(prev => ({
-                          ...prev,
-                          [rule.documentRuleId]: e.target.value
-                        }));
-                      }}
-                      placeholder={`Nhập ${rule.documentRuleName.toLowerCase()}...`}
-                      disabled={isSubmitting}
-                      className="w-full"
-                    />
-                  </div>
-                ))}
-
-                {documentRules.length > 1 && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">
-                      Đã nhập: {Object.values(ruleValues).filter(v => v.trim()).length} / {documentRules.length}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <AlertCircle className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
-                <p className="text-sm font-medium text-muted-foreground">Không tìm thấy rules</p>
-                <p className="text-xs text-muted-foreground mt-1">Tài liệu chưa có document rules</p>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsRuleFormOpen(false);
-                setSelectedCell(null);
-                setRuleValues({});
-                setDocumentRules([]);
-              }}
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleSubmitRuleForm}
-              disabled={isSubmitting || Object.values(ruleValues).filter(v => v.trim()).length === 0}
-              className="flex-1"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                "Lưu"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
