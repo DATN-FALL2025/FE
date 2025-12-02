@@ -596,7 +596,7 @@ export default function TrainingDirectorMatrixPage() {
                       <SelectItem value="all">All Departments</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem key={dept.id} value={String(dept.id)}>
-                          {dept.departmentCode || dept.code || "N/A"} - {dept.departmentName || dept.name || "Unknown"}
+                        {dept.departmentName || dept.name || "Unknown"}
                         </SelectItem>
                       ))}
                     </SelectContent>

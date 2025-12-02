@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Loader2, AlertCircle, User, Mail } from "lucide-react";
+import { Eye, Loader2, AlertCircle, User, Mail, Plus, Upload, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { getAllUsers } from "@/lib/actions/auth";
+import { Input } from "@/components/ui/input";
+import { getAllUsers, createUser, importUsers } from "@/lib/actions/auth";
 import Image from "next/image";
+import * as XLSX from 'xlsx';
 
 interface UserData {
   id: string;
@@ -27,12 +29,33 @@ interface UserData {
   [key: string]: any;
 }
 
+interface CreateUserForm {
+  userName: string;
+  password: string;
+  gmail: string;
+  accountImage: string;
+  positionName: string;
+  departmentName: string;
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState<CreateUserForm>({
+    userName: "",
+    password: "",
+    gmail: "",
+    accountImage: "",
+    positionName: "",
+    departmentName: ""
+  });
 
   useEffect(() => {
     loadUsers();
@@ -44,7 +67,6 @@ export default function UsersPage() {
     try {
       const result: any = await getAllUsers();
 
-      // Check multiple possible response formats
       if (result.data && Array.isArray(result.data)) {
         setUsers(result.data);
       } else if (Array.isArray(result)) {
@@ -66,6 +88,115 @@ export default function UsersPage() {
     setIsViewOpen(true);
   };
 
+  const openCreateDialog = () => {
+    setFormData({
+      userName: "",
+      password: "",
+      gmail: "",
+      accountImage: "",
+      positionName: "",
+      departmentName: ""
+    });
+    setIsCreateOpen(true);
+    setError("");
+    setSuccess("");
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateUser = async () => {
+    setError("");
+    setSuccess("");
+    
+    if (!formData.userName || !formData.password || !formData.gmail) {
+      setError("Vui lòng điền đầy đủ thông tin bắt buộc");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await createUser(formData);
+      
+      if (result.status === 'success') {
+        setSuccess("Tạo tài khoản thành công!");
+        setIsCreateOpen(false);
+        loadUsers();
+      } else {
+        setError(result.message || "Tạo tài khoản thất bại");
+      }
+    } catch (err: any) {
+      setError(err.message || "Có lỗi xảy ra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        userName: "user001",
+        password: "password123",
+        gmail: "user001@example.com",
+        accountImage: "https://example.com/avatar.jpg",
+        positionName: "Giảng viên",
+        departmentName: "Khoa Công nghệ"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "account_template.xlsx");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setSuccess("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const accounts = jsonData.map((row: any) => ({
+        userName: row.userName || row.username || "",
+        password: row.password || "",
+        gmail: row.gmail || row.email || "",
+        accountImage: row.accountImage || row.image || "",
+        positionName: row.positionName || row.position || "",
+        departmentName: row.departmentName || row.department || ""
+      }));
+
+      if (accounts.length === 0) {
+        setError("File Excel không có dữ liệu");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const result = await importUsers(accounts);
+      
+      if (result.status === 'success') {
+        setSuccess(`Import thành công ${accounts.length} tài khoản!`);
+        loadUsers();
+      } else {
+        setError(result.message || "Import thất bại");
+      }
+    } catch (err: any) {
+      setError(err.message || "Có lỗi xảy ra khi đọc file");
+    } finally {
+      setIsSubmitting(false);
+      e.target.value = "";
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -81,21 +212,48 @@ export default function UsersPage() {
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý người dùng</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý tài khoản</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Xem và quản lý thông tin người dùng trong hệ thống
+            Tạo, import và quản lý tài khoản người dùng
           </p>
         </div>
-        <Button onClick={loadUsers} variant="outline" className="gap-2">
-          <Loader2 className="w-4 h-4" />
-          Làm mới
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={downloadTemplate} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Tải mẫu Excel
+          </Button>
+          <label htmlFor="file-upload">
+            <Button variant="outline" className="gap-2" disabled={isSubmitting} asChild>
+              <span>
+                <Upload className="w-4 h-4" />
+                Import Excel
+              </span>
+            </Button>
+          </label>
+          <input
+            id="file-upload"
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button onClick={openCreateDialog} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Tạo tài khoản
+          </Button>
+        </div>
       </div>
 
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="border-green-500 bg-green-50 text-green-900">
+          <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 
@@ -180,6 +338,101 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Tạo tài khoản mới</DialogTitle>
+            <DialogDescription>Điền thông tin để tạo tài khoản người dùng</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="userName">Tên đăng nhập <span className="text-red-500">*</span></Label>
+              <Input
+                id="userName"
+                name="userName"
+                value={formData.userName}
+                onChange={handleInputChange}
+                placeholder="Nhập tên đăng nhập"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Mật khẩu <span className="text-red-500">*</span></Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gmail">Email <span className="text-red-500">*</span></Label>
+              <Input
+                id="gmail"
+                name="gmail"
+                type="email"
+                value={formData.gmail}
+                onChange={handleInputChange}
+                placeholder="Nhập email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountImage">URL ảnh đại diện</Label>
+              <Input
+                id="accountImage"
+                name="accountImage"
+                value={formData.accountImage}
+                onChange={handleInputChange}
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="positionName">Vị trí</Label>
+              <Input
+                id="positionName"
+                name="positionName"
+                value={formData.positionName}
+                onChange={handleInputChange}
+                placeholder="Nhập vị trí"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="departmentName">Phòng ban</Label>
+              <Input
+                id="departmentName"
+                name="departmentName"
+                value={formData.departmentName}
+                onChange={handleInputChange}
+                placeholder="Nhập phòng ban"
+              />
+            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
+              Hủy
+            </Button>
+            <Button onClick={handleCreateUser} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang tạo...
+                </>
+              ) : (
+                "Tạo tài khoản"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* View Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>

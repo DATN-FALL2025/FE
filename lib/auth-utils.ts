@@ -154,3 +154,64 @@ export function getUserAvatar(): string | null {
   return user?.accountImage || null;
 }
 
+
+
+/**
+ * Decode JWT token to get payload
+ */
+export function decodeJWT(token: string): any {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+
+    // Decode base64url payload
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+}
+
+/**
+ * Get department ID from JWT token
+ */
+export function getDepartmentIdFromToken(): string | null {
+  const token = getToken();
+  if (!token) return null;
+
+  const decoded = decodeJWT(token);
+  return decoded?.departmentId || null;
+}
+
+/**
+ * Get role from JWT token
+ */
+export function getRoleFromToken(): string | null {
+  const token = getToken();
+  if (!token) return null;
+
+  const decoded = decodeJWT(token);
+  return decoded?.role || null;
+}
+
+/**
+ * Get all decoded token data
+ */
+export function getDecodedToken(): any {
+  const token = getToken();
+  if (!token) return null;
+
+  return decodeJWT(token);
+}
