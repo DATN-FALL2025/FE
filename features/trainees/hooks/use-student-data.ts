@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { StudentInfo, Document, SubmissionProgress, Notification } from "../types";
+import { getUser } from "@/lib/auth-utils";
 
 // Mock data hook - replace with actual API calls
 export const useStudentData = () => {
@@ -16,18 +17,22 @@ export const useStudentData = () => {
     const fetchData = async () => {
       setLoading(true);
       
-      // Mock student data
+      // Get real user data from auth
+      const authUser = getUser();
+      
+      // Mock student data with real user info
       const mockStudent: StudentInfo = {
-        id: "SE161662",
-        fullName: "Tôn Thiện Hoàng Hiệp",
-        studentCode: "SE161662",
-        email: "hieptthse161662@fpt.edu.vn",
-        phone: "0932029407",
-        program: "Software Engineering",
-        trainingRole: "Pilot",
-        courseCode: "SE144",
-        courseName: "Aviation Academy - Pilot Training",
-        enrollmentDate: new Date("2024-09-01"),
+        id: authUser?.id || authUser?.userName || "STUDENT001",
+        fullName: authUser?.userName || "Student",
+        studentCode: authUser?.studentCode || authUser?.id || "STUDENT001",
+        email: authUser?.gmail || authUser?.email || "",
+        phone: authUser?.phone || "",
+        program: authUser?.program || "Software Engineering",
+        trainingRole: authUser?.trainingRole || "Trainee",
+        courseCode: authUser?.courseCode || "",
+        courseName: authUser?.courseName || "Aviation Academy Training",
+        enrollmentDate: authUser?.enrollmentDate ? new Date(authUser.enrollmentDate) : new Date(),
+        avatar: authUser?.accountImage,
       };
 
       // Mock documents

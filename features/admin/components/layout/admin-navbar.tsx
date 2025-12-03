@@ -28,7 +28,7 @@ export const AdminNavbar = () => {
     setMounted(true);
   }, []);
   
-  const userEmail = user?.gmail || user?.email || "user@idmawa.edu.vn";
+  const userEmail = user?.gmail || user?.email || "";
   const userName = displayName || "User";
   
   // Get initials for avatar fallback

@@ -12,7 +12,6 @@ import {
   createTraineeSubmission,
   uploadTraineeApplication,
 } from "@/lib/actions";
-import { getToken } from "@/lib/auth-utils";
 
 interface SubmittedDocument {
   submissionId: number | null;
@@ -34,21 +33,14 @@ export default function StudentDocumentsPage() {
   const [applicationDetail, setApplicationDetail] = useState<ApplicationDetail | null>(null);
   const [documents, setDocuments] = useState<SubmittedDocument[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState<Set<number>>(new Set());
-  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [uploadedFiles, setUploadedFiles] = useState<{ [key: number]: string }>({});
+  const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: { name: string; file: File } }>({});
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
-  // Debug: Check for auth token in cookies
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const cookies = document.cookie;
-      console.log("🍪 All cookies:", cookies);
-      
-      const authCookie = cookies.split(';').find(c => c.trim().startsWith('auth-storage='));
-      console.log("🔑 Auth cookie:", authCookie);
-      
-      setDebugInfo(`Cookies: ${cookies.substring(0, 100)}...`);
-    }
-  }, []);
+  // Helper function to get token from localStorage
+  const getClientToken = () => {
+    return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  };
 
   // Fetch trainee application detail on mount
   useEffect(() => {
@@ -57,7 +49,7 @@ export default function StudentDocumentsPage() {
         setLoading(true);
 
         // Get token from localStorage
-        const token = getToken();
+        const token = getClientToken();
         console.log("🔑 Token from localStorage:", token ? "Yes" : "No");
 
         // Fetch trainee applications
@@ -105,41 +97,101 @@ export default function StudentDocumentsPage() {
     fetchApplicationDetail();
   }, []);
 
-  const handleFileUpload = async (docId: number) => {
-    const fileInput = fileInputRefs.current[docId];
-    if (!fileInput) return;
+  const handleFileSelect = (docId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log("📁 File selected:", { docId, fileName: file.name, fileSize: file.size });
+      
+      // Save selected file object and name
+      setSelectedFiles(prev => ({
+        ...prev,
+        [docId]: { name: file.name, file: file }
+      }));
+      
+      // Show toast notification
+      const document = documents.find(d => d.documentId === docId);
+      toast.info(`Đã chọn file: ${file.name}`, {
+        description: `Nhấn "Gửi file" để tải lên tài liệu ${document?.requiredDocumentName || ''}`,
+        duration: 3000,
+      });
+    }
+  };
 
-    const file = fileInput.files?.[0];
-    if (!file) {
+  const handleFileUpload = async (docId: number) => {
+    console.log("🚀 handleFileUpload called for docId:", docId);
+    console.log("📁 Selected files state:", selectedFiles);
+    
+    // Get file from selectedFiles state instead of fileInput
+    const selectedFile = selectedFiles[docId];
+    if (!selectedFile) {
+      console.error("❌ No file selected for docId:", docId);
       toast.error("Vui lòng chọn file");
       return;
     }
 
+    const file = selectedFile.file;
+    console.log("📄 File to upload:", { name: file.name, size: file.size, type: file.type });
+
     if (!applicationDetail?.traineeApplicationId) {
+      console.error("❌ No traineeApplicationId");
       toast.error("Không tìm thấy đơn đăng ký");
       return;
     }
 
     const document = documents.find(d => d.documentId === docId);
-    if (!document) return;
+    if (!document) {
+      console.error("❌ Document not found for docId:", docId);
+      return;
+    }
+
+    // Show loading toast
+    const loadingToast = toast.loading(`Đang tải lên "${document.requiredDocumentName}"...`);
 
     try {
       setUploadingDocs((prev) => new Set(prev).add(docId));
 
-      // Get token from localStorage
-      const token = getToken();
+      const token = getClientToken();
+      console.log("🔑 Token available:", token ? "Yes" : "No");
+      console.log("📤 Calling createTraineeSubmission with:", {
+        documentID: docId,
+        traineeApplicationId: applicationDetail.traineeApplicationId,
+        submissionName: document.requiredDocumentName,
+        fileName: file.name,
+      });
 
       const result: any = await createTraineeSubmission({
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: file.name,
+        submissionName: document.requiredDocumentName,
         takeNote: "Submitted via web portal",
         submissionDocumentFile: file,
         token,
       });
 
-      if (result.status === "200 OK" || result.status === "success") {
-        toast.success(`Nộp tài liệu "${document.requiredDocumentName}" thành công`);
+      console.log("📥 createTraineeSubmission result:", result);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (result.status === "201 CREATED" || result.status === "200 OK" || result.status === "success") {
+        console.log("✅ Upload successful!");
+        toast.success(`✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`, {
+          description: `File "${file.name}" đã được tải lên`,
+          duration: 4000,
+        });
+
+        // Save uploaded file name
+        setUploadedFiles(prev => ({
+          ...prev,
+          [docId]: file.name
+        }));
+
+        // Clear selected file
+        setSelectedFiles(prev => {
+          const newFiles = { ...prev };
+          delete newFiles[docId];
+          return newFiles;
+        });
 
         // Refresh application detail to get updated submittedDocuments
         const detailRes: any = await getTraineeApplicationDetailByTrainee(applicationDetail.traineeApplicationId, token);
@@ -148,63 +200,115 @@ export default function StudentDocumentsPage() {
           setDocuments(detailRes.data.submittedDocuments || []);
         }
       } else {
-        toast.error(result.message || "Nộp tài liệu thất bại");
+        console.error("❌ Upload failed:", result);
+        toast.error(`❌ Nộp tài liệu thất bại`, {
+          description: result.message || "Vui lòng thử lại",
+          duration: 4000,
+        });
       }
     } catch (error) {
-      console.error("Error uploading document:", error);
-      toast.error("Lỗi khi nộp tài liệu");
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      console.error("💥 Error uploading document:", error);
+      toast.error("❌ Lỗi khi nộp tài liệu", {
+        description: "Vui lòng kiểm tra kết nối và thử lại",
+        duration: 4000,
+      });
     } finally {
       setUploadingDocs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(docId);
         return newSet;
       });
+      
+      // Clear file input
+      const fileInput = fileInputRefs.current[docId];
       if (fileInput) fileInput.value = "";
     }
   };
 
   const handleSubmitApplication = async () => {
+    console.log("🚀 Starting handleSubmitApplication");
+    console.log("📋 Application Detail:", applicationDetail);
+    console.log("📄 Documents:", documents);
+    
     if (!applicationDetail?.traineeApplicationId) {
-      toast.error("Không tìm thấy đơn đăng ký");
+      console.error("❌ No traineeApplicationId found");
+      toast.error("❌ Không tìm thấy đơn đăng ký", {
+        description: "Vui lòng tải lại trang và thử lại",
+        duration: 4000,
+      });
       return;
     }
 
     const pendingDocs = documents.filter(doc => doc.submissionId === null);
+    console.log("⏳ Pending documents:", pendingDocs);
+    
     if (pendingDocs.length > 0) {
-      toast.error(`Bạn cần nộp ${pendingDocs.length} tài liệu còn lại trước khi submit hồ sơ`);
+      console.warn("⚠️ Still have pending documents:", pendingDocs.length);
+      const pendingDocNames = pendingDocs.map(d => d.requiredDocumentName).join(", ");
+      toast.warning(`⚠️ Chưa đủ tài liệu để submit`, {
+        description: `Bạn cần nộp ${pendingDocs.length} tài liệu còn lại: ${pendingDocNames}`,
+        duration: 5000,
+      });
       return;
     }
 
+    // Show loading toast
+    const loadingToast = toast.loading("Đang submit hồ sơ tổng...", {
+      description: "Vui lòng đợi trong giây lát",
+    });
+
     try {
-      // Get token from localStorage
-      const token = getToken();
+      const token = getClientToken();
+      console.log("🔑 Token for submit:", token ? "Yes" : "No");
+      console.log("📤 Calling uploadTraineeApplication with ID:", applicationDetail.traineeApplicationId);
 
       const result: any = await uploadTraineeApplication(applicationDetail.traineeApplicationId, token);
+      
+      console.log("📥 Submit result:", result);
+      console.log("📥 Result status:", result.status);
+      console.log("📥 Result message:", result.message);
+      console.log("📥 Result data:", result.data);
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
       if (result.status === "200 OK" || result.status === "success") {
-        toast.success("Submit hồ sơ thành công! Hồ sơ của bạn đang được xem xét.");
+        console.log("✅ Submit successful!");
+        toast.success("🎉 Submit hồ sơ thành công!", {
+          description: "Hồ sơ của bạn đang được xem xét. Bạn sẽ nhận được thông báo khi có kết quả.",
+          duration: 5000,
+        });
       } else {
-        toast.error(result.message || "Submit hồ sơ thất bại");
+        console.error("❌ Submit failed with status:", result.status);
+        toast.error("❌ Submit hồ sơ thất bại", {
+          description: result.message || "Vui lòng thử lại sau",
+          duration: 4000,
+        });
       }
     } catch (error) {
-      console.error("Error submitting application:", error);
-      toast.error("Lỗi khi submit hồ sơ");
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      console.error("💥 Error submitting application:", error);
+      toast.error("❌ Lỗi khi submit hồ sơ", {
+        description: "Vui lòng kiểm tra kết nối và thử lại",
+        duration: 4000,
+      });
     }
   };
 
   const submittedCount = documents.filter(doc => doc.submissionId !== null).length;
   const totalCount = documents.length;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
-      case "Approved":
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3" />Đã duyệt</span>;
-      case "Rejected":
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"><AlertCircle className="w-3 h-3" />Từ chối</span>;
-      default:
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
+  const getStatusBadge = (doc: SubmittedDocument) => {
+    // If has submissionId, show "Đã nộp" regardless of status
+    if (doc.submissionId !== null) {
+      return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3" />Đã nộp</span>;
     }
+    
+    // If no submissionId, show "Chờ nộp"
+    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
   };
 
   if (loading) {
@@ -231,13 +335,33 @@ export default function StudentDocumentsPage() {
     );
   }
 
+  // Debug function to test API directly
+  const testAPICall = async () => {
+    console.log("🧪 Testing API call directly...");
+    const token = getClientToken();
+    console.log("🔑 Token:", token);
+    
+    const testFile = new File(["test content"], "test.txt", { type: "text/plain" });
+    
+    const result = await createTraineeSubmission({
+      documentID: 1,
+      traineeApplicationId: applicationDetail?.traineeApplicationId || 3,
+      submissionName: "Test Document",
+      takeNote: "Test submission",
+      submissionDocumentFile: testFile,
+      token,
+    });
+    
+    console.log("🧪 Test result:", result);
+  };
+
   return (
     <div className="space-y-6 w-full pb-8">
-      {/* Debug Info */}
-      {debugInfo && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-xs">
-          <strong>Debug:</strong> {debugInfo}
-        </div>
+      {/* Debug Button - Remove after testing */}
+      {process.env.NODE_ENV === 'development' && (
+        <Button onClick={testAPICall} variant="outline" className="bg-yellow-100">
+          🧪 Test API Call
+        </Button>
       )}
       
       {/* Page Header */}
@@ -317,41 +441,68 @@ export default function StudentDocumentsPage() {
                 documents.map((doc) => (
                   <div
                     key={doc.documentId}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex-1 min-w-0 mr-3">
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1 min-w-0 mr-3">
                         <p className="text-sm font-medium truncate">
                           {doc.requiredDocumentName}
                           <span className="text-red-500 ml-1">*</span>
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(doc.submissionStatus)}
-                      </div>
+                      <input
+                        ref={(el) => { fileInputRefs.current[doc.documentId] = el; }}
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => handleFileSelect(doc.documentId, e)}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      />
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                        onClick={() => {
+                          if (selectedFiles[doc.documentId]) {
+                            handleFileUpload(doc.documentId);
+                          } else {
+                            fileInputRefs.current[doc.documentId]?.click();
+                          }
+                        }}
+                        disabled={uploadingDocs.has(doc.documentId)}
+                      >
+                        {uploadingDocs.has(doc.documentId) ? (
+                          <>Đang tải...</>
+                        ) : selectedFiles[doc.documentId] ? (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Gửi file
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            {doc.submissionId ? "Nộp lại" : "Tải lên"}
+                          </>
+                        )}
+                      </Button>
                     </div>
-                    <input
-                      ref={(el) => { fileInputRefs.current[doc.documentId] = el; }}
-                      type="file"
-                      className="hidden"
-                      onChange={() => handleFileUpload(doc.documentId)}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    />
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 shrink-0"
-                      onClick={() => fileInputRefs.current[doc.documentId]?.click()}
-                      disabled={uploadingDocs.has(doc.documentId)}
-                    >
-                      {uploadingDocs.has(doc.documentId) ? (
-                        <>Đang tải...</>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {doc.submissionId ? "Nộp lại" : "Tải lên"}
-                        </>
+                    
+                    {/* Show selected file name */}
+                    {selectedFiles[doc.documentId] && (
+                      <div className="mb-2 p-2 bg-blue-50 rounded text-xs text-blue-800 flex items-center gap-2">
+                        <span className="font-medium">File đã chọn:</span>
+                        <span className="truncate flex-1">{selectedFiles[doc.documentId].name}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(doc)}
+                      </div>
+                      {(doc.submissionId && uploadedFiles[doc.documentId]) && (
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={uploadedFiles[doc.documentId]}>
+                          📎 {uploadedFiles[doc.documentId]}
+                        </p>
                       )}
-                    </Button>
+                    </div>
                   </div>
                 ))
               )}

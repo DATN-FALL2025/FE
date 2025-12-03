@@ -26,8 +26,8 @@ export const AcademicStaffNavbar = () => {
     setMounted(true);
   }, []);
 
-  const userEmail = user?.gmail || user?.email || "academic.staff@idmawa.edu.vn";
-  const userName = displayName || "Academic Staff";
+  const userEmail = user?.gmail || user?.email || "";
+  const userName = displayName || "User";
 
   const initials = userName
     .split(' ')

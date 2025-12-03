@@ -308,7 +308,7 @@ export default function HeadMatrixPage() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight">Department Document Matrix</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            View and manage document requirements for your department's training positions
+            View and manage document requirements for your department&apos;s training positions
           </p>
         </div>
         <div className="flex gap-2">

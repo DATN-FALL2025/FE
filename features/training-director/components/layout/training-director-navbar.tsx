@@ -26,8 +26,8 @@ export const TrainingDirectorNavbar = () => {
     setMounted(true);
   }, []);
 
-  const userEmail = user?.gmail || user?.email || "training.director@idmawa.edu.vn";
-  const userName = displayName || "Training Director";
+  const userEmail = user?.gmail || user?.email || "";
+  const userName = displayName || "User";
 
   const initials = userName
     .split(' ')

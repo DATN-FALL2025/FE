@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStudentData } from "../../hooks/use-student-data";
+import { useAuthInfo } from "@/hooks/use-auth-info";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -24,6 +25,7 @@ export const Navbar = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
   } = useStudentData();
+  const { logout } = useAuthInfo();
 
   const getInitials = (name: string) => {
     if (!name) return "ST";
@@ -114,7 +116,10 @@ export const Navbar = () => {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+              <DropdownMenuItem 
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+                onClick={logout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
