@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileCheck } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast-compat";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,6 @@ import { DocumentRule } from "@/types/document-rule";
 import { Document } from "@/types/document";
 
 export default function RulesPage() {
-  const { toast } = useToast();
   const [rules, setRules] = useState<DocumentRule[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);

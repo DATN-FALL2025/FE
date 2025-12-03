@@ -34,7 +34,7 @@ export function getUser(): UserData | null {
 }
 
 /**
- * Lưu thông tin user vào localStorage
+ * Lưu thông tin user vào localStorage và cookie
  */
 export function setUser(userData: UserData): void {
   if (typeof window === 'undefined') return;
@@ -52,6 +52,16 @@ export function setUser(userData: UserData): void {
     if (userData.token) {
       localStorage.setItem('token', userData.token);
     }
+    
+    // Store auth data in cookie for middleware access
+    const authCookie = JSON.stringify({
+      state: {
+        user: dataToStore
+      }
+    });
+    
+    // Set cookie with 7 days expiry
+    document.cookie = `auth-storage=${encodeURIComponent(authCookie)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
     
     console.log('💾 User data saved:', dataToStore);
   } catch (error) {
@@ -99,6 +109,9 @@ export function logout(): void {
   localStorage.removeItem('user');
   localStorage.removeItem('isAuthenticated');
   localStorage.removeItem('token');
+  
+  // Clear auth cookie
+  document.cookie = 'auth-storage=; path=/; max-age=0; SameSite=Lax';
   
   console.log('👋 User logged out');
 }

@@ -4,13 +4,25 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Upload, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Upload, CheckCircle2, AlertCircle, Clock, User, Eye, Download, FileText, Calendar, MessageSquare, XCircle, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useAuthInfo } from "@/hooks/use-auth-info";
+import { getDecodedToken } from "@/lib/auth-utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   getAllTraineeApplicationsByTrainee,
   getTraineeApplicationDetailByTrainee,
   createTraineeSubmission,
   uploadTraineeApplication,
+  getTraineeSubmissionDetail,
+  updateTraineeSubmission,
 } from "@/lib/actions";
 
 interface SubmittedDocument {
@@ -18,6 +30,17 @@ interface SubmittedDocument {
   documentId: number;
   requiredDocumentName: string;
   submissionStatus: "Pending" | "Approved" | "Rejected";
+}
+
+interface SubmissionDetail {
+  submissionId: number;
+  document_id: number;
+  requiredDocumentName: string;
+  submissionStatus: string;
+  submission_name: string;
+  takeNote: string;
+  fileDownloadUrl: string;
+  uploadTime: string;
 }
 
 interface ApplicationDetail {
@@ -29,6 +52,7 @@ interface ApplicationDetail {
 }
 
 export default function StudentDocumentsPage() {
+  const { displayName, user } = useAuthInfo();
   const [loading, setLoading] = useState(true);
   const [applicationDetail, setApplicationDetail] = useState<ApplicationDetail | null>(null);
   const [documents, setDocuments] = useState<SubmittedDocument[]>([]);
@@ -36,11 +60,47 @@ export default function StudentDocumentsPage() {
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: number]: string }>({});
   const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: { name: string; file: File } }>({});
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+  
+  // Modal state for viewing submission detail
+  const [selectedSubmission, setSelectedSubmission] = useState<SubmissionDetail | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  
+  // Image preview modal
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  
+  // Resubmit modal
+  const [isResubmitModalOpen, setIsResubmitModalOpen] = useState(false);
+  const [resubmitFile, setResubmitFile] = useState<File | null>(null);
+  const [resubmitNote, setResubmitNote] = useState("");
+  const [isResubmitting, setIsResubmitting] = useState(false);
+  
+  // Get user info from decoded token
+  const [userInfo, setUserInfo] = useState<{
+    fullName: string;
+    email: string;
+    studentCode: string;
+    department: string;
+  } | null>(null);
 
   // Helper function to get token from localStorage
   const getClientToken = () => {
     return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   };
+
+  // Load user info from token
+  useEffect(() => {
+    const decodedToken = getDecodedToken();
+    if (decodedToken) {
+      setUserInfo({
+        fullName: decodedToken.sub || displayName || "Học viên",
+        email: decodedToken.gmail || user?.gmail || "",
+        studentCode: decodedToken.studentCode || "N/A",
+        department: decodedToken.departmentName || "N/A",
+      });
+    }
+  }, [displayName, user]);
 
   // Fetch trainee application detail on mount
   useEffect(() => {
@@ -175,7 +235,7 @@ export default function StudentDocumentsPage() {
 
       if (result.status === "201 CREATED" || result.status === "200 OK" || result.status === "success") {
         console.log("✅ Upload successful!");
-        toast.success(`✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`, {
+        toast.success(result.message || `✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`, {
           description: `File "${file.name}" đã được tải lên`,
           duration: 4000,
         });
@@ -201,8 +261,8 @@ export default function StudentDocumentsPage() {
         }
       } else {
         console.error("❌ Upload failed:", result);
-        toast.error(`❌ Nộp tài liệu thất bại`, {
-          description: result.message || "Vui lòng thử lại",
+        toast.error(result.message || "❌ Nộp tài liệu thất bại", {
+          description: "Vui lòng thử lại",
           duration: 4000,
         });
       }
@@ -276,14 +336,14 @@ export default function StudentDocumentsPage() {
       
       if (result.status === "200 OK" || result.status === "success") {
         console.log("✅ Submit successful!");
-        toast.success("🎉 Submit hồ sơ thành công!", {
+        toast.success(result.message || "🎉 Submit hồ sơ thành công!", {
           description: "Hồ sơ của bạn đang được xem xét. Bạn sẽ nhận được thông báo khi có kết quả.",
           duration: 5000,
         });
       } else {
         console.error("❌ Submit failed with status:", result.status);
-        toast.error("❌ Submit hồ sơ thất bại", {
-          description: result.message || "Vui lòng thử lại sau",
+        toast.error(result.message || "❌ Submit hồ sơ thất bại", {
+          description: "Vui lòng thử lại sau",
           duration: 4000,
         });
       }
@@ -301,6 +361,29 @@ export default function StudentDocumentsPage() {
   const submittedCount = documents.filter(doc => doc.submissionId !== null).length;
   const totalCount = documents.length;
 
+  const handleViewSubmissionDetail = async (submissionId: number) => {
+    try {
+      setLoadingDetail(true);
+      setIsDetailModalOpen(true);
+      
+      const token = getClientToken();
+      const result: any = await getTraineeSubmissionDetail(submissionId);
+      
+      if (result.status === "200 OK" && result.data) {
+        setSelectedSubmission(result.data);
+      } else {
+        toast.error("Không thể tải chi tiết tài liệu");
+        setIsDetailModalOpen(false);
+      }
+    } catch (error) {
+      console.error("Error loading submission detail:", error);
+      toast.error("Lỗi khi tải chi tiết tài liệu");
+      setIsDetailModalOpen(false);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   const getStatusBadge = (doc: SubmittedDocument) => {
     // If has submissionId, show "Đã nộp" regardless of status
     if (doc.submissionId !== null) {
@@ -309,6 +392,26 @@ export default function StudentDocumentsPage() {
     
     // If no submissionId, show "Chờ nộp"
     return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
+  };
+
+  const getSubmissionStatusBadge = (status: string) => {
+    const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
+      "Pending": { label: "Chờ duyệt", className: "bg-yellow-100 text-yellow-800", icon: Clock },
+      "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+      "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+    };
+    
+    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
+    const Icon = statusInfo.icon;
+    
+    return (
+      <Badge className={statusInfo.className}>
+        <Icon className="w-3 h-3 mr-1" />
+        {statusInfo.label}
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -357,11 +460,24 @@ export default function StudentDocumentsPage() {
 
   return (
     <div className="space-y-6 w-full pb-8">
-      {/* Debug Button - Remove after testing */}
-      {process.env.NODE_ENV === 'development' && (
-        <Button onClick={testAPICall} variant="outline" className="bg-yellow-100">
-          🧪 Test API Call
-        </Button>
+      {/* User Info Card */}
+      {userInfo && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-600 rounded-full p-3">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-blue-900">{userInfo.fullName}</h3>
+                <div className="flex flex-wrap gap-4 mt-1 text-sm text-blue-700">
+                  <span>📧 {userInfo.email}</span>
+                  <span>🏢 {userInfo.department}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
       
       {/* Page Header */}
@@ -496,6 +612,17 @@ export default function StudentDocumentsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getStatusBadge(doc)}
+                        {doc.submissionId && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleViewSubmissionDetail(doc.submissionId!)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Xem chi tiết
+                          </Button>
+                        )}
                       </div>
                       {(doc.submissionId && uploadedFiles[doc.documentId]) && (
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={uploadedFiles[doc.documentId]}>
@@ -528,6 +655,298 @@ export default function StudentDocumentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Preview Modal */}
+      <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" />
+              Xem ảnh
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+            <img 
+              src={previewImageUrl} 
+              alt="Preview" 
+              className="max-w-full max-h-[70vh] object-contain rounded"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={() => window.open(previewImageUrl, '_blank')}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Tải xuống
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsImagePreviewOpen(false)}
+            >
+              Đóng
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resubmit Modal */}
+      <Dialog open={isResubmitModalOpen} onOpenChange={setIsResubmitModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5" />
+              Nộp lại tài liệu
+            </DialogTitle>
+            <DialogDescription>
+              Tải lên file mới và thêm ghi chú (nếu cần)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* File Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">File mới *</label>
+              <input
+                type="file"
+                className="w-full p-2 border rounded"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setResubmitFile(file);
+                    toast.info(`Đã chọn file: ${file.name}`);
+                  }
+                }}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+              {resubmitFile && (
+                <p className="text-xs text-green-600">✓ {resubmitFile.name}</p>
+              )}
+            </div>
+            
+            {/* Note */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
+              <textarea
+                className="w-full p-2 border rounded min-h-[100px]"
+                placeholder="Thêm ghi chú về tài liệu mới..."
+                value={resubmitNote}
+                onChange={(e) => setResubmitNote(e.target.value)}
+              />
+            </div>
+            
+            {/* Actions */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                onClick={async () => {
+                  if (!resubmitFile) {
+                    toast.error("Vui lòng chọn file");
+                    return;
+                  }
+                  
+                  if (!selectedSubmission) {
+                    toast.error("Không tìm thấy thông tin submission");
+                    return;
+                  }
+                  
+                  setIsResubmitting(true);
+                  const loadingToast = toast.loading("Đang nộp lại tài liệu...");
+                  
+                  try {
+                    const token = getClientToken();
+                    const result: any = await updateTraineeSubmission(
+                      selectedSubmission.submissionId,
+                      {
+                        requireDocumentName: selectedSubmission.requiredDocumentName,
+                        newTakeNote: resubmitNote || "Nộp lại tài liệu",
+                        newSubmissionDocumentFile: resubmitFile,
+                        token,
+                      }
+                    );
+                    
+                    toast.dismiss(loadingToast);
+                    
+                    if (result.status === "200 OK" || result.status === "success") {
+                      toast.success("✅ Nộp lại tài liệu thành công!");
+                      setIsResubmitModalOpen(false);
+                      setIsDetailModalOpen(false);
+                      
+                      // Refresh documents list
+                      if (applicationDetail) {
+                        const detailRes: any = await getTraineeApplicationDetailByTrainee(
+                          applicationDetail.traineeApplicationId,
+                          token
+                        );
+                        if (detailRes.status === "200 OK" && detailRes.data) {
+                          setDocuments(detailRes.data.submittedDocuments || []);
+                        }
+                      }
+                    } else {
+                      toast.error(result.message || "Nộp lại tài liệu thất bại");
+                    }
+                  } catch (error) {
+                    toast.dismiss(loadingToast);
+                    console.error("Error resubmitting:", error);
+                    toast.error("Lỗi khi nộp lại tài liệu");
+                  } finally {
+                    setIsResubmitting(false);
+                  }
+                }}
+                disabled={isResubmitting || !resubmitFile}
+              >
+                {isResubmitting ? "Đang nộp..." : "Nộp lại"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsResubmitModalOpen(false)}
+                disabled={isResubmitting}
+              >
+                Hủy
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Submission Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Chi Tiết Tài Liệu
+            </DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về tài liệu đã nộp
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetail ? (
+            <div className="space-y-4 py-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ) : selectedSubmission ? (
+            <div className="space-y-6 py-4">
+              {/* Document Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Tên tài liệu
+                </label>
+                <p className="text-base font-semibold">{selectedSubmission.requiredDocumentName}</p>
+              </div>
+
+              {/* Submission Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Tên bài nộp</label>
+                <p className="text-base">{selectedSubmission.submission_name}</p>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
+                <div>{getSubmissionStatusBadge(selectedSubmission.submissionStatus)}</div>
+              </div>
+
+              {/* Upload Time */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Thời gian nộp
+                </label>
+                <p className="text-base">
+                  {new Date(selectedSubmission.uploadTime).toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+
+              {/* Take Note */}
+              {selectedSubmission.takeNote && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Ghi chú
+                  </label>
+                  <p className="text-base p-3 bg-muted rounded-lg">{selectedSubmission.takeNote}</p>
+                </div>
+              )}
+
+              {/* File Download */}
+              {selectedSubmission.fileDownloadUrl && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    File đã nộp
+                  </label>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => window.open(selectedSubmission.fileDownloadUrl, '_blank')}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Tải xuống file
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const fileUrl = selectedSubmission.fileDownloadUrl;
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(fileUrl);
+                        
+                        if (isImage) {
+                          setPreviewImageUrl(fileUrl);
+                          setIsImagePreviewOpen(true);
+                        } else {
+                          window.open(fileUrl, '_blank');
+                        }
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Xem file
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Resubmit Button - Only show if status is Reject */}
+              {selectedSubmission.submissionStatus === "Reject" && (
+                <div className="pt-4 border-t">
+                  <Button
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                    onClick={() => {
+                      setIsResubmitModalOpen(true);
+                      setResubmitNote("");
+                      setResubmitFile(null);
+                    }}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Nộp lại tài liệu
+                  </Button>
+                </div>
+              )}
+
+              {/* Submission ID */}
+              <div className="pt-4 border-t">
+                <p className="text-xs text-muted-foreground">
+                  ID Submission: #{selectedSubmission.submissionId}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Không thể tải thông tin chi tiết</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

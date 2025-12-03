@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { siteConfig } from "@/config/site";
 import { fontMono, fontSans } from "@/lib/fonts";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
 // import SessionProviders from "@/providers/session-provider";
@@ -63,7 +63,7 @@ export default function RootLayout({
             <QueryProvider>
               <ModalProvider /> */}
               {children}
-              <Toaster />
+              <Toaster position="top-right" richColors />
             {/* </QueryProvider>
           </SessionProviders> */}
         </ThemeProvider>

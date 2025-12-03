@@ -1,3 +1,5 @@
+import { Toaster } from "sonner";
+
 export default function AuthLayout({
   children,
 }: {
@@ -6,6 +8,9 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-muted/20 flex items-center justify-center p-4">
       {children}
+      
+      {/* Toast Notifications */}
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

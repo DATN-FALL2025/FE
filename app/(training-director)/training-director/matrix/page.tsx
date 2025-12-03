@@ -53,7 +53,7 @@ import {
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
 import { getAllDocuments } from "@/lib/actions/document";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
 import type { ApiResponse as PositionApiResponse, Position } from "@/types/position";
 import type { ApiResponse as DocumentApiResponse, Document } from "@/types/document";
@@ -69,7 +69,6 @@ function removeVietnameseAccents(str: string): string {
 }
 
 export default function TrainingDirectorMatrixPage() {
-  const { toast } = useToast();
   const [departments, setDepartments] = useState<any[]>([]);
   const [allMatrixData, setAllMatrixData] = useState<any>(null); // Store all data from API
   const [filterDepartmentId, setFilterDepartmentId] = useState<string>("all");

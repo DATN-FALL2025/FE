@@ -26,10 +26,9 @@ import {
   createDocumentRuleValue,
   getDocumentWithRules,
 } from "@/lib/actions/matrix";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast-compat";
 
 export default function HeadMatrixPage() {
-  const { toast } = useToast();
   const [allMatrixData, setAllMatrixData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");

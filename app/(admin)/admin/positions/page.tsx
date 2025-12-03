@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Upload, X, Loader2, AlertCircle } from "lucide-react";
 import { getToken } from "@/lib/auth-utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast-compat";
 import {
   Dialog,
   DialogContent,
@@ -67,7 +67,6 @@ interface Department {
 }
 
 export default function PositionsPage() {
-  const { toast } = useToast();
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);

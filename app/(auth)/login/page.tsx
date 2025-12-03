@@ -7,16 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, Loader2, AlertCircle } from "lucide-react";
+import { GraduationCap, Loader2 } from "lucide-react";
 import { authenticateAccount } from "@/lib/actions/auth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { setUser, getRoleRedirectPath } from "@/lib/auth-utils";
 import type { ApiResponse, AuthData } from "@/types/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     userName: "",
     password: "",
@@ -25,7 +24,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
       const result = await authenticateAccount({
@@ -34,7 +32,10 @@ export default function LoginPage() {
       }) as ApiResponse<AuthData>;
 
       if (result.status === 'error') {
-        setError(result.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        toast.error(result.message || 'Đăng nhập thất bại', {
+          description: 'Vui lòng kiểm tra lại thông tin đăng nhập',
+          duration: 4000,
+        });
         setIsLoading(false);
         return;
       }
@@ -52,17 +53,28 @@ export default function LoginPage() {
         
         console.log('🔀 Redirecting to:', redirectPath);
         
+        toast.success('Đăng nhập thành công!', {
+          description: `Chào mừng ${result.data.userName}`,
+          duration: 2000,
+        });
+        
         // Small delay to ensure localStorage is updated
         setTimeout(() => {
           router.push(redirectPath);
         }, 100);
       } else {
         // No user data returned
-        setError('Đăng nhập thành công nhưng không nhận được thông tin user');
+        toast.error('Đăng nhập thất bại', {
+          description: 'Không nhận được thông tin người dùng',
+          duration: 4000,
+        });
         setIsLoading(false);
       }
     } catch (err) {
-      setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      toast.error('Có lỗi xảy ra', {
+        description: 'Vui lòng thử lại sau',
+        duration: 4000,
+      });
       setIsLoading(false);
     }
   };
@@ -90,13 +102,6 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="userName">Tên đăng nhập</Label>
               <Input

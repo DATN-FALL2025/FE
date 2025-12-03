@@ -118,7 +118,7 @@ export default function UsersPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await createUser(formData);
+      const result: any = await createUser(formData);
       
       if (result.status === 'success') {
         setSuccess("Tạo tài khoản thành công!");
@@ -181,7 +181,7 @@ export default function UsersPage() {
         return;
       }
 
-      const result = await importUsers(accounts);
+      const result: any = await importUsers(accounts);
       
       if (result.status === 'success') {
         setSuccess(`Import thành công ${accounts.length} tài khoản!`);
