@@ -47,6 +47,29 @@ export default function LoginPage() {
         // Store user info using auth utils
         setUser(result.data);
 
+        // Log JWT token details
+        if (result.data.token) {
+          try {
+            const parts = result.data.token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+              console.log('🔐 JWT Token Payload:', JSON.stringify(payload, null, 2));
+              console.log('📋 JWT Fields:', {
+                sub: payload.sub,
+                gmail: payload.gmail,
+                role: payload.role,
+                departmentId: payload.departmentId,
+                departmentName: payload.departmentName,
+                studentCode: payload.studentCode,
+                exp: payload.exp ? new Date(payload.exp * 1000).toLocaleString() : 'N/A',
+                iat: payload.iat ? new Date(payload.iat * 1000).toLocaleString() : 'N/A',
+              });
+            }
+          } catch (e) {
+            console.error('❌ Error decoding JWT:', e);
+          }
+        }
+
         // Get redirect path based on user role
         const userRole = result.data?.role || result.data?.roles?.[0]?.roleName;
         const redirectPath = getRoleRedirectPath(userRole);

@@ -10,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getDepartmentIdFromToken, getDecodedToken } from "@/lib/auth-utils";
 import {
   Dialog,
   DialogContent,
@@ -45,14 +46,32 @@ export default function HeadMatrixPage() {
   const [ruleValues, setRuleValues] = useState<Record<number, string>>({});
   const [isLoadingRules, setIsLoadingRules] = useState(false);
 
-  // TODO: Get department ID from user session/auth
-  // For now, filter by first department in data
-  const userDepartmentId = allMatrixData?.[0]?.departmentId || null;
+  // Get department info from JWT token
+  const userDepartmentId = getDepartmentIdFromToken();
+  const decodedToken = getDecodedToken();
+  const userDepartmentName = decodedToken?.departmentName || null;
+
+  // Debug logs
+  console.log('🔍 Debug Head Matrix:');
+  console.log('  userDepartmentId from JWT:', userDepartmentId);
+  console.log('  userDepartmentName from JWT:', userDepartmentName);
+  console.log('  allMatrixData:', allMatrixData);
+  console.log('  allMatrixData length:', allMatrixData?.length);
+  
+  if (allMatrixData && allMatrixData.length > 0) {
+    console.log('  Sample position:', allMatrixData[0]);
+    console.log('  All departmentIds in data:', [...new Set(allMatrixData.map((p: any) => p.departmentId))]);
+  }
 
   // Filter matrix data by user's department
-  const matrixData = allMatrixData?.filter(
-    (position: any) => position.departmentId === userDepartmentId
-  );
+  const matrixData = userDepartmentId 
+    ? allMatrixData?.filter(
+        (position: any) => position.departmentId === Number(userDepartmentId)
+      )
+    : null;
+  
+  console.log('  Filtered matrixData:', matrixData);
+  console.log('  Filtered matrixData length:', matrixData?.length);
 
   // Load matrix data on mount
   useEffect(() => {
@@ -62,14 +81,19 @@ export default function HeadMatrixPage() {
 
       try {
         const matrixResult: any = await getAllMatrix();
+        
+        console.log('📥 getAllMatrix API Response:', matrixResult);
+        console.log('📥 matrixResult.data:', matrixResult.data);
 
         if (matrixResult.status === 'error') {
           setError(matrixResult.message);
           setAllMatrixData(null);
         } else {
           setAllMatrixData(matrixResult.data);
+          console.log('✅ Matrix data loaded, length:', matrixResult.data?.length);
         }
       } catch (err: any) {
+        console.error('❌ Error loading matrix:', err);
         setError(err.message || 'Failed to load matrix data');
       } finally {
         setIsLoading(false);
@@ -308,17 +332,13 @@ export default function HeadMatrixPage() {
           <h1 className="text-4xl font-bold tracking-tight">Department Document Matrix</h1>
           <p className="text-muted-foreground mt-2 text-base">
             View and manage document requirements for your department&apos;s training positions
+          
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          {userDepartmentName && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Department: <span className="font-semibold">{userDepartmentName}</span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -350,6 +370,20 @@ export default function HeadMatrixPage() {
               >
                 Retry
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : !userDepartmentId ? (
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-yellow-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-yellow-600">No Department Access</h3>
+              <p className="text-sm text-muted-foreground text-center max-w-md">
+                Your account is not assigned to any department. Please contact administrator.
+              </p>
             </div>
           </CardContent>
         </Card>

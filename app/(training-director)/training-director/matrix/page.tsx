@@ -533,16 +533,6 @@ export default function TrainingDirectorMatrixPage() {
             Configure document requirements for training positions by department
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
-        </div>
       </div>
 
       {/* Loading State */}
