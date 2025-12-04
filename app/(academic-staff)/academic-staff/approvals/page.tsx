@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -685,10 +686,11 @@ export default function AcademicStaffApprovalsPage() {
           </DialogHeader>
           <div className="relative w-full h-[75vh] bg-muted/20 flex items-center justify-center p-6">
             {previewImageUrl ? (
-              <img
+              <Image
                 src={previewImageUrl}
                 alt={previewDocumentName}
-                className="max-w-full max-h-full object-contain rounded-lg"
+                fill
+                className="object-contain rounded-lg"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = "none";

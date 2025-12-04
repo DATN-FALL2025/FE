@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -665,11 +666,12 @@ export default function StudentDocumentsPage() {
               Xem ảnh
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
-            <img 
+          <div className="relative flex items-center justify-center p-4 bg-muted rounded-lg h-[70vh]">
+            <Image 
               src={previewImageUrl} 
               alt="Preview" 
-              className="max-w-full max-h-[70vh] object-contain rounded"
+              fill
+              className="object-contain rounded"
             />
           </div>
           <div className="flex gap-2">
