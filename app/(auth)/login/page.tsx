@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { authenticateAccount } from "@/lib/actions/auth";
 import { toast } from "sonner";
-import { setUser, getRoleRedirectPath } from "@/lib/auth-utils";
+import { setUser, getRoleRedirectPath, getDecodedToken } from "@/lib/auth-utils";
 import type { ApiResponse, AuthData } from "@/types/auth";
 
 export default function LoginPage() {
@@ -20,6 +20,19 @@ export default function LoginPage() {
     userName: "",
     password: "",
   });
+
+  // Check if user is already logged in and redirect to their dashboard
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      const decodedToken = getDecodedToken();
+      if (decodedToken?.role) {
+        const redirectPath = getRoleRedirectPath(decodedToken.role);
+        console.log('🔀 User already logged in, redirecting to:', redirectPath);
+        router.push(redirectPath);
+      }
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,14 +104,14 @@ export default function LoginPage() {
             <p className="text-sm text-muted-foreground">Aviation Academy</p>
           </div>
         </div>
-        <h2 className="text-3xl font-bold">Welcome Back</h2>
-        <p className="text-muted-foreground mt-2">Sign in to your account to continue</p>
+        <h2 className="text-3xl font-bold">Chào mừng trở lại</h2>
+        <p className="text-muted-foreground mt-2">Đăng nhập vào tài khoản của bạn để tiếp tục</p>
       </div>
 
       <Card className="border-0 shadow-xl">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Enter your credentials to access the system</CardDescription>
+          <CardTitle>Đăng nhập</CardTitle>
+          <CardDescription>Nhập thông tin đăng nhập để truy cập hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,23 +161,18 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don&apos;t have an account? </span>
-            <Link href="/signup" className="text-primary font-medium hover:underline">
-              Sign up
-            </Link>
-          </div>
+
         </CardContent>
       </Card>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
-        By continuing, you agree to our{" "}
+        Bằng việc tiếp tục, bạn đồng ý với{" "}
         <Link href="/terms" className="text-primary hover:underline">
-          Terms of Service
+          Điều khoản dịch vụ
         </Link>{" "}
-        and{" "}
+        và{" "}
         <Link href="/privacy" className="text-primary hover:underline">
-          Privacy Policy
+          Chính sách bảo mật
         </Link>
       </p>
     </div>

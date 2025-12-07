@@ -29,7 +29,8 @@ interface SubmittedDocument {
   submissionId: number | null;
   documentId: number;
   requiredDocumentName: string;
-  submissionStatus: "Pending" | "Approved" | "Rejected";
+  apply_or_not: string; // "Not apply" or "Applied"
+  url?: string | null;
 }
 
 interface SubmissionDetail {
@@ -134,8 +135,24 @@ export default function StudentDocumentsPage() {
             if ((detailRes.status === "200 OK" || detailRes.status === "success") && detailRes.data) {
               console.log("📄 Application Detail:", detailRes.data);
               console.log("📄 Submitted Documents:", detailRes.data.submittedDocuments);
+              
+              // Validate document data
+              const docs = detailRes.data.submittedDocuments || [];
+              docs.forEach((doc: any, index: number) => {
+                console.log(`📄 Document ${index}:`, {
+                  documentId: doc.documentId,
+                  requiredDocumentName: doc.requiredDocumentName,
+                  submissionId: doc.submissionId,
+                  apply_or_not: doc.apply_or_not
+                });
+                
+                if (!doc.requiredDocumentName) {
+                  console.warn(`⚠️ Document ${index} has null/empty requiredDocumentName!`, doc);
+                }
+              });
+              
               setApplicationDetail(detailRes.data);
-              setDocuments(detailRes.data.submittedDocuments || []);
+              setDocuments(docs);
             } else {
               console.error("❌ Invalid detail response status:", detailRes.status);
             }
@@ -201,6 +218,14 @@ export default function StudentDocumentsPage() {
     const document = documents.find(d => d.documentId === docId);
     if (!document) {
       console.error("❌ Document not found for docId:", docId);
+      toast.error("Không tìm thấy thông tin tài liệu");
+      return;
+    }
+
+    // Validate requireDocumentName
+    if (!document.requiredDocumentName || document.requiredDocumentName.trim() === '') {
+      console.error("❌ requiredDocumentName is null or empty:", document);
+      toast.error("Tên tài liệu không hợp lệ. Vui lòng tải lại trang.");
       return;
     }
 
@@ -215,14 +240,14 @@ export default function StudentDocumentsPage() {
       console.log("📤 Calling createTraineeSubmission with:", {
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
+        requireDocumentName: document.requiredDocumentName,
         fileName: file.name,
       });
 
       const result: any = await createTraineeSubmission({
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
+        requireDocumentName: document.requiredDocumentName,
         takeNote: "Submitted via web portal",
         submissionDocumentFile: file,
         token,
@@ -301,7 +326,7 @@ export default function StudentDocumentsPage() {
       return;
     }
 
-    const pendingDocs = documents.filter(doc => doc.submissionId === null);
+    const pendingDocs = documents.filter(doc => doc.apply_or_not === "Not apply");
     console.log("⏳ Pending documents:", pendingDocs);
     
     if (pendingDocs.length > 0) {
@@ -358,7 +383,7 @@ export default function StudentDocumentsPage() {
     }
   };
 
-  const submittedCount = documents.filter(doc => doc.submissionId !== null).length;
+  const submittedCount = documents.filter(doc => doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp").length;
   const totalCount = documents.length;
 
   const handleViewSubmissionDetail = async (submissionId: number) => {
@@ -385,12 +410,12 @@ export default function StudentDocumentsPage() {
   };
 
   const getStatusBadge = (doc: SubmittedDocument) => {
-    // If has submissionId, show "Đã nộp" regardless of status
-    if (doc.submissionId !== null) {
+    // Use apply_or_not field to determine status
+    if (doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") {
       return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3" />Đã nộp</span>;
     }
     
-    // If no submissionId, show "Chờ nộp"
+    // If "Not apply" or any other value, show "Chờ nộp"
     return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
   };
 
@@ -449,7 +474,7 @@ export default function StudentDocumentsPage() {
     const result = await createTraineeSubmission({
       documentID: 1,
       traineeApplicationId: applicationDetail?.traineeApplicationId || 3,
-      submissionName: "Test Document",
+      requireDocumentName: "Test Document",
       takeNote: "Test submission",
       submissionDocumentFile: testFile,
       token,
@@ -595,7 +620,7 @@ export default function StudentDocumentsPage() {
                         ) : (
                           <>
                             <Upload className="w-4 h-4 mr-2" />
-                            {doc.submissionId ? "Nộp lại" : "Tải lên"}
+                            {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") ? "Nộp lại" : "Tải lên"}
                           </>
                         )}
                       </Button>
@@ -612,7 +637,7 @@ export default function StudentDocumentsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getStatusBadge(doc)}
-                        {doc.submissionId && (
+                        {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && doc.submissionId && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -635,41 +660,63 @@ export default function StudentDocumentsPage() {
               )}
             </div>
 
-            {/* Action Button */}
-            <div className="border-t pt-4">
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700"
-                size="lg"
-                onClick={handleSubmitApplication}
-                disabled={submittedCount < totalCount}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Submit Hồ Sơ Tổng
-              </Button>
-              {submittedCount < totalCount && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Vui lòng nộp đủ {totalCount} tài liệu trước khi submit
+            {/* Action Button - Only show if all documents submitted AND status is Pending */}
+            {submittedCount === totalCount && applicationDetail.traineeApplicationStatus === "Pending" && (
+              <div className="border-t pt-4">
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  size="lg"
+                  onClick={handleSubmitApplication}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Submit Hồ Sơ Tổng
+                </Button>
+              </div>
+            )}
+            
+            {/* Show message if not all documents submitted yet */}
+            {submittedCount < totalCount && (
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Vui lòng nộp đủ {totalCount} tài liệu trước khi submit hồ sơ tổng
+                  <br />
+                  <span className="font-medium">Đã nộp: {submittedCount}/{totalCount}</span>
                 </p>
-              )}
-            </div>
+              </div>
+            )}
+            
+            {/* Show message if already submitted */}
+            {submittedCount === totalCount && applicationDetail.traineeApplicationStatus !== "Pending" && (
+              <div className="border-t pt-4">
+                <div className="p-3 bg-blue-50 rounded-lg text-center">
+                  <p className="text-sm font-medium text-blue-900">
+                    ✅ Hồ sơ đã được submit
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Trạng thái: {applicationDetail.traineeApplicationStatus}
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Image Preview Modal */}
+      {/* File Preview Modal */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5" />
-              Xem ảnh
+              <FileText className="w-5 h-5" />
+              Xem file
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
-            <img 
+          <div className="relative flex items-center justify-center p-4 bg-muted rounded-lg h-[70vh]">
+            <Image 
               src={previewImageUrl} 
               alt="Preview" 
-              className="max-w-full max-h-[70vh] object-contain rounded"
+              fill
+              className="object-contain rounded"
             />
           </div>
           <div className="flex gap-2">

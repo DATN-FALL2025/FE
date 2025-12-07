@@ -19,32 +19,32 @@ import { useAuthInfo } from "@/hooks/use-auth-info";
 
 const adminNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "User Management",
+    name: "Quản lý người dùng",
     href: "/admin/users",
     icon: Users,
   },
   {
-    name: "Department Management",
+    name: "Quản lý phòng ban",
     href: "/admin/departments",
     icon: Building2,
   },
   {
-    name: "Position Management",
+    name: "Quản lý vị trí",
     href: "/admin/positions",
     icon: Users,
   },
   {
-    name: "Document Management",
+    name: "Quản lý tài liệu",
     href: "/admin/documents",
     icon: FileText,
   },
   {
-    name: "Rule Management",
+    name: "Quản lý quy tắc",
     href: "/admin/rules",
     icon: Shield,
   },
@@ -75,7 +75,7 @@ export const AdminSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Administration
+                Quản trị hệ thống
               </div>
               <ul role="list" className="space-y-1">
                 {adminNavigation.map((item) => {
@@ -130,7 +130,7 @@ export const AdminSidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (

@@ -16,12 +16,12 @@ import { useAuthInfo } from "@/hooks/use-auth-info";
 
 const academicStaffNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/academic-staff/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Document Approvals",
+    name: "Duyệt tài liệu",
     href: "/academic-staff/approvals",
     icon: FileCheck,
   },
@@ -52,7 +52,7 @@ export const AcademicStaffSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Academic Management
+                Quản lý học thuật
               </div>
               <ul role="list" className="space-y-1">
                 {academicStaffNavigation.map((item) => {
@@ -106,7 +106,7 @@ export const AcademicStaffSidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (

@@ -21,37 +21,37 @@ import { useAuthInfo } from "@/hooks/use-auth-info";
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/trainees/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "My Documents",
+    name: "Tài liệu của tôi",
     href: "/trainees/documents",
     icon: FileText,
   },
   {
-    name: "Notifications",
+    name: "Thông báo",
     href: "/trainees/notifications",
     icon: Bell,
   },
   {
-    name: "Admission Result",
+    name: "Kết quả tuyển sinh",
     href: "/trainees/result",
     icon: Trophy,
   },
   {
-    name: "Document Matrix",
+    name: "Ma trận tài liệu",
     href: "/trainees/matrix",
     icon: Grid3x3,
   },
   {
-    name: "Profile",
+    name: "Hồ sơ",
     href: "/trainees/profile",
     icon: User,
   },
   {
-    name: "Security Settings",
+    name: "Cài đặt bảo mật",
     href: "/trainees/settings",
     icon: Shield,
   },
@@ -132,7 +132,7 @@ export const Sidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (

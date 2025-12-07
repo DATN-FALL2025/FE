@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,8 +21,23 @@ import {
   Users,
   BarChart3,
 } from "lucide-react";
+import { getDecodedToken, getRoleRedirectPath } from "@/lib/auth-utils";
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  // Check if user is already logged in and redirect to their dashboard
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      const decodedToken = getDecodedToken();
+      if (decodedToken?.role) {
+        const redirectPath = getRoleRedirectPath(decodedToken.role);
+        console.log('🔀 User already logged in, redirecting to:', redirectPath);
+        router.push(redirectPath);
+      }
+    }
+  }, [router]);
   const features = [
     {
       icon: Upload,

@@ -23,32 +23,32 @@ import { useAuthInfo } from "@/hooks/use-auth-info";
 
 const trainingDirectorNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/training-director/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Document Matrix",
+    name: "Ma trận tài liệu",
     href: "/training-director/matrix",
     icon: FileText,
   },
   {
-    name: "Reports",
+    name: "Báo cáo",
     href: "/training-director/reports",
     icon: BarChart3,
   },
   {
-    name: "Admission Results",
+    name: "Kết quả tuyển sinh",
     href: "/training-director/results",
     icon: Trophy,
   },
   {
-    name: "Profile",
+    name: "Hồ sơ",
     href: "/training-director/profile",
     icon: User,
   },
   {
-    name: "Security Settings",
+    name: "Cài đặt bảo mật",
     href: "/training-director/settings",
     icon: Shield,
   },
@@ -79,7 +79,7 @@ export const TrainingDirectorSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Training Management
+                Quản lý đào tạo
               </div>
               <ul role="list" className="space-y-1">
                 {trainingDirectorNavigation.map((item) => {
@@ -133,7 +133,7 @@ export const TrainingDirectorSidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (
