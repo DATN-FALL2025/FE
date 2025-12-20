@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -712,12 +713,37 @@ export default function StudentDocumentsPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="relative flex items-center justify-center p-4 bg-muted rounded-lg h-[70vh]">
-            <Image 
-              src={previewImageUrl} 
-              alt="Preview" 
-              fill
-              className="object-contain rounded"
-            />
+            {previewImageUrl ? (
+              previewImageUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={previewImageUrl}
+                  className="w-full h-full rounded-lg"
+                  title="PDF Preview"
+                />
+              ) : /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(previewImageUrl) ? (
+                <Image 
+                  src={previewImageUrl} 
+                  alt="Preview" 
+                  fill
+                  className="object-contain rounded"
+                />
+              ) : (
+                <div className="text-center">
+                  <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-4">
+                    Không thể xem trước file này
+                  </p>
+                  <Button
+                    onClick={() => window.open(previewImageUrl, '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Mở trong tab mới
+                  </Button>
+                </div>
+              )
+            ) : (
+              <p className="text-muted-foreground">Không có file</p>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
@@ -945,9 +971,10 @@ export default function StudentDocumentsPage() {
                       variant="outline"
                       onClick={() => {
                         const fileUrl = selectedSubmission.fileDownloadUrl;
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(fileUrl);
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
+                        const isPdf = /\.pdf$/i.test(fileUrl);
                         
-                        if (isImage) {
+                        if (isImage || isPdf) {
                           setPreviewImageUrl(fileUrl);
                           setIsImagePreviewOpen(true);
                         } else {
