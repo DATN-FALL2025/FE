@@ -47,8 +47,14 @@ interface SubmissionDetail {
 interface ApplicationDetail {
   traineeApplicationId: number;
   traineeApplicationStatus: string;
+  traineeApplicationCreateAt: string;
+  traineeApplicationUpdateAt: string | null;
+  positionId: number;
   positionName: string;
   departmentName: string;
+  positionDescription: string;
+  accountId: number;
+  fullName: string;
   submittedDocuments: SubmittedDocument[];
 }
 
@@ -216,14 +222,14 @@ export default function StudentDocumentsPage() {
       console.log("📤 Calling createTraineeSubmission with:", {
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
+        requireDocumentName: document.requiredDocumentName,
         fileName: file.name,
       });
 
       const result: any = await createTraineeSubmission({
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
+        requireDocumentName: document.requiredDocumentName,
         takeNote: "Submitted via web portal",
         submissionDocumentFile: file,
         token,
@@ -256,8 +262,9 @@ export default function StudentDocumentsPage() {
 
         // Refresh application detail to get updated submittedDocuments
         const detailRes: any = await getTraineeApplicationDetailByTrainee(applicationDetail.traineeApplicationId, token);
-        
-        if (detailRes.status === "200 OK" && detailRes.data) {
+
+        if ((detailRes.status === "200 OK" || detailRes.status === "success") && detailRes.data) {
+          setApplicationDetail(detailRes.data);
           setDocuments(detailRes.data.submittedDocuments || []);
         }
       } else {
@@ -386,13 +393,29 @@ export default function StudentDocumentsPage() {
   };
 
   const getStatusBadge = (doc: SubmittedDocument) => {
-    // If has submissionId, show "Đã nộp" regardless of status
-    if (doc.submissionId !== null) {
-      return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3" />Đã nộp</span>;
-    }
-    
     // If no submissionId, show "Chờ nộp"
-    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
+    if (doc.submissionId === null) {
+      return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
+    }
+
+    // If has submissionId, show status based on submissionStatus
+    const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
+      "Pending": { label: "Chờ duyệt", className: "bg-blue-100 text-blue-800", icon: Clock },
+      "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+      "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+    };
+
+    const statusInfo = statusMap[doc.submissionStatus] || { label: "Đã nộp", className: "bg-green-100 text-green-800", icon: CheckCircle2 };
+    const Icon = statusInfo.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}>
+        <Icon className="w-3 h-3" />
+        {statusInfo.label}
+      </span>
+    );
   };
 
   const getSubmissionStatusBadge = (status: string) => {
@@ -403,10 +426,31 @@ export default function StudentDocumentsPage() {
       "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
       "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
     };
-    
+
     const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
     const Icon = statusInfo.icon;
-    
+
+    return (
+      <Badge className={statusInfo.className}>
+        <Icon className="w-3 h-3 mr-1" />
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
+  const getApplicationStatusBadge = (status: string) => {
+    const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
+      "Pending": { label: "Đang chờ xử lý", className: "bg-yellow-100 text-yellow-800", icon: Clock },
+      "Submitted": { label: "Đã nộp", className: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
+      "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+      "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+    };
+
+    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
+    const Icon = statusInfo.icon;
+
     return (
       <Badge className={statusInfo.className}>
         <Icon className="w-3 h-3 mr-1" />
@@ -502,17 +546,59 @@ export default function StudentDocumentsPage() {
             {/* Application Details */}
             <div className="space-y-4 mb-8">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Vị trí</label>
+                <label className="text-sm font-medium text-muted-foreground">Họ tên</label>
+                <p className="text-base font-semibold">{applicationDetail.fullName}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Vị trí ứng tuyển</label>
                 <p className="text-base font-semibold">{applicationDetail.positionName}</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Phòng ban</label>
                 <p className="text-base font-semibold">{applicationDetail.departmentName}</p>
               </div>
+              {applicationDetail.positionDescription && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Mô tả vị trí</label>
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">{applicationDetail.positionDescription}</p>
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Trạng thái đơn</label>
-                <p className="text-base font-semibold">{applicationDetail.traineeApplicationStatus}</p>
+                <div>{getApplicationStatusBadge(applicationDetail.traineeApplicationStatus)}</div>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Ngày tạo đơn
+                </label>
+                <p className="text-sm">
+                  {new Date(applicationDetail.traineeApplicationCreateAt).toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              {applicationDetail.traineeApplicationUpdateAt && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Cập nhật lần cuối
+                  </label>
+                  <p className="text-sm">
+                    {new Date(applicationDetail.traineeApplicationUpdateAt).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Document Statistics */}
