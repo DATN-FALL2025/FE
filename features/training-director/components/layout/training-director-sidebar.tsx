@@ -20,6 +20,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 const trainingDirectorNavigation = [
   {
@@ -31,6 +32,11 @@ const trainingDirectorNavigation = [
     name: "Ma trận tài liệu",
     href: "/training-director/matrix",
     icon: FileText,
+  },
+  {
+    name: "Duyệt Ma trận",
+    href: "/training-director/approvals",
+    icon: Shield,
   },
 ];
 
@@ -102,7 +108,7 @@ export const TrainingDirectorSidebar = () => {
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   {role && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {translateRole(role)}
                     </p>
                   )}
                 </div>

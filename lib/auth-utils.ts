@@ -228,3 +228,18 @@ export function getDecodedToken(): any {
 
   return decodeJWT(token);
 }
+
+/**
+ * Translate role to Vietnamese
+ */
+export function translateRole(role: string): string {
+  const roleTranslations: Record<string, string> = {
+    'ADMIN': 'Quản trị viên',
+    'ACADEMIC_STAFF_AFFAIR': 'Nhân viên Học Vụ',
+    'HEAD_OF_DEPARTMENT': 'Trưởng Khoa',
+    'TRAINING_DIRECTOR': 'Giám đốc Đào tạo',
+    'TRAINEE': 'Học viên',
+  };
+
+  return roleTranslations[role] || role.replace(/_/g, ' ');
+}

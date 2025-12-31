@@ -17,62 +17,62 @@ import {
 export default function HeadOfDepartmentDashboardPage() {
   const stats = [
     {
-      label: "Training Programs",
+      label: "Chương trình đào tạo",
       value: 5,
       icon: BookOpen,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: "+1 this month",
+      change: "+1 tháng này",
     },
     {
-      label: "Document Matrices",
+      label: "Ma trận tài liệu",
       value: 12,
       icon: FileCheck,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      change: "3 pending approval",
+      change: "3 chờ phê duyệt",
     },
     {
-      label: "Total Students",
+      label: "Tổng số học viên",
       value: 342,
       icon: Users,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
-      change: "+15 this week",
+      change: "+15 tuần này",
     },
     {
-      label: "Compliance Rate",
+      label: "Tỷ lệ tuân thủ",
       value: "96%",
       icon: TrendingUp,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
-      change: "+2% vs last month",
+      change: "+2% so với tháng trước",
     },
   ];
 
   const pendingMatrices = [
     {
       id: 1,
-      program: "Pilot Training - CPL",
+      program: "Đào tạo phi công - CPL",
       code: "PT-CPL-2024",
       documents: 15,
-      createdBy: "Academic Staff",
+      createdBy: "Nhân viên học vụ",
       status: "pending_review",
     },
     {
       id: 2,
-      program: "Cabin Crew Advanced",
+      program: "Tiếp viên hàng không nâng cao",
       code: "CC-ADV-2024",
       documents: 12,
-      createdBy: "Academic Staff",
+      createdBy: "Nhân viên học vụ",
       status: "pending_review",
     },
     {
       id: 3,
-      program: "Aircraft Maintenance",
+      program: "Bảo dưỡng máy bay",
       code: "AM-BASIC-2024",
       documents: 18,
-      createdBy: "Academic Staff",
+      createdBy: "Nhân viên học vụ",
       status: "pending_review",
     },
   ];
@@ -82,14 +82,14 @@ export default function HeadOfDepartmentDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Department Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Bảng điều khiển khoa</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Manage training program requirements and document matrices
+            Quản lý yêu cầu chương trình đào tạo và ma trận tài liệu
           </p>
         </div>
         <Button size="lg" className="gap-2">
           <Plus className="w-5 h-5" />
-          Configure New Matrix
+          Cấu hình ma trận mới
         </Button>
       </div>
 
@@ -126,13 +126,13 @@ export default function HeadOfDepartmentDashboardPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold">Pending Matrix Approvals</CardTitle>
+                  <CardTitle className="text-xl font-bold">Ma trận chờ phê duyệt</CardTitle>
                   <CardDescription className="text-base mt-1.5">
-                    Document matrices awaiting your approval
+                    Ma trận tài liệu đang chờ bạn phê duyệt
                   </CardDescription>
                 </div>
                 <Badge className="bg-orange-500 hover:bg-orange-600 text-white h-9 px-4">
-                  {pendingMatrices.length} Pending
+                  {pendingMatrices.length} Chờ duyệt
                 </Badge>
               </div>
             </CardHeader>
@@ -151,18 +151,18 @@ export default function HeadOfDepartmentDashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{matrix.documents} required documents</span>
+                      <span>{matrix.documents} tài liệu yêu cầu</span>
                       <span>•</span>
-                      <span>Created by {matrix.createdBy}</span>
+                      <span>Tạo bởi {matrix.createdBy}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline">
                       <Settings className="w-4 h-4 mr-2" />
-                      Review
+                      Xem xét
                     </Button>
                     <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                      Approve
+                      Phê duyệt
                     </Button>
                   </div>
                 </div>
@@ -175,24 +175,24 @@ export default function HeadOfDepartmentDashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
+              <CardTitle className="text-xl font-bold">Thao tác nhanh</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <FileCheck className="w-5 h-5" />
-                View All Matrices
+                Xem tất cả ma trận
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <BookOpen className="w-5 h-5" />
-                Training Programs
+                Chương trình đào tạo
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <Users className="w-5 h-5" />
-                Student Overview
+                Tổng quan học viên
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 h-12">
                 <LayoutDashboard className="w-5 h-5" />
-                Reports & Analytics
+                Báo cáo & Phân tích
               </Button>
             </CardContent>
           </Card>
@@ -201,17 +201,17 @@ export default function HeadOfDepartmentDashboardPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-orange-600" />
-                <CardTitle className="text-lg font-bold">Attention Required</CardTitle>
+                <CardTitle className="text-lg font-bold">Cần chú ý</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm space-y-2">
-                <p className="font-medium">3 document matrices pending your review</p>
+                <p className="font-medium">3 ma trận tài liệu chờ bạn xem xét</p>
                 <p className="text-muted-foreground">
-                  Please review and approve to activate for student submissions.
+                  Vui lòng xem xét và phê duyệt để kích hoạt cho học viên nộp hồ sơ.
                 </p>
               </div>
-              <Button className="w-full">Review Now</Button>
+              <Button className="w-full">Xem xét ngay</Button>
             </CardContent>
           </Card>
         </div>

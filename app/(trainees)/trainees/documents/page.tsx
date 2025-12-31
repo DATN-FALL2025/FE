@@ -553,7 +553,7 @@ export default function StudentDocumentsPage() {
             </p>
 
             {/* Document List */}
-            <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3 mb-6 overflow-y-auto">
               {documents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />

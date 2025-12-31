@@ -17,12 +17,12 @@ import {
 
 const headNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/head/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Document Matrix",
+    name: "Ma trận tài liệu",
     href: "/head/matrix",
     icon: FileCheck,
   },
@@ -40,7 +40,7 @@ export const HeadMobileSidebar = () => {
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Head Portal</p>
+          <p className="text-xs text-muted-foreground">Trang trưởng khoa</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export const HeadMobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Department Management
+              Quản lý phòng ban
             </p>
             <ul role="list" className="space-y-1">
               {headNavigation.map((item) => {

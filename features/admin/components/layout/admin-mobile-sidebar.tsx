@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 
 const adminNavigation = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "User Management", href: "/admin/users", icon: Users },
-  { name: "Department Management", href: "/admin/departments", icon: Building2 },
-  { name: "Position Management", href: "/admin/positions", icon: Users },
-  { name: "Document Management", href: "/admin/documents", icon: FileText },
-  { name: "Rule Management", href: "/admin/rules", icon: Shield },
+  { name: "Trang chủ", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Quản lý người dùng", href: "/admin/users", icon: Users },
+  { name: "Quản lý phòng ban", href: "/admin/departments", icon: Building2 },
+  { name: "Quản lý vị trí", href: "/admin/positions", icon: Users },
+  { name: "Quản lý tài liệu", href: "/admin/documents", icon: FileText },
+  { name: "Quản lý quy tắc", href: "/admin/rules", icon: Shield },
 ];
 
 export const AdminMobileSidebar = () => {
@@ -34,7 +34,7 @@ export const AdminMobileSidebar = () => {
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Admin Portal</p>
+          <p className="text-xs text-muted-foreground">Trang Admin</p>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export const AdminMobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Administration
+              Quản trị hệ thống
             </p>
             <ul role="list" className="space-y-1">
               {adminNavigation.map((item) => {

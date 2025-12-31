@@ -17,6 +17,7 @@ import { Bell, User, Settings, LogOut, Shield, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminMobileSidebar } from "./admin-mobile-sidebar";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 export const AdminNavbar = () => {
   // Get real user info from auth
@@ -41,7 +42,7 @@ export const AdminNavbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full max-w-[1920px] mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Left Side - Logo & Mobile Menu */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
@@ -63,24 +64,13 @@ export const AdminNavbar = () => {
             </div>
             <div className="hidden sm:block">
               <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Admin Portal</p>
+              <p className="text-xs text-muted-foreground">Trang Admin</p>
             </div>
           </Link>
         </div>
 
         {/* Right Side - Notifications & Profile */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="w-5 h-5" />
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-            >
-              12
-            </Badge>
-          </Button>
-
           {/* User Profile Dropdown */}
           {mounted ? (
             <DropdownMenu>
@@ -101,7 +91,7 @@ export const AdminNavbar = () => {
                     <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
                     {role && (
                       <Badge className="bg-primary mt-2 w-fit text-xs">
-                        {role.replace(/_/g, ' ')}
+                        {translateRole(role)}
                       </Badge>
                     )}
                   </div>
@@ -110,13 +100,13 @@ export const AdminNavbar = () => {
                 <DropdownMenuItem asChild>
                   <Link href="/admin/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>Hồ sơ</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/admin/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>Cài đặt</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -125,7 +115,7 @@ export const AdminNavbar = () => {
                   onClick={logout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

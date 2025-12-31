@@ -13,6 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 const academicStaffNavigation = [
   {
@@ -52,7 +53,7 @@ export const AcademicStaffSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Quản lý học thuật
+                
               </div>
               <ul role="list" className="space-y-1">
                 {academicStaffNavigation.map((item) => {
@@ -95,7 +96,7 @@ export const AcademicStaffSidebar = () => {
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   {role && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {translateRole(role)}
                     </p>
                   )}
                 </div>

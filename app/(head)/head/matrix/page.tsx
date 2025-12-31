@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Download,
-  Upload,
   AlertCircle,
   Loader2,
+  Download,
+  Upload,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,8 +26,67 @@ import {
   clickToCellMatrix,
   createDocumentRuleValue,
   getDocumentWithRules,
+  setMatrixDraftedByDepartment,
 } from "@/lib/actions/matrix";
+import { getDepartmentIdFromToken, getDecodedToken } from "@/lib/auth-utils";
 import { toast } from "@/lib/toast-compat";
+
+// Helper function to get status badge info
+function getStatusBadge(status: string | null) {
+  if (!status) {
+    return {
+      label: "Chưa gửi",
+      variant: "secondary" as const,
+      className: "bg-gray-500 hover:bg-gray-600"
+    };
+  }
+
+  const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
+    'Drafted': {
+      label: "Đã gửi - Chờ duyệt",
+      variant: "default",
+      className: "bg-blue-500 hover:bg-blue-600"
+    },
+    'Pending': {
+      label: "Đang xử lý",
+      variant: "default",
+      className: "bg-yellow-500 hover:bg-yellow-600"
+    },
+    'Approved': {
+      label: "Đã phê duyệt",
+      variant: "default",
+      className: "bg-green-500 hover:bg-green-600"
+    },
+    'Approve': {
+      label: "Đã phê duyệt",
+      variant: "default",
+      className: "bg-green-500 hover:bg-green-600"
+    },
+    'Rejected': {
+      label: "Đã từ chối",
+      variant: "destructive"
+    },
+    'Reject': {
+      label: "Đã từ chối",
+      variant: "destructive"
+    },
+    'InProgress': {
+      label: "Đang xử lý",
+      variant: "default",
+      className: "bg-yellow-500 hover:bg-yellow-600"
+    },
+    'Complete': {
+      label: "Hoàn thành",
+      variant: "default",
+      className: "bg-green-600 hover:bg-green-700"
+    }
+  };
+
+  return statusMap[status] || {
+    label: status,
+    variant: "secondary" as const
+  };
+}
 
 export default function HeadMatrixPage() {
   const [allMatrixData, setAllMatrixData] = useState<any>(null);
@@ -44,15 +104,56 @@ export default function HeadMatrixPage() {
   const [documentRules, setDocumentRules] = useState<any[]>([]);
   const [ruleValues, setRuleValues] = useState<Record<number, string>>({});
   const [isLoadingRules, setIsLoadingRules] = useState(false);
+  const [isSubmittingForReview, setIsSubmittingForReview] = useState(false);
 
-  // TODO: Get department ID from user session/auth
-  // For now, filter by first department in data
-  const userDepartmentId = allMatrixData?.[0]?.departmentId || null;
+  // Get department ID and name from JWT token
+  const decodedToken = getDecodedToken();
+  const userDepartmentId = decodedToken?.departmentId ? Number(decodedToken.departmentId) : null;
+  const userDepartmentName = decodedToken?.departmentName || null;
 
   // Filter matrix data by user's department
   const matrixData = allMatrixData?.filter(
     (position: any) => position.departmentId === userDepartmentId
   );
+
+  // Get matrix status from first position (all positions in same department have same status)
+  const matrixStatus = matrixData?.[0]?.matrixStatusEnum || null;
+  const rejectReason = matrixData?.[0]?.reject_reason || null;
+
+  // Calculate overall status from all positions' statusEnum
+  const getOverallStatus = () => {
+    if (!matrixData || matrixData.length === 0) return null;
+
+    const statuses = matrixData
+      .filter((p: any) => p.positionId !== null)
+      .map((p: any) => p.statusEnum);
+
+    // If all approved, return Approve
+    if (statuses.every((s: string) => s === 'Approve' || s === 'Approved')) {
+      return 'Approve';
+    }
+    // If any rejected, return Reject
+    if (statuses.some((s: string) => s === 'Reject' || s === 'Rejected')) {
+      return 'Reject';
+    }
+    // If any in progress, return InProgress
+    if (statuses.some((s: string) => s === 'InProgress' || s === 'Pending')) {
+      return 'InProgress';
+    }
+    // Default
+    return statuses[0] || null;
+  };
+
+  const overallStatus = getOverallStatus();
+
+  // Debug log
+  useEffect(() => {
+    if (userDepartmentId) {
+      console.log('🔓 Head Department ID from JWT:', userDepartmentId);
+      console.log('🏢 Department Name:', userDepartmentName);
+      console.log('📊 Matrix Status:', matrixStatus);
+    }
+  }, [userDepartmentId, userDepartmentName, matrixStatus]);
 
   // Load matrix data on mount
   useEffect(() => {
@@ -81,15 +182,15 @@ export default function HeadMatrixPage() {
 
   const reloadMatrix = async (maxRetries: number = 3) => {
     setIsLoading(true);
-    
+
     let retries = 0;
-    
+
     while (retries < maxRetries) {
       try {
         const result: any = await getAllMatrix();
-        
+
         console.log(`🔄 Reload Matrix Attempt ${retries + 1}/${maxRetries}:`, result);
-        
+
         if (result.status === 'error') {
           setError(result.message);
           setAllMatrixData(null);
@@ -97,7 +198,7 @@ export default function HeadMatrixPage() {
         } else {
           const newDataString = JSON.stringify(result.data);
           const oldDataString = JSON.stringify(allMatrixData);
-          
+
           if (newDataString !== oldDataString || retries === maxRetries - 1) {
             setAllMatrixData(result.data);
             setError("");
@@ -118,7 +219,7 @@ export default function HeadMatrixPage() {
         break;
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -247,7 +348,7 @@ export default function HeadMatrixPage() {
     }
 
     const tempCell = selectedCell;
-    
+
     setIsRuleFormOpen(false);
     setSelectedCell(null);
     setRuleValues({});
@@ -300,25 +401,104 @@ export default function HeadMatrixPage() {
     }
   };
 
+  const handleSubmitForReview = async () => {
+    if (!userDepartmentId) {
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy thông tin khoa",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm("Bạn có chắc muốn gửi ma trận này để xét duyệt?")) return;
+
+    setIsSubmittingForReview(true);
+    try {
+      const result = await setMatrixDraftedByDepartment(userDepartmentId);
+
+      if (result.status === 'error' || result.status !== '200 OK') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể gửi ma trận để xét duyệt",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: result.message || "Đã gửi ma trận để xét duyệt",
+        });
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingForReview(false);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Department Document Matrix</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-bold tracking-tight">Ma trận tài liệu khoa</h1>
+          </div>
+          {userDepartmentName && (
+            <p className="text-lg font-semibold text-primary mt-1">
+              {userDepartmentName}
+            </p>
+          )}
+          {rejectReason && matrixStatus === 'Rejected' && (
+            <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm font-medium text-red-800">Lý do từ chối:</p>
+              <p className="text-sm text-red-700 mt-1">{rejectReason}</p>
+            </div>
+          )}
           <p className="text-muted-foreground mt-2 text-base">
-            View and manage document requirements for your department&apos;s training positions
+            Xem và quản lý yêu cầu tài liệu cho các vị trí đào tạo của khoa bạn
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Upload className="w-4 h-4" />
-            Import
+          <Button
+            variant="default"
+            className="gap-2"
+            onClick={handleSubmitForReview}
+            disabled={
+              isSubmittingForReview ||
+              !matrixData ||
+              matrixData.length === 0 ||
+              matrixStatus === 'Drafted' ||
+              matrixStatus === 'Pending' ||
+              matrixStatus === 'Approved'
+            }
+          >
+            {isSubmittingForReview ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Đang gửi...
+              </>
+            ) : matrixStatus === 'Drafted' || matrixStatus === 'Pending' ? (
+              "Đã gửi xét duyệt"
+            ) : matrixStatus === 'Approved' ? (
+              "Đã được phê duyệt"
+            ) : (
+              "Gửi để xét duyệt"
+            )}
           </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          {overallStatus && (
+            <Badge
+              variant={getStatusBadge(overallStatus).variant}
+              className={getStatusBadge(overallStatus).className}
+            >
+              {getStatusBadge(overallStatus).label}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -328,7 +508,7 @@ export default function HeadMatrixPage() {
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">Loading matrix data...</p>
+              <p className="text-muted-foreground">Đang tải dữ liệu ma trận...</p>
             </div>
           </CardContent>
         </Card>
@@ -339,7 +519,7 @@ export default function HeadMatrixPage() {
               <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
                 <AlertCircle className="w-8 h-8 text-red-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-red-600">Error Loading Matrix</h3>
+              <h3 className="text-xl font-semibold mb-2 text-red-600">Lỗi tải ma trận</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md">
                 {error}
               </p>
@@ -348,7 +528,7 @@ export default function HeadMatrixPage() {
                 className="mt-4"
                 onClick={() => window.location.reload()}
               >
-                Retry
+                Thử lại
               </Button>
             </div>
           </CardContent>
@@ -390,45 +570,45 @@ export default function HeadMatrixPage() {
                         {matrixData
                           .filter((position: any) => position.positionId !== null)
                           .map((position: any) => {
-                          const positionDocuments = new Map();
-                          position.documentCollumResponseList?.forEach((doc: any) => {
-                            positionDocuments.set(doc.document_id, doc);
-                          });
+                            const positionDocuments = new Map();
+                            position.documentCollumResponseList?.forEach((doc: any) => {
+                              positionDocuments.set(doc.document_id, doc);
+                            });
 
-                          return (
-                            <tr key={position.positionId} className="border-b hover:bg-muted/20">
-                              <td className="p-4 font-medium sticky left-0 bg-background z-10 border-r-2">
-                                <span>{position.positionName}</span>
-                              </td>
-                              {documentColumns.map(([docId, docName]) => {
-                                const doc = positionDocuments.get(docId);
-                                return (
-                                  <td key={docId} className="p-4 text-center border-l">
-                                    {doc ? (
-                                      <div className="flex items-center justify-center gap-2">
-                                        <Checkbox
-                                          checked={doc.required}
-                                          className="h-5 w-5 cursor-pointer"
-                                          onCheckedChange={() => handleCellClick(
-                                            doc.matrixId,
-                                            doc.required,
-                                            position.positionName,
-                                            docName,
-                                            doc.document_rule_id || null,
-                                            docId
-                                          )}
-                                          disabled={isSubmitting}
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="text-muted-foreground">—</div>
-                                    )}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
+                            return (
+                              <tr key={position.positionId} className="border-b hover:bg-muted/20">
+                                <td className="p-4 font-medium sticky left-0 bg-background z-10 border-r-2">
+                                  <span>{position.positionName}</span>
+                                </td>
+                                {documentColumns.map(([docId, docName]) => {
+                                  const doc = positionDocuments.get(docId);
+                                  return (
+                                    <td key={docId} className="p-4 text-center border-l">
+                                      {doc ? (
+                                        <div className="flex items-center justify-center gap-2">
+                                          <Checkbox
+                                            checked={doc.required}
+                                            className="h-5 w-5 cursor-pointer"
+                                            onCheckedChange={() => handleCellClick(
+                                              doc.matrixId,
+                                              doc.required,
+                                              position.positionName,
+                                              docName,
+                                              doc.document_rule_id || null,
+                                              docId
+                                            )}
+                                            disabled={isSubmitting}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="text-muted-foreground">—</div>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
                   );
@@ -445,9 +625,9 @@ export default function HeadMatrixPage() {
                 <AlertCircle className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">No Matrix Data</h3>
+                <h3 className="text-xl font-semibold mb-2">Không có dữ liệu ma trận</h3>
                 <p className="text-sm text-muted-foreground">
-                  No matrix configuration found for your department.
+                  Không tìm thấy cấu hình ma trận cho khoa của bạn.
                 </p>
               </div>
             </div>
@@ -475,11 +655,6 @@ export default function HeadMatrixPage() {
                   <div key={rule.documentRuleId} className="space-y-2">
                     <Label htmlFor={`rule-${rule.documentRuleId}`} className="text-sm font-medium">
                       {rule.documentRuleName}
-                      {rule.documentRuleDescription && (
-                        <span className="text-xs text-muted-foreground block mt-0.5">
-                          {rule.documentRuleDescription}
-                        </span>
-                      )}
                     </Label>
                     <Input
                       id={`rule-${rule.documentRuleId}`}

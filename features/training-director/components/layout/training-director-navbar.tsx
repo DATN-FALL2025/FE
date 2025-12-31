@@ -17,6 +17,7 @@ import { Bell, User, Settings, LogOut, Target, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { TrainingDirectorMobileSidebar } from "./training-director-mobile-sidebar";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 export const TrainingDirectorNavbar = () => {
   const { user, displayName, avatar, role, logout } = useAuthInfo();
@@ -38,7 +39,7 @@ export const TrainingDirectorNavbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full max-w-[1920px] mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Left Side - Logo & Mobile Menu */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
@@ -60,24 +61,13 @@ export const TrainingDirectorNavbar = () => {
             </div>
             <div className="hidden sm:block">
               <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Training Director</p>
+              <p className="text-xs text-muted-foreground">Trang giám đốc đào tạo</p>
             </div>
           </Link>
         </div>
 
         {/* Right Side - Notifications & Profile */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="w-5 h-5" />
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-            >
-              5
-            </Badge>
-          </Button>
-
           {/* User Profile Dropdown */}
           {mounted ? (
             <DropdownMenu>
@@ -98,7 +88,7 @@ export const TrainingDirectorNavbar = () => {
                     <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
                     {role && (
                       <Badge className="bg-primary mt-2 w-fit text-xs">
-                        {role.replace(/_/g, ' ')}
+                        {translateRole(role)}
                       </Badge>
                     )}
                   </div>

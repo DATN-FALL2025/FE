@@ -66,6 +66,24 @@ interface Department {
   departmentDescription: string;
 }
 
+// Hàm chuyển đổi role sang tiếng Việt
+const getRoleInVietnamese = (role: string): string => {
+  const roleMap: { [key: string]: string } = {
+    'ROLE_TRAINEE': 'Học viên',
+    'TRAINEE': 'Học viên',
+    'ROLE_ACADEMIC_STAFF_AFFAIR': 'Nhân viên học vụ',
+    'ACADEMIC_STAFF_AFFAIR': 'Nhân viên học vụ',
+    'ROLE_HEAD_OF_DEPARTMENT': 'Trưởng phòng',
+    'HEAD_OF_DEPARTMENT': 'Trưởng phòng',
+    'ROLE_TRAINING_DIRECTOR': 'Giám đốc đào tạo',
+    'TRAINING_DIRECTOR': 'Giám đốc đào tạo',
+    'ROLE_ADMIN': 'Quản trị viên',
+    'ADMIN': 'Quản trị viên',
+  };
+  
+  return roleMap[role] || role;
+};
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -422,13 +440,16 @@ export default function UsersPage() {
                       <td className="py-4 px-6">
                         <div className="flex gap-1 flex-wrap">
                           {(user.authorities || user.roles) && (user.authorities || user.roles).length > 0 ? (
-                            (user.authorities || user.roles).map((role: any, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {role.authority || role.roleName || role.name || 'User'}
-                              </Badge>
-                            ))
+                            (user.authorities || user.roles).map((role: any, index: number) => {
+                              const roleText = role.authority || role.roleName || role.name || 'User';
+                              return (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {getRoleInVietnamese(roleText)}
+                                </Badge>
+                              );
+                            })
                           ) : (
-                            <Badge variant="outline" className="text-xs">User</Badge>
+                            <Badge variant="outline" className="text-xs">Người dùng</Badge>
                           )}
                         </div>
                       </td>
@@ -505,11 +526,11 @@ export default function UsersPage() {
                   <SelectValue placeholder="Chọn vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="TRAINEE">Trainee</SelectItem>
-                  <SelectItem value="ACADEMIC_STAFF_AFFAIR">Academic Staff</SelectItem>
-                  <SelectItem value="HEAD_OF_DEPARTMENT">Head of Department</SelectItem>
-                  <SelectItem value="TRAINING_DIRECTOR">Training Director</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="TRAINEE">Học viên</SelectItem>
+                  <SelectItem value="ACADEMIC_STAFF_AFFAIR">Nhân viên học vụ</SelectItem>
+                  <SelectItem value="HEAD_OF_DEPARTMENT">Trưởng phòng</SelectItem>
+                  <SelectItem value="TRAINING_DIRECTOR">Giám đốc đào tạo</SelectItem>
+                  <SelectItem value="ADMIN">Quản trị viên</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -629,13 +650,16 @@ export default function UsersPage() {
                   <Label className="text-sm text-muted-foreground">Vai trò</Label>
                   <div className="mt-2 flex gap-2 flex-wrap">
                     {(selectedUser.authorities || selectedUser.roles) && (selectedUser.authorities || selectedUser.roles).length > 0 ? (
-                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => (
-                        <Badge key={index} variant="secondary">
-                          {role.authority || role.roleName || role.name || 'User'}
-                        </Badge>
-                      ))
+                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => {
+                        const roleText = role.authority || role.roleName || role.name || 'User';
+                        return (
+                          <Badge key={index} variant="secondary">
+                            {getRoleInVietnamese(roleText)}
+                          </Badge>
+                        );
+                      })
                     ) : (
-                      <Badge variant="secondary">User</Badge>
+                      <Badge variant="secondary">Người dùng</Badge>
                     )}
                   </div>
                 </div>

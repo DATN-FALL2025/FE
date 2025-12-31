@@ -17,6 +17,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 const headNavigation = [
   {
@@ -98,7 +99,7 @@ export const HeadSidebar = () => {
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   {role && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {translateRole(role)}
                     </p>
                   )}
                 </div>
