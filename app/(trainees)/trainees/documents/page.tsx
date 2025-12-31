@@ -486,26 +486,6 @@ export default function StudentDocumentsPage() {
 
   return (
     <div className="space-y-6 w-full pb-8">
-      {/* User Info Card */}
-      {userInfo && (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-600 rounded-full p-3">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-blue-900">{userInfo.fullName}</h3>
-                <div className="flex flex-wrap gap-4 mt-1 text-sm text-blue-700">
-                  <span>📧 {userInfo.email}</span>
-                  <span>🏢 {userInfo.department}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Hồ Sơ Học Viên</h1>
@@ -660,45 +640,6 @@ export default function StudentDocumentsPage() {
                 ))
               )}
             </div>
-
-            {/* Action Button - Only show if all documents submitted AND status is Pending */}
-            {submittedCount === totalCount && applicationDetail.traineeApplicationStatus === "Pending" && (
-              <div className="border-t pt-4">
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  size="lg"
-                  onClick={handleSubmitApplication}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Submit Hồ Sơ Tổng
-                </Button>
-              </div>
-            )}
-            
-            {/* Show message if not all documents submitted yet */}
-            {submittedCount < totalCount && (
-              <div className="border-t pt-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Vui lòng nộp đủ {totalCount} tài liệu trước khi submit hồ sơ tổng
-                  <br />
-                  <span className="font-medium">Đã nộp: {submittedCount}/{totalCount}</span>
-                </p>
-              </div>
-            )}
-            
-            {/* Show message if already submitted */}
-            {submittedCount === totalCount && applicationDetail.traineeApplicationStatus !== "Pending" && (
-              <div className="border-t pt-4">
-                <div className="p-3 bg-blue-50 rounded-lg text-center">
-                  <p className="text-sm font-medium text-blue-900">
-                    ✅ Hồ sơ đã được submit
-                  </p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    Trạng thái: {applicationDetail.traineeApplicationStatus}
-                  </p>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

@@ -13,18 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NotificationCenter } from "../notifications/notification-center";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
 import { Menu, User, Settings, LogOut, GraduationCap } from "lucide-react";
 
 export const Navbar = () => {
-  const {
-    student,
-    notifications,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
-  } = useStudentData();
+  const { student } = useStudentData();
   const { logout } = useAuthInfo();
 
   const getInitials = (name: string) => {
@@ -66,15 +60,8 @@ export const Navbar = () => {
           </Link>
         </div>
 
-        {/* Right Side - Notifications & Profile */}
+        {/* Right Side - Profile */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <NotificationCenter
-            notifications={notifications}
-            onMarkAsRead={markNotificationAsRead}
-            onMarkAllAsRead={markAllNotificationsAsRead}
-          />
-
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

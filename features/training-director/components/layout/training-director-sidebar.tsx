@@ -32,26 +32,6 @@ const trainingDirectorNavigation = [
     href: "/training-director/matrix",
     icon: FileText,
   },
-  {
-    name: "Báo cáo",
-    href: "/training-director/reports",
-    icon: BarChart3,
-  },
-  {
-    name: "Kết quả tuyển sinh",
-    href: "/training-director/results",
-    icon: Trophy,
-  },
-  {
-    name: "Hồ sơ",
-    href: "/training-director/profile",
-    icon: User,
-  },
-  {
-    name: "Cài đặt bảo mật",
-    href: "/training-director/settings",
-    icon: Shield,
-  },
 ];
 
 export const TrainingDirectorSidebar = () => {

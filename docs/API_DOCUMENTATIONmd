@@ -1,0 +1,804 @@
+# 📚 API Documentation - Aviation Academy System
+
+**Version:** 2.0  
+**Last Updated:** December 31, 2025  
+**Base URL:** `https://manage-and-automate-aviation-academy-application-production.up.railway.app`  
+**API Docs:** `/v3/api-docs`
+
+---
+
+## 📋 Table of Contents
+
+1. [Server Information](#server-information)
+2. [Authentication](#authentication)
+3. [Trainee Submission](#trainee-submission)
+4. [Trainee Application](#trainee-application)
+5. [Position Management](#position-management)
+6. [Input Document Matrix](#input-document-matrix)
+7. [Document Rule Value](#document-rule-value)
+8. [Upload Management](#upload-management)
+9. [Document Management](#document-management)
+10. [Document Rule Management](#document-rule-management)
+11. [Department Management](#department-management)
+12. [Account Management](#account-management)
+
+---
+
+## 🌐 Server Information
+
+**Production Server:**
+```
+https://manage-and-automate-aviation-academy-application-production.up.railway.app
+```
+
+**API Documentation:**
+```
+https://manage-and-automate-aviation-academy-application-production.up.railway.app/v3/api-docs
+```
+
+---
+
+## 🔐 Authentication
+
+### Login
+**Endpoint:** `POST /api/account/v1/authenticateAccount`
+
+**Request Body:**
+```json
+{
+  "userName": "string",
+  "password": "string"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": "JWT_TOKEN_STRING"
+}
+```
+
+### Get User Profile
+**Endpoint:** `GET /api/account/profile`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "id": "number",
+    "userName": "string",
+    "gmail": "string",
+    "role": "string",
+    "accountImage": "string"
+  }
+}
+```
+
+### Create User
+**Endpoint:** `POST /api/account/v1/createUser`
+
+**Request Body:**
+```json
+{
+  "userName": "string",
+  "password": "string",
+  "gmail": "string",
+  "accountImage": "string"
+}
+```
+
+### Create Role
+**Endpoint:** `POST /api/account/v1/createRole`
+
+**Request Body:**
+```json
+{
+  "roleName": "ACADEMIC_STAFF_AFFAIR"
+}
+```
+
+### Get All Users
+**Endpoint:** `GET /api/account/v1/getAllUser`
+
+### Get All Roles
+**Endpoint:** `GET /api/account/v1/getAllRole`
+
+### Import Multiple Accounts
+**Endpoint:** `POST /api/account/multipleAccounts`
+
+**Request Body:**
+```json
+{
+  "accounts": [
+    {
+      "userName": "string",
+      "password": "string",
+      "gmail": "string",
+      "role": "string"
+    }
+  ]
+}
+```
+
+### Add Position to Account
+**Endpoint:** `POST /api/account/add_position_to_account`
+
+**Request Body:**
+```json
+{
+  "accountId": "number",
+  "positionId": "number"
+}
+```
+
+### OTP Verification
+**Endpoint:** `POST /api/account/v1/verify-otp`
+
+**Request Body:**
+```json
+{
+  "gmail": "string",
+  "otp": "string"
+}
+```
+
+### Send OTP Again
+**Endpoint:** `POST /api/account/v1/send-otp-again`
+
+**Request Body:**
+```json
+{
+  "gmail": "string"
+}
+```
+
+---
+
+## 📝 Trainee Submission
+
+### Create Trainee Submission
+**Endpoint:** `POST /api/trainee_submission/create_trainee_submission_by_trainee`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `documentID` (string) - ID of the required document
+- `traineeApplicationId` (string) - ID of the trainee application
+- `requireDocumentName` (string) - Name of the required document
+- `takeNote` (string) - Optional notes
+- `submissionDocumentFile` (binary) - The document file
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "submissionId": "number",
+    "documentId": "number",
+    "traineeApplicationId": "number",
+    "url": "string",
+    "submissionStatus": "string"
+  }
+}
+```
+
+### Update Trainee Submission
+**Endpoint:** `PUT /api/trainee_submission/update/{submissionID}`
+
+**Path Parameters:**
+- `submissionID` (integer) - ID of the submission to update
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `newSubmissionName` (string) - Optional
+- `newTakeNote` (string) - Optional
+- `newSubmissionDocumentFile` (binary) - Optional
+
+### Get Trainee Submission Detail
+**Endpoint:** `GET /api/trainee_submission/get_trainee_submission_detail/{trainee_submission_id}`
+
+**Path Parameters:**
+- `trainee_submission_id` (integer)
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "submissionId": "number",
+    "documentId": "number",
+    "requiredDocumentName": "string",
+    "url": "string",
+    "submissionStatus": "string",
+    "takeNote": "string"
+  }
+}
+```
+
+---
+
+## 📋 Trainee Application
+
+### Complete Trainee Application
+**Endpoint:** `PUT /api/trainee_application/{traineeApplicationId}/complete`
+
+**Path Parameters:**
+- `traineeApplicationId` (integer)
+
+### Get All Applications by Trainee
+**Endpoint:** `GET /api/trainee_application/get_all_application_by_trainee`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "traineeApplicationId": "number",
+      "traineeApplicationStatus": "string",
+      "positionName": "string",
+      "departmentName": "string"
+    }
+  ]
+}
+```
+
+### Get Application Detail by Trainee
+**Endpoint:** `GET /api/trainee_application/get_trainee_application_detail_by_trainee/{trainee_application_id}`
+
+**Path Parameters:**
+- `trainee_application_id` (integer)
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "traineeApplicationId": "number",
+    "traineeApplicationStatus": "string",
+    "positionName": "string",
+    "departmentName": "string",
+    "submittedDocuments": [
+      {
+        "submissionId": "number",
+        "documentId": "number",
+        "requiredDocumentName": "string",
+        "apply_or_not": "string",
+        "submissionStatus": "string",
+        "url": "string"
+      }
+    ]
+  }
+}
+```
+
+### Get Application Detail by Staff
+**Endpoint:** `GET /api/trainee_application/get_trainee_application_detail_by_staff/{trainee_application_id}`
+
+**Path Parameters:**
+- `trainee_application_id` (integer)
+
+### Get All Applications by Staff (Academic Affairs)
+**Endpoint:** `GET /api/trainee_application/get_all_trainee_application_by_staff_academic_affair`
+
+### Get Applications by Status (Academic Staff)
+**Endpoint:** `GET /api/trainee_application/get_trainee_application_list_by_status_by_staff_academic_staff_affair`
+
+**Query Parameters:**
+- `status` (string) - Application status filter
+
+---
+
+## 📍 Position Management
+
+### Get All Positions
+**Endpoint:** `GET /api/position/getAllPossition`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "positionId": "number",
+      "positionName": "string",
+      "positionDescription": "string",
+      "positionImage": "string"
+    }
+  ]
+}
+```
+
+### Get Position by ID
+**Endpoint:** `GET /api/position/getPositionById/{position_id}`
+
+**Path Parameters:**
+- `position_id` (integer)
+
+### Create Position
+**Endpoint:** `POST /api/position/createPosition`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `positionName` (string)
+- `positionDescription` (string)
+- `positionImage` (binary)
+
+### Update Position
+**Endpoint:** `PUT /api/position/updatePositionById/{position_id}`
+
+**Path Parameters:**
+- `position_id` (integer)
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `positionName` (string)
+- `positionDescription` (string)
+- `positionImage` (binary)
+
+### Delete Position
+**Endpoint:** `DELETE /api/position/deletePositionById/{position_id}`
+
+**Path Parameters:**
+- `position_id` (integer)
+
+---
+
+## 📊 Input Document Matrix
+
+### Get All Matrix
+**Endpoint:** `GET /api/matrix/getAllMatrix`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "matrixId": "number",
+      "positionId": "number",
+      "documentId": "number",
+      "required": "boolean",
+      "departmentId": "number"
+    }
+  ]
+}
+```
+
+### Get Matrix by Department
+**Endpoint:** `GET /api/matrix/department/{departmentID}`
+
+**Path Parameters:**
+- `departmentID` (integer)
+
+### Get Matrix Dashboard
+**Endpoint:** `GET /api/matrix/input_matrix_document_dashboard`
+
+### Get Matrix Filter by Position & Department
+**Endpoint:** `GET /api/matrix/get_matrix_filter_by_position_department`
+
+**Query Parameters:**
+- `positionId` (integer)
+- `departmentId` (integer)
+
+### Add Single Row (Position)
+**Endpoint:** `POST /api/matrix/addRow_for_training_director`
+
+**Request Body:**
+```json
+{
+  "positionId": "number"
+}
+```
+
+### Add Multiple Rows
+**Endpoint:** `POST /api/matrix/addMultipleRow_for_training_director`
+
+**Request Body:**
+```json
+{
+  "positionIds": ["number"]
+}
+```
+
+### Add Single Column (Document)
+**Endpoint:** `POST /api/matrix/addColum_for_training_director`
+
+**Request Body:**
+```json
+{
+  "documentId": "number"
+}
+```
+
+### Add Multiple Columns
+**Endpoint:** `POST /api/matrix/addMultipleColum_for_training_director`
+
+**Request Body:**
+```json
+{
+  "documentIds": ["number"]
+}
+```
+
+### Click to Cell (Toggle Required)
+**Endpoint:** `POST /api/matrix/clickToCellMatrix_for_head_of_department`
+
+**Request Body:**
+```json
+{
+  "matrixId": "number",
+  "required": "boolean"
+}
+```
+
+### Set Pending Status
+**Endpoint:** `POST /api/matrix/setPendintStatusMatrix_for_training_director`
+
+**Request Body:**
+```json
+{
+  "startDate": "string",
+  "endDate": "string"
+}
+```
+
+### Set Drafted Status (Head of Department)
+**Endpoint:** `PUT /api/matrix/set-drafted/{departmentID}_for_head_department`
+
+**Path Parameters:**
+- `departmentID` (integer)
+
+### Set Status by Department (Training Director Approve/Reject)
+**Endpoint:** `PUT /api/matrix/set-status/department/{departmentId}_for_training_director_approve_or_reject`
+
+**Path Parameters:**
+- `departmentId` (integer)
+
+**Request Body:**
+```json
+{
+  "status": "string",
+  "rejectReason": "string"
+}
+```
+
+### Set Complete Status to Active
+**Endpoint:** `PUT /api/matrix/setCompleteStatusToActive_for_training_director`
+
+### Delete Row (Position)
+**Endpoint:** `DELETE /api/matrix/deleteRow_for_training_director/{positionId}`
+
+**Path Parameters:**
+- `positionId` (integer)
+
+### Delete Column (Document)
+**Endpoint:** `DELETE /api/matrix/deleteColumn_for_training_director/{documentId}`
+
+**Path Parameters:**
+- `documentId` (integer)
+
+### Delete All Rows
+**Endpoint:** `DELETE /api/matrix/deleteAllRow_for_training_director`
+
+### Delete All Columns
+**Endpoint:** `DELETE /api/matrix/deleteAllColumns_for_training_director`
+
+### Clear Matrix
+**Endpoint:** `DELETE /api/matrix/clearMatrix_for_training_director`
+
+---
+
+## 📐 Document Rule Value
+
+### Create Document Rule Value
+**Endpoint:** `POST /api/document_rule_value/create_document_rule_value`
+
+**Request Body:**
+```json
+{
+  "documentId": "number",
+  "ruleId": "number",
+  "value": "string"
+}
+```
+
+### Update Document Rule Value
+**Endpoint:** `PUT /api/document_rule_value/update_document_rule_value`
+
+**Request Body:**
+```json
+{
+  "documentRuleValueId": "number",
+  "value": "string"
+}
+```
+
+---
+
+## 📤 Upload Management
+
+### Upload File
+**Endpoint:** `POST /api/admin/uploads/file`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `file` (binary) - File to upload
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "url": "string",
+    "publicId": "string"
+  }
+}
+```
+
+### Update File
+**Endpoint:** `PUT /api/admin/uploads/file`
+
+**Query Parameters:**
+- `oldPublicId` (string) - Public ID of the file to replace
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `file` (binary) - New file
+
+---
+
+## 📄 Document Management
+
+### Get All Documents
+**Endpoint:** `GET /api/admin/documents`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "documentId": "number",
+      "documentName": "string",
+      "documentDescription": "string"
+    }
+  ]
+}
+```
+
+### Get Document by ID
+**Endpoint:** `GET /api/admin/documents/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+### Get Document with Rules
+**Endpoint:** `GET /api/admin/documents/{id}/with-rules`
+
+**Path Parameters:**
+- `id` (integer)
+
+### Get All Documents with Rules
+**Endpoint:** `GET /api/admin/documents/all-with-rules`
+
+### Create Document
+**Endpoint:** `POST /api/admin/documents/create`
+
+**Request Body:**
+```json
+{
+  "documentName": "string",
+  "documentDescription": "string"
+}
+```
+
+### Create Document with Rules
+**Endpoint:** `POST /api/admin/documents/create-with-rules`
+
+**Request Body:**
+```json
+{
+  "documentName": "string",
+  "documentDescription": "string",
+  "rules": [
+    {
+      "ruleId": "number",
+      "value": "string"
+    }
+  ]
+}
+```
+
+### Update Document
+**Endpoint:** `PUT /api/admin/documents/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+**Request Body:**
+```json
+{
+  "documentName": "string",
+  "documentDescription": "string"
+}
+```
+
+### Delete Document
+**Endpoint:** `DELETE /api/admin/documents/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+---
+
+## 📋 Document Rule Management
+
+### Get All Document Rules
+**Endpoint:** `GET /api/admin/document-rules`
+
+### Get Document Rule by ID
+**Endpoint:** `GET /api/admin/document-rules/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+### Create Document Rule
+**Endpoint:** `POST /api/admin/document-rules/create`
+
+**Request Body:**
+```json
+{
+  "ruleName": "string",
+  "ruleDescription": "string",
+  "ruleType": "string"
+}
+```
+
+### Update Document Rule
+**Endpoint:** `PUT /api/admin/document-rules/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+**Request Body:**
+```json
+{
+  "ruleName": "string",
+  "ruleDescription": "string",
+  "ruleType": "string"
+}
+```
+
+### Delete Document Rule
+**Endpoint:** `DELETE /api/admin/document-rules/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+---
+
+## 🏢 Department Management
+
+### Get All Departments
+**Endpoint:** `GET /api/admin/departments`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "departmentId": "number",
+      "departmentName": "string",
+      "departmentDescription": "string"
+    }
+  ]
+}
+```
+
+### Get Department by ID
+**Endpoint:** `GET /api/admin/departments/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+### Create Department
+**Endpoint:** `POST /api/admin/departments/create`
+
+**Request Body:**
+```json
+{
+  "departmentName": "string",
+  "departmentDescription": "string"
+}
+```
+
+### Update Department
+**Endpoint:** `PUT /api/admin/departments/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+**Request Body:**
+```json
+{
+  "departmentName": "string",
+  "departmentDescription": "string"
+}
+```
+
+### Delete Department
+**Endpoint:** `DELETE /api/admin/departments/{id}`
+
+**Path Parameters:**
+- `id` (integer)
+
+---
+
+## 📊 Response Format
+
+All API responses follow this standard format:
+
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {} | [] | null
+}
+```
+
+**Status Values:**
+- `"200 OK"` - Success
+- `"400 Bad Request"` - Invalid request
+- `"401 Unauthorized"` - Authentication required
+- `"403 Forbidden"` - Insufficient permissions
+- `"404 Not Found"` - Resource not found
+- `"500 Internal Server Error"` - Server error
+
+---
+
+## 🔒 Authentication
+
+Most endpoints require authentication. Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer {your_jwt_token}
+```
+
+---
+
+## 📝 Notes
+
+1. **File Uploads**: Use `multipart/form-data` content type
+2. **JSON Requests**: Use `application/json` content type
+3. **Date Format**: ISO 8601 format (e.g., `2025-12-31T00:00:00Z`)
+4. **Pagination**: Not implemented in current version
+5. **Rate Limiting**: Not specified in current documentation
+
+---
+
+**End of Documentation**
