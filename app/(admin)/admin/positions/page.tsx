@@ -559,46 +559,54 @@ export default function PositionsPage() {
             </div>
             <div className="space-y-2">
               <Label>Hình ảnh</Label>
-              <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                <input
-                  type="file"
-                  id="image-upload"
-                  className="hidden"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImageChange}
-                  disabled={isSubmitting}
-                />
-                <label htmlFor="image-upload" className="cursor-pointer">
-                  {imagePreview ? (
-                    <div className="relative">
-                      <Image src={imagePreview} alt="Preview" width={200} height={200} className="mx-auto rounded-lg object-cover" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setImagePreview("");
-                          setImageFile(null);
-                        }}
+              <div className="space-y-3">
+                {imagePreview ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setImagePreview("");
+                        setImageFile(null);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="image-upload"
+                      className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-10 h-10 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                      </div>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
                         disabled={isSubmitting}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                      <p className="text-sm text-blue-600 font-medium">
-                        Nhấn để tải ảnh hoặc kéo thả ảnh vào đây
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG, WEBP (tối đa 5MB)
-                      </p>
-                    </>
-                  )}
-                </label>
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -685,46 +693,54 @@ export default function PositionsPage() {
             </div>
             <div className="space-y-2">
               <Label>Hình ảnh</Label>
-              <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                <input
-                  type="file"
-                  id="image-upload-edit"
-                  className="hidden"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImageChange}
-                  disabled={isSubmitting}
-                />
-                <label htmlFor="image-upload-edit" className="cursor-pointer">
-                  {imagePreview ? (
-                    <div className="relative inline-block">
-                      <Image src={imagePreview} alt="Preview" width={200} height={200} className="mx-auto rounded-lg object-cover" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setImagePreview("");
-                          setImageFile(null);
-                        }}
+              <div className="space-y-3">
+                {imagePreview ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setImagePreview("");
+                        setImageFile(null);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="image-upload-edit"
+                      className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-10 h-10 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                      </div>
+                      <input
+                        id="image-upload-edit"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
                         disabled={isSubmitting}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                      <p className="text-sm text-blue-600 font-medium">
-                        Nhấn để tải ảnh hoặc kéo thả ảnh vào đây
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG, WEBP (tối đa 5MB)
-                      </p>
-                    </>
-                  )}
-                </label>
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>

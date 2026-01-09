@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getAllMatrix, setMatrixStatusForTrainingDirector } from "@/lib/actions/matrix";
+import { getAllMatrix, setMatrixStatusForTrainingDirector, getMatrixDashboard } from "@/lib/actions/matrix";
 import { getAllDepartments } from "@/lib/actions/department";
 import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
@@ -57,6 +57,7 @@ function getStatusBadge(status: string | null) {
 export default function TrainingDirectorApprovalsPage() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [allMatrixData, setAllMatrixData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -108,10 +109,11 @@ export default function TrainingDirectorApprovalsPage() {
       setError("");
 
       try {
-        const [deptResult, matrixResult] = await Promise.all([
+        const [deptResult, matrixResult, dashboardResult] = await Promise.all([
           getAllDepartments(),
           getAllMatrix(),
-        ]) as [DepartmentApiResponse<Department[]>, any];
+          getMatrixDashboard(),
+        ]) as [DepartmentApiResponse<Department[]>, any, any];
 
         if (deptResult?.data) {
           setDepartments(Array.isArray(deptResult.data) ? deptResult.data : []);
@@ -122,6 +124,10 @@ export default function TrainingDirectorApprovalsPage() {
           setAllMatrixData(null);
         } else {
           setAllMatrixData(matrixResult.data);
+        }
+
+        if (dashboardResult.status === 'success' && dashboardResult.data) {
+          setDashboardData(dashboardResult.data);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load data');
@@ -135,14 +141,21 @@ export default function TrainingDirectorApprovalsPage() {
 
   const reloadMatrix = async () => {
     try {
-      const result: any = await getAllMatrix();
+      const [matrixResult, dashboardResult] = await Promise.all([
+        getAllMatrix(),
+        getMatrixDashboard(),
+      ]);
       
-      if (result.status === 'error') {
-        setError(result.message);
+      if (matrixResult.status === 'error') {
+        setError(matrixResult.message);
         setAllMatrixData(null);
       } else {
-        setAllMatrixData(result.data);
+        setAllMatrixData(matrixResult.data);
         setError("");
+      }
+
+      if (dashboardResult.status === 'success' && dashboardResult.data) {
+        setDashboardData(dashboardResult.data);
       }
     } catch (error: any) {
       setError(error.message || 'Failed to reload matrix');
@@ -207,6 +220,105 @@ export default function TrainingDirectorApprovalsPage() {
           </p>
         </div>
       </div>
+
+      {/* Dashboard Statistics */}
+      {dashboardData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Approved Count */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-700">Đã Phê Duyệt</p>
+                  <p className="text-3xl font-bold text-green-900 mt-2">
+                    {dashboardData.approvedCount || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rejected Count */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-700">Đã Từ Chối</p>
+                  <p className="text-3xl font-bold text-red-900 mt-2">
+                    {dashboardData.rejectedCount || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-red-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Drafted Count */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-700">Chờ Duyệt</p>
+                  <p className="text-3xl font-bold text-blue-900 mt-2">
+                    {dashboardData.draftedCount || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* In Progress Count */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-50 to-yellow-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-700">Đang Xử Lý</p>
+                  <p className="text-3xl font-bold text-yellow-900 mt-2">
+                    {dashboardData.inProgressCount || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-yellow-200 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-yellow-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Approval Progress Percentage */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-700">Tiến Độ Duyệt</p>
+                  <p className="text-3xl font-bold text-purple-900 mt-2">
+                    {dashboardData.approvalProgressPercentage?.toFixed(1) || 0}%
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center">
+                  <div className="text-lg font-bold text-purple-700">
+                    {Math.round(dashboardData.approvalProgressPercentage || 0)}%
+                  </div>
+                </div>
+              </div>
+              {/* Progress Bar */}
+              <div className="mt-3 w-full bg-purple-200 rounded-full h-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${dashboardData.approvalProgressPercentage || 0}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Department Selection */}
       <Card className="border-0 shadow-lg">
@@ -301,7 +413,11 @@ export default function TrainingDirectorApprovalsPage() {
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     {/* Show Approve button if not already approved */}
-                    {matrixStatus !== 'Approved' && matrixStatus !== 'Pending' && matrixStatus && (
+                    {overallStatus !== 'Approve' && 
+                     overallStatus !== 'Approved' && 
+                     matrixStatus !== 'Approved' && 
+                     matrixStatus !== 'Pending' && 
+                     matrixStatus && (
                       <Button
                         variant="default"
                         className="gap-2 bg-green-600 hover:bg-green-700"
@@ -316,8 +432,15 @@ export default function TrainingDirectorApprovalsPage() {
                       </Button>
                     )}
                     
-                    {/* Show Reject button if not already rejected */}
-                    {matrixStatus !== 'Rejected' && matrixStatus !== 'Pending' && matrixStatus && (
+                    {/* Show Reject button if not already rejected or approved */}
+                    {overallStatus !== 'Reject' && 
+                     overallStatus !== 'Rejected' && 
+                     overallStatus !== 'Approve' && 
+                     overallStatus !== 'Approved' && 
+                     matrixStatus !== 'Rejected' && 
+                     matrixStatus !== 'Approved' && 
+                     matrixStatus !== 'Pending' && 
+                     matrixStatus && (
                       <Button
                         variant="destructive"
                         className="gap-2"

@@ -148,24 +148,39 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result: any = await createDepartment({
-        departmentName: formData.departmentName,
-        departmentDescription: formData.departmentDescription,
-        departmentImage: imageFile || undefined,
-      });
+      // Create FormData to send to server action
+      const submitFormData = new FormData();
+      submitFormData.append('departmentName', formData.departmentName);
+      submitFormData.append('departmentDescription', formData.departmentDescription);
+      if (imageFile) {
+        submitFormData.append('departmentImage', imageFile);
+      }
+
+      const result: any = await createDepartment(submitFormData);
 
       console.log('🏢 Create result:', result);
 
       // Check if successful (backend returns "201 CREATED" or "200 OK")
-      if (result.data || (result.status && result.status.includes('CREATED'))) {
+      const isSuccess = result && (
+        result.data ||
+        (result.status && (
+          result.status.includes('CREATED') ||
+          result.status.includes('201') ||
+          result.status.includes('200') ||
+          result.status.includes('OK')
+        ))
+      );
+
+      if (isSuccess) {
         setIsCreateOpen(false);
         resetForm();
         await loadDepartments();
         toast.success('Tạo phòng ban thành công!');
       } else {
-        toast.error(result.message || 'Tạo phòng ban thất bại!');
+        toast.error(result?.message || 'Tạo phòng ban thất bại!');
       }
     } catch (err: any) {
+      console.error('Create error:', err);
       toast.error(err.message || 'Có lỗi xảy ra!');
     } finally {
       setIsSubmitting(false);
@@ -181,25 +196,39 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result: any = await updateDepartmentById(Number(selectedDept.id), {
-        departmentName: formData.departmentName,
-        departmentDescription: formData.departmentDescription,
-        departmentImage: imageFile || undefined,
-      });
+      // Create FormData to send to server action
+      const submitFormData = new FormData();
+      submitFormData.append('departmentName', formData.departmentName);
+      submitFormData.append('departmentDescription', formData.departmentDescription);
+      if (imageFile) {
+        submitFormData.append('departmentImage', imageFile);
+      }
+
+      const result: any = await updateDepartmentById(Number(selectedDept.id), submitFormData);
 
       console.log('✏️ Update result:', result);
 
       // Check if successful
-      if (result.data || (result.status && result.status.includes('OK'))) {
+      const isSuccess = result && (
+        result.data ||
+        (result.status && (
+          result.status.includes('OK') ||
+          result.status.includes('200') ||
+          result.status.includes('UPDATED')
+        ))
+      );
+
+      if (isSuccess) {
         setIsEditOpen(false);
         resetForm();
         setSelectedDept(null);
         await loadDepartments();
         toast.success('Cập nhật phòng ban thành công!');
       } else {
-        toast.error(result.message || 'Cập nhật phòng ban thất bại!');
+        toast.error(result?.message || 'Cập nhật phòng ban thất bại!');
       }
     } catch (err: any) {
+      console.error('Update error:', err);
       toast.error(err.message || 'Có lỗi xảy ra!');
     } finally {
       setIsSubmitting(false);

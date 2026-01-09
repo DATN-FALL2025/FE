@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   FileCheck,
+  Calendar,
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
@@ -25,6 +26,11 @@ const academicStaffNavigation = [
     name: "Duyệt tài liệu",
     href: "/academic-staff/approvals",
     icon: FileCheck,
+  },
+  {
+    name: "Quản lý đợt duyệt",
+    href: "/academic-staff/batch-management",
+    icon: Calendar,
   },
 ];
 

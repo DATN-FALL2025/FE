@@ -782,3 +782,45 @@ export async function setMatrixStatusForTrainingDirector(
     };
   }
 }
+
+/**
+ * Get Matrix Dashboard Statistics - FOR TRAINING DIRECTOR
+ * GET /api/matrix/input_matrix_document_dashboard
+ */
+export async function getMatrixDashboard() {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/input_matrix_document_dashboard`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to get matrix dashboard',
+        data: null,
+      };
+    }
+
+    return {
+      status: 'success',
+      message: 'Matrix dashboard retrieved successfully',
+      data: result,
+    };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}

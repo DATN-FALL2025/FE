@@ -20,18 +20,36 @@ import { Badge } from "@/components/ui/badge";
 import {
   getAllTraineeApplicationsByTrainee,
   getTraineeApplicationDetailByTrainee,
-  createTraineeSubmission,
   uploadTraineeApplication,
   getTraineeSubmissionDetail,
-  updateTraineeSubmission,
 } from "@/lib/actions";
+import {
+  createTraineeSubmission,
+  updateTraineeSubmission,
+} from "@/lib/actions/trainee-submission-client";
+
+interface DocumentRuleValue {
+  document_rule_value_id: number;
+  value: string;
+  document_rule_id: number;
+  document_rule_name: string;
+}
+
+interface ExtractedData {
+  extract_data_id: number;
+  extract_data_name: string;
+  extract_Data_value: string;
+}
 
 interface SubmittedDocument {
   submissionId: number | null;
   documentId: number;
   requiredDocumentName: string;
   apply_or_not: string; // "Not apply" or "Applied"
+  submissionStatus?: string; // "Pending", "Approve", "Reject"
   url?: string | null;
+  documentRuleValueCellResponseList?: DocumentRuleValue[];
+  extractDataResponseList?: ExtractedData[];
 }
 
 interface SubmissionDetail {
@@ -43,6 +61,8 @@ interface SubmissionDetail {
   takeNote: string;
   fileDownloadUrl: string;
   uploadTime: string;
+  documentRuleValueCellResponseList?: DocumentRuleValue[];
+  extractDataResponseList?: ExtractedData[];
 }
 
 interface ApplicationDetail {
@@ -230,41 +250,81 @@ export default function StudentDocumentsPage() {
       return;
     }
 
+    // Check if this is a resubmit (document already submitted and rejected)
+    const isResubmit = document.submissionId !== null && 
+                       (document.submissionStatus === "Reject" || document.submissionStatus === "Rejected");
+
     // Show loading toast
-    const loadingToast = toast.loading(`Đang tải lên "${document.requiredDocumentName}"...`);
+    const loadingToast = toast.loading(
+      isResubmit 
+        ? `Đang nộp lại "${document.requiredDocumentName}"...`
+        : `Đang tải lên "${document.requiredDocumentName}"...`
+    );
 
     try {
       setUploadingDocs((prev) => new Set(prev).add(docId));
 
       const token = getClientToken();
       console.log("🔑 Token available:", token ? "Yes" : "No");
-      console.log("📤 Calling createTraineeSubmission with:", {
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        requireDocumentName: document.requiredDocumentName,
-        fileName: file.name,
-      });
 
-      const result: any = await createTraineeSubmission({
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        requireDocumentName: document.requiredDocumentName,
-        takeNote: "Submitted via web portal",
-        submissionDocumentFile: file,
-        token,
-      });
+      let result: any;
 
-      console.log("📥 createTraineeSubmission result:", result);
+      if (isResubmit && document.submissionId !== null) {
+        // Use UPDATE API for resubmit
+        console.log("🔄 Calling updateTraineeSubmission with:", {
+          submissionID: document.submissionId,
+          requiredDocumentName: document.requiredDocumentName,
+          fileName: file.name,
+        });
+
+        result = await updateTraineeSubmission(
+          document.submissionId,
+          {
+            requiredDocumentName: document.requiredDocumentName,
+            newTakeNote: "Nộp lại tài liệu qua web portal",
+            newSubmissionDocumentFile: file,
+            token,
+          }
+        );
+
+        console.log("📥 updateTraineeSubmission result:", result);
+      } else {
+        // Use CREATE API for first time submission
+        console.log("📤 Calling createTraineeSubmission with:", {
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          requiredDocumentName: document.requiredDocumentName,
+          fileName: file.name,
+        });
+
+        result = await createTraineeSubmission({
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          requiredDocumentName: document.requiredDocumentName,
+          takeNote: "Submitted via web portal",
+          submissionDocumentFile: file,
+          token,
+        });
+
+        console.log("📥 createTraineeSubmission result:", result);
+      }
 
       // Dismiss loading toast
       toast.dismiss(loadingToast);
 
       if (result.status === "201 CREATED" || result.status === "200 OK" || result.status === "success") {
         console.log("✅ Upload successful!");
-        toast.success(result.message || `✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`, {
-          description: `File "${file.name}" đã được tải lên`,
-          duration: 4000,
-        });
+        toast.success(
+          result.message || 
+          (isResubmit 
+            ? `✅ Nộp lại tài liệu "${document.requiredDocumentName}" thành công!`
+            : `✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`
+          ), 
+          {
+            description: `File "${file.name}" đã được tải lên`,
+            duration: 4000,
+          }
+        );
 
         // Save uploaded file name
         setUploadedFiles(prev => ({
@@ -386,6 +446,20 @@ export default function StudentDocumentsPage() {
 
   const submittedCount = documents.filter(doc => doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp").length;
   const totalCount = documents.length;
+  
+  // Calculate approval status counts
+  const approvedCount = documents.filter(doc => 
+    (doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
+    (doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved")
+  ).length;
+  const pendingCount = documents.filter(doc => 
+    (doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
+    doc.submissionStatus === "Pending"
+  ).length;
+  const rejectedCount = documents.filter(doc => 
+    (doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
+    (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+  ).length;
 
   const handleViewSubmissionDetail = async (submissionId: number) => {
     try {
@@ -475,7 +549,7 @@ export default function StudentDocumentsPage() {
     const result = await createTraineeSubmission({
       documentID: 1,
       traineeApplicationId: applicationDetail?.traineeApplicationId || 3,
-      requireDocumentName: "Test Document",
+      requiredDocumentName: "Test Document",
       takeNote: "Test submission",
       submissionDocumentFile: testFile,
       token,
@@ -526,18 +600,58 @@ export default function StudentDocumentsPage() {
                 <span className="text-muted-foreground">Tổng số tài liệu</span>
                 <span className="font-bold">{totalCount}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Đã nộp</span>
-                <span className="font-bold text-green-600">{submittedCount}</span>
+              
+              {/* Submission Status */}
+              <div className="space-y-2 pt-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái nộp</p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-green-600" />
+                    Đã nộp
+                  </span>
+                  <span className="font-bold text-green-600">{submittedCount}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-yellow-600" />
+                    Chưa nộp
+                  </span>
+                  <span className="font-bold text-yellow-600">{totalCount - submittedCount}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Chưa nộp</span>
-                <span className="font-bold text-yellow-600">{totalCount - submittedCount}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tiến độ</span>
+              
+              {/* Approval Status */}
+              {submittedCount > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái duyệt</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      Đã duyệt
+                    </span>
+                    <span className="font-bold text-green-600">{approvedCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-blue-600" />
+                      Chờ duyệt
+                    </span>
+                    <span className="font-bold text-blue-600">{pendingCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <XCircle className="w-3 h-3 text-red-600" />
+                      Từ chối
+                    </span>
+                    <span className="font-bold text-red-600">{rejectedCount}</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between text-sm pt-2 border-t">
+                <span className="text-muted-foreground">Tiến độ hoàn tất</span>
                 <span className="font-bold">
-                  {totalCount > 0 ? Math.round((submittedCount / totalCount) * 100) : 0}%
+                  {totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%
                 </span>
               </div>
             </div>
@@ -579,32 +693,36 @@ export default function StudentDocumentsPage() {
                         onChange={(e) => handleFileSelect(doc.documentId, e)}
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       />
-                      <Button
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 shrink-0"
-                        onClick={() => {
-                          if (selectedFiles[doc.documentId]) {
-                            handleFileUpload(doc.documentId);
-                          } else {
-                            fileInputRefs.current[doc.documentId]?.click();
-                          }
-                        }}
-                        disabled={uploadingDocs.has(doc.documentId)}
-                      >
-                        {uploadingDocs.has(doc.documentId) ? (
-                          <>Đang tải...</>
-                        ) : selectedFiles[doc.documentId] ? (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Gửi file
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") ? "Nộp lại" : "Tải lên"}
-                          </>
-                        )}
-                      </Button>
+                      {/* Only show upload button if not submitted OR if rejected */}
+                      {(doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") || 
+                       (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                          onClick={() => {
+                            if (selectedFiles[doc.documentId]) {
+                              handleFileUpload(doc.documentId);
+                            } else {
+                              fileInputRefs.current[doc.documentId]?.click();
+                            }
+                          }}
+                          disabled={uploadingDocs.has(doc.documentId)}
+                        >
+                          {uploadingDocs.has(doc.documentId) ? (
+                            <>Đang tải...</>
+                          ) : selectedFiles[doc.documentId] ? (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Gửi file
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              {(doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? "Nộp lại" : "Tải lên"}
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                     
                     {/* Show selected file name */}
@@ -615,9 +733,35 @@ export default function StudentDocumentsPage() {
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Submission Status Badge */}
                         {getStatusBadge(doc)}
+                        
+                        {/* Approval Status Badge - Only show if submitted */}
+                        {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && doc.submissionStatus && (
+                          <>
+                            {doc.submissionStatus === "Pending" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <Clock className="w-3 h-3" />
+                                Chờ duyệt
+                              </span>
+                            )}
+                            {(doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved") && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Đã duyệt
+                              </span>
+                            )}
+                            {(doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <XCircle className="w-3 h-3" />
+                                Từ chối
+                              </span>
+                            )}
+                          </>
+                        )}
+                        
                         {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && doc.submissionId && (
                           <Button
                             size="sm"
@@ -636,6 +780,48 @@ export default function StudentDocumentsPage() {
                         </p>
                       )}
                     </div>
+                    
+                    {/* Document Rule Values - Only show if submitted and has rules */}
+                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
+                     doc.documentRuleValueCellResponseList && 
+                     doc.documentRuleValueCellResponseList.length > 0 && (
+                      <div className="mt-3 pt-3 border-t space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase">Quy tắc kiểm tra</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {doc.documentRuleValueCellResponseList.map((rule) => (
+                            <div key={rule.document_rule_value_id} className="flex items-start gap-2 text-xs bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 min-w-[100px]">
+                                {rule.document_rule_name}:
+                              </span>
+                              <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-0.5 rounded font-medium">
+                                {rule.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Extracted Data - Only show if submitted and has extracted data */}
+                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
+                     doc.extractDataResponseList && 
+                     doc.extractDataResponseList.length > 0 && (
+                      <div className="mt-3 pt-3 border-t space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase">Dữ liệu trích xuất</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {doc.extractDataResponseList.map((data) => (
+                            <div key={data.extract_data_id} className="flex items-start gap-2 text-xs bg-blue-100 dark:bg-blue-900/30 p-2 rounded">
+                              <span className="font-medium text-blue-700 dark:text-blue-300 min-w-[100px]">
+                                {data.extract_data_name}:
+                              </span>
+                              <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-800 px-2 py-0.5 rounded font-medium">
+                                {data.extract_Data_value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -655,13 +841,13 @@ export default function StudentDocumentsPage() {
           </DialogHeader>
           <div className="relative flex items-center justify-center p-4 bg-muted rounded-lg h-[70vh]">
             {previewImageUrl ? (
-              previewImageUrl.toLowerCase().endsWith('.pdf') ? (
+              typeof previewImageUrl === 'string' && previewImageUrl.toLowerCase().endsWith('.pdf') ? (
                 <iframe
                   src={previewImageUrl}
                   className="w-full h-full rounded-lg"
                   title="PDF Preview"
                 />
-              ) : /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(previewImageUrl) ? (
+              ) : typeof previewImageUrl === 'string' && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(previewImageUrl) ? (
                 <Image 
                   src={previewImageUrl} 
                   alt="Preview" 
@@ -772,7 +958,7 @@ export default function StudentDocumentsPage() {
                     const result: any = await updateTraineeSubmission(
                       selectedSubmission.submissionId,
                       {
-                        requireDocumentName: selectedSubmission.requiredDocumentName,
+                        requiredDocumentName: selectedSubmission.requiredDocumentName,
                         newTakeNote: resubmitNote || "Nộp lại tài liệu",
                         newSubmissionDocumentFile: resubmitFile,
                         token,
@@ -926,6 +1112,52 @@ export default function StudentDocumentsPage() {
                       <Eye className="w-4 h-4 mr-2" />
                       Xem file
                     </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Document Rule Values */}
+              {selectedSubmission.documentRuleValueCellResponseList && 
+               selectedSubmission.documentRuleValueCellResponseList.length > 0 && (
+                <div className="space-y-3 pt-4 border-t">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Quy tắc kiểm tra
+                  </label>
+                  <div className="space-y-2">
+                    {selectedSubmission.documentRuleValueCellResponseList.map((rule) => (
+                      <div key={rule.document_rule_value_id} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                          {rule.document_rule_name}
+                        </p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-2 rounded">
+                          {rule.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Extracted Data */}
+              {selectedSubmission.extractDataResponseList && 
+               selectedSubmission.extractDataResponseList.length > 0 && (
+                <div className="space-y-3 pt-4 border-t">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Dữ liệu trích xuất từ tài liệu
+                  </label>
+                  <div className="space-y-2">
+                    {selectedSubmission.extractDataResponseList.map((data) => (
+                      <div key={data.extract_data_id} className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                          {data.extract_data_name}
+                        </p>
+                        <p className="text-sm text-blue-800 dark:text-blue-200 bg-white dark:bg-blue-950 px-3 py-2 rounded font-mono">
+                          {data.extract_Data_value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

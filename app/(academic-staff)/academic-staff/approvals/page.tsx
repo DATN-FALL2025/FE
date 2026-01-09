@@ -278,7 +278,7 @@ export default function AcademicStaffApprovalsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { label: string; className: string } } = {
-      Pending: { label: "Chờ xử lý", className: "bg-yellow-500 hover:bg-yellow-600" },
+      Pending: { label: "Chờ duyệt", className: "bg-yellow-500 hover:bg-yellow-600" },
       InProgress: { label: "Đang xử lý", className: "bg-blue-500 hover:bg-blue-600" },
       Approve: { label: "Đã duyệt", className: "bg-green-500 hover:bg-green-600" },
       Reject: { label: "Từ chối", className: "bg-red-500 hover:bg-red-600" },
@@ -336,6 +336,7 @@ export default function AcademicStaffApprovalsPage() {
           {getPriorityBadge(app.statusEnum) && (
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-orange-600" />
+              <span className="text-sm font-medium text-muted-foreground">Mức độ ưu tiên:</span>
               {getPriorityBadge(app.statusEnum)}
             </div>
           )}
@@ -406,7 +407,7 @@ export default function AcademicStaffApprovalsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Chờ xem xét", value: pendingCount, color: "text-yellow-600" },
+          { label: "Chờ duyệt", value: pendingCount, color: "text-yellow-600" },
           { label: "Đã duyệt", value: approveCount, color: "text-green-600" },
           { label: "Từ chối", value: rejectCount, color: "text-red-600" },
         ].map((stat, i) => (
@@ -423,7 +424,7 @@ export default function AcademicStaffApprovalsPage() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
           <TabsList className="grid w-full max-w-3xl grid-cols-6">
             <TabsTrigger value="all">Tất cả</TabsTrigger>
-            <TabsTrigger value="pending">Chờ xử lý</TabsTrigger>
+            <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
             <TabsTrigger value="approve">Đã duyệt</TabsTrigger>
             <TabsTrigger value="reject">Từ chối</TabsTrigger>
             <TabsTrigger value="complete">Hoàn thành</TabsTrigger>
@@ -634,21 +635,27 @@ export default function AcademicStaffApprovalsPage() {
                               <Badge
                                 variant={doc.apply_or_not === "Applied" ? "default" : "secondary"}
                               >
-                                {doc.apply_or_not}
+                                {doc.apply_or_not === "Applied" ? "Đã nộp" : "Chưa nộp"}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm text-muted-foreground">Trạng thái:</p>
                               <Badge
                                 className={
-                                  doc.submissionStatus === "Approve"
+                                  doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
                                     ? "bg-green-500"
-                                    : doc.submissionStatus === "Reject"
+                                    : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
                                     ? "bg-red-500"
                                     : "bg-yellow-500"
                                 }
                               >
-                                {doc.submissionStatus}
+                                {doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
+                                  ? "Đã duyệt"
+                                  : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
+                                  ? "Từ chối"
+                                  : doc.submissionStatus === "Pending"
+                                  ? "Chờ duyệt"
+                                  : doc.submissionStatus}
                               </Badge>
                             </div>
                           </div>
