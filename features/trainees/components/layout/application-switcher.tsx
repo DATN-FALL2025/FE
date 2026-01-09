@@ -107,12 +107,14 @@ export const ApplicationSwitcher = ({
                       <span className="text-xs text-muted-foreground truncate">
                         {app.positionName} • {app.courseCode}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        Enrolled: {app.enrollmentDate.toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
+                      {app.enrollmentDate && (
+                        <span className="text-xs text-muted-foreground">
+                          Enrolled: {app.enrollmentDate.toLocaleDateString("en-US", {
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Check

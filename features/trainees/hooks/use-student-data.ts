@@ -4,6 +4,17 @@ import { useState, useEffect } from "react";
 import { StudentInfo, Document, SubmissionProgress, Notification } from "../types";
 import { getUser } from "@/lib/auth-utils";
 
+// Export TraineeApplication type
+export interface TraineeApplication {
+  id: string;
+  courseName: string;
+  courseCode: string;
+  status: string;
+  positionName?: string;
+  departmentName?: string;
+  enrollmentDate?: Date;
+}
+
 // Mock data hook - replace with actual API calls
 export const useStudentData = () => {
   const [student, setStudent] = useState<StudentInfo | null>(null);

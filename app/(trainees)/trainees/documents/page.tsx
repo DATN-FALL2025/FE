@@ -288,8 +288,7 @@ export default function StudentDocumentsPage() {
         token,
       });
 
-        console.log("📥 createTraineeSubmission result:", result);
-      }
+      console.log("📥 createTraineeSubmission result:", result);
 
       // Dismiss loading toast
       toast.dismiss(loadingToast);
@@ -553,7 +552,7 @@ export default function StudentDocumentsPage() {
     const result = await createTraineeSubmission({
       documentID: 1,
       traineeApplicationId: applicationDetail?.traineeApplicationId || 3,
-      requiredDocumentName: "Test Document",
+      submissionName: "Test Document",
       takeNote: "Test submission",
       submissionDocumentFile: testFile,
       token,
@@ -978,7 +977,7 @@ export default function StudentDocumentsPage() {
                     const result: any = await updateTraineeSubmission(
                       selectedSubmission.submissionId,
                       {
-                        requiredDocumentName: selectedSubmission.requiredDocumentName,
+                        newSubmissionName: selectedSubmission.requiredDocumentName,
                         newTakeNote: resubmitNote || "Nộp lại tài liệu",
                         newSubmissionDocumentFile: resubmitFile,
                         token,
