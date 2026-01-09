@@ -49,6 +49,8 @@ import {
   deleteAllMatrixRows,
   deleteAllMatrixColumns,
   clearMatrix,
+  setPendingStatusMatrixForTrainingDirector,
+  setMatrixStatusForTrainingDirector,
 } from "@/lib/actions/matrix";
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
@@ -86,6 +88,13 @@ export default function TrainingDirectorMatrixPage() {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [addColumnMode, setAddColumnMode] = useState<"single" | "multiple">("single");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeadlineDialogOpen, setIsDeadlineDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [isApproveRejectDialogOpen, setIsApproveRejectDialogOpen] = useState(false);
+  const [selectedDepartmentForApproval, setSelectedDepartmentForApproval] = useState<number | null>(null);
+  const [approvalAction, setApprovalAction] = useState<'Approve' | 'Reject'>('Approve');
+  const [rejectReason, setRejectReason] = useState<string>(" ");
 
   // Client-side filtered data based on department selection and search
   let matrixData = filterDepartmentId === "all"
@@ -521,17 +530,69 @@ export default function TrainingDirectorMatrixPage() {
     }
   };
 
+  const handleSetDeadline = async () => {
+    if (!startDate || !endDate) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn ngày bắt đầu và kết thúc",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsSubmitting(true);
+    try {
+      const result = await setPendingStatusMatrixForTrainingDirector({
+        startDate_deadLine: new Date(startDate).toISOString(),
+        endDate_deadLine: new Date(endDate).toISOString(),
+      });
+
+      if (result.status === 'error' || result.status !== '200 OK') {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể thiết lập deadline",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: result.message || "Đã thiết lập deadline thành công",
+        });
+        setIsDeadlineDialogOpen(false);
+        setStartDate("");
+        setEndDate("");
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6 w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Document Matrix Management</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Quản lý Ma trận Tài liệu</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Configure document requirements for training positions by department
+            Cấu hình yêu cầu tài liệu cho các vị trí đào tạo theo khoa
           </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2">
+            <Upload className="w-4 h-4" />
+            Import
+          </Button>
+          <Button variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
         </div>
       </div>
 
@@ -541,7 +602,7 @@ export default function TrainingDirectorMatrixPage() {
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">Loading matrix data...</p>
+              <p className="text-muted-foreground">Đang tải dữ liệu ma trận...</p>
             </div>
           </CardContent>
         </Card>
@@ -552,7 +613,7 @@ export default function TrainingDirectorMatrixPage() {
               <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
                 <AlertCircle className="w-8 h-8 text-red-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-red-600">Error Loading Matrix</h3>
+              <h3 className="text-xl font-semibold mb-2 text-red-600">Lỗi tải Ma trận</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md">
                 {error}
               </p>
@@ -561,7 +622,7 @@ export default function TrainingDirectorMatrixPage() {
                 className="mt-4"
                 onClick={() => window.location.reload()}
               >
-                Retry
+                Thử lại
               </Button>
             </div>
           </CardContent>
@@ -579,10 +640,10 @@ export default function TrainingDirectorMatrixPage() {
                     onValueChange={setFilterDepartmentId}
                   >
                     <SelectTrigger className="w-[250px]">
-                      <SelectValue placeholder="Filter by department" />
+                      <SelectValue placeholder="Lọc theo khoa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
+                      <SelectItem value="all">Tất cả các Khoa</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem key={dept.id} value={String(dept.id)}>
                         {dept.departmentName || dept.name || "Unknown"}
@@ -594,7 +655,7 @@ export default function TrainingDirectorMatrixPage() {
                   {/* Search Position Name */}
                   <Input
                     type="text"
-                    placeholder="Search position name..."
+                    placeholder="Tìm kiếm tên vị trí..."
                     value={searchPositionName}
                     onChange={(e) => setSearchPositionName(e.target.value)}
                     className="w-[250px]"
@@ -615,7 +676,7 @@ export default function TrainingDirectorMatrixPage() {
                       disabled={isSubmitting}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Clear Matrix
+                      Xóa toàn bộ Ma trận
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1050,16 +1111,76 @@ export default function TrainingDirectorMatrixPage() {
                 <AlertCircle className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">No Matrix Data</h3>
+                <h3 className="text-xl font-semibold mb-2">Không có dữ liệu Ma trận</h3>
                 <p className="text-sm text-muted-foreground">
-                  No matrix configuration found.<br />
-                  Start by adding positions and documents to the matrix.
+                  Không tìm thấy cấu hình ma trận.<br />
+                  Bắt đầu bằng cách thêm vị trí và tài liệu vào ma trận.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Deadline Setting Dialog */}
+      <Dialog open={isDeadlineDialogOpen} onOpenChange={setIsDeadlineDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Thiết lập Deadline</DialogTitle>
+            <DialogDescription>
+              Đặt thời gian bắt đầu và kết thúc cho việc xét duyệt ma trận
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Ngày bắt đầu</Label>
+              <Input
+                id="startDate"
+                type="datetime-local"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endDate">Ngày kết thúc</Label>
+              <Input
+                id="endDate"
+                type="datetime-local"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeadlineDialogOpen(false);
+                setStartDate("");
+                setEndDate("");
+              }}
+              disabled={isSubmitting}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSetDeadline}
+              disabled={isSubmitting || !startDate || !endDate}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

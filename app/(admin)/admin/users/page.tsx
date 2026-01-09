@@ -17,8 +17,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { getAllUsers, createUser, importUsers } from "@/lib/actions/auth";
+import { getAllPositions } from "@/lib/actions/position";
+import { getAllDepartments } from "@/lib/actions/department";
+import { getToken } from "@/lib/auth-utils";
 import Image from "next/image";
 import * as XLSX from 'xlsx';
+import { createAccountImportTemplate } from '@/lib/utils/excel-template';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserData {
   id: string;
@@ -33,13 +44,50 @@ interface CreateUserForm {
   userName: string;
   password: string;
   gmail: string;
-  accountImage: string;
-  positionName: string;
-  departmentName: string;
+  role: string;
+  positionId: string;
+  departmentId: string;
 }
+
+interface Position {
+  id: string;
+  positionName: string;
+  positionDescription: string;
+  departmentID?: string;
+  department?: {
+    id: string | number;
+    departmentName: string;
+  };
+}
+
+interface Department {
+  departmentId: string;
+  departmentName: string;
+  departmentDescription: string;
+}
+
+// Hàm chuyển đổi role sang tiếng Việt
+const getRoleInVietnamese = (role: string): string => {
+  const roleMap: { [key: string]: string } = {
+    'ROLE_TRAINEE': 'Học viên',
+    'TRAINEE': 'Học viên',
+    'ROLE_ACADEMIC_STAFF_AFFAIR': 'Nhân viên học vụ',
+    'ACADEMIC_STAFF_AFFAIR': 'Nhân viên học vụ',
+    'ROLE_HEAD_OF_DEPARTMENT': 'Trưởng phòng',
+    'HEAD_OF_DEPARTMENT': 'Trưởng phòng',
+    'ROLE_TRAINING_DIRECTOR': 'Giám đốc đào tạo',
+    'TRAINING_DIRECTOR': 'Giám đốc đào tạo',
+    'ROLE_ADMIN': 'Quản trị viên',
+    'ADMIN': 'Quản trị viên',
+  };
+  
+  return roleMap[role] || role;
+};
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -52,13 +100,15 @@ export default function UsersPage() {
     userName: "",
     password: "",
     gmail: "",
-    accountImage: "",
-    positionName: "",
-    departmentName: ""
+    role: "TRAINEE",
+    positionId: "",
+    departmentId: ""
   });
 
   useEffect(() => {
     loadUsers();
+    loadPositions();
+    loadDepartments();
   }, []);
 
   const loadUsers = async () => {
@@ -83,6 +133,50 @@ export default function UsersPage() {
     }
   };
 
+  const loadPositions = async () => {
+    try {
+      const token = getToken();
+      const result: any = await getAllPositions(token || undefined);
+
+      if (result && result.data) {
+        const positionsWithDeptId = Array.isArray(result.data)
+          ? result.data.map((pos: any) => ({
+              ...pos,
+              departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+            }))
+          : [];
+        setPositions(positionsWithDeptId);
+      } else if (result && Array.isArray(result)) {
+        const positionsWithDeptId = result.map((pos: any) => ({
+          ...pos,
+          departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+        }));
+        setPositions(positionsWithDeptId);
+      } else {
+        setPositions([]);
+      }
+    } catch (err) {
+      setPositions([]);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const result: any = await getAllDepartments();
+
+      if (result && (result as any).data) {
+        const deptArray = Array.isArray((result as any).data) ? (result as any).data : [];
+        setDepartments(deptArray);
+      } else if (result && Array.isArray(result)) {
+        setDepartments(result);
+      } else {
+        setDepartments([]);
+      }
+    } catch (err) {
+      setDepartments([]);
+    }
+  };
+
   const openViewDialog = (user: UserData) => {
     setSelectedUser(user);
     setIsViewOpen(true);
@@ -93,9 +187,9 @@ export default function UsersPage() {
       userName: "",
       password: "",
       gmail: "",
-      accountImage: "",
-      positionName: "",
-      departmentName: ""
+      role: "TRAINEE",
+      positionId: "",
+      departmentId: ""
     });
     setIsCreateOpen(true);
     setError("");
@@ -118,9 +212,26 @@ export default function UsersPage() {
 
     setIsSubmitting(true);
     try {
-      const result: any = await createUser(formData);
+      // Get position and department names from IDs
+      const selectedPosition = positions.find(p => p.id === formData.positionId);
+      const selectedDepartment = departments.find(d => 
+        (d as any).departmentId === formData.departmentId || 
+        (d as any).id === formData.departmentId
+      );
+
+      const payload = {
+        userName: formData.userName,
+        password: formData.password,
+        gmail: formData.gmail,
+        accountImage: "",
+        role: formData.role,
+        positionName: selectedPosition?.positionName || "",
+        departmentName: selectedDepartment?.departmentName || ""
+      };
+
+      const result: any = await createUser(payload);
       
-      if (result.status === 'success') {
+      if (result.status === 'success' || result.status === '200 OK') {
         setSuccess("Tạo tài khoản thành công!");
         setIsCreateOpen(false);
         loadUsers();
@@ -134,22 +245,24 @@ export default function UsersPage() {
     }
   };
 
-  const downloadTemplate = () => {
-    const template = [
-      {
-        userName: "user001",
-        password: "password123",
-        gmail: "user001@example.com",
-        accountImage: "https://example.com/avatar.jpg",
-        positionName: "Giảng viên",
-        departmentName: "Khoa Công nghệ"
-      }
-    ];
-
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, "account_template.xlsx");
+  const downloadTemplate = async () => {
+    try {
+      // Create workbook with data validation
+      const workbook = await createAccountImportTemplate(departments, positions);
+      
+      // Download file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'account_import_template.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error creating template:', error);
+      setError('Không thể tạo file template');
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,21 +276,41 @@ export default function UsersPage() {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Check if file has required sheets
+      if (!workbook.SheetNames.includes("Accounts")) {
+        setError("File Excel phải có sheet 'Accounts'");
+        setIsSubmitting(false);
+        e.target.value = "";
+        return;
+      }
 
-      const accounts = jsonData.map((row: any) => ({
+      // Read Accounts sheet
+      const accountsSheet = workbook.Sheets["Accounts"];
+      const accountsData = XLSX.utils.sheet_to_json(accountsSheet);
+
+      // Map accounts data (no role field)
+      const accounts = accountsData.map((row: any) => ({
         userName: row.userName || row.username || "",
         password: row.password || "",
         gmail: row.gmail || row.email || "",
-        accountImage: row.accountImage || row.image || "",
         positionName: row.positionName || row.position || "",
         departmentName: row.departmentName || row.department || ""
       }));
 
       if (accounts.length === 0) {
-        setError("File Excel không có dữ liệu");
+        setError("Sheet 'Accounts' không có dữ liệu");
         setIsSubmitting(false);
+        e.target.value = "";
+        return;
+      }
+
+      // Validate required fields
+      const invalidAccounts = accounts.filter(acc => !acc.userName || !acc.password || !acc.gmail);
+      if (invalidAccounts.length > 0) {
+        setError(`Có ${invalidAccounts.length} tài khoản thiếu thông tin bắt buộc (userName, password, gmail)`);
+        setIsSubmitting(false);
+        e.target.value = "";
         return;
       }
 
@@ -307,13 +440,16 @@ export default function UsersPage() {
                       <td className="py-4 px-6">
                         <div className="flex gap-1 flex-wrap">
                           {(user.authorities || user.roles) && (user.authorities || user.roles).length > 0 ? (
-                            (user.authorities || user.roles).map((role: any, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {role.authority || role.roleName || role.name || 'User'}
-                              </Badge>
-                            ))
+                            (user.authorities || user.roles).map((role: any, index: number) => {
+                              const roleText = role.authority || role.roleName || role.name || 'User';
+                              return (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {getRoleInVietnamese(roleText)}
+                                </Badge>
+                              );
+                            })
                           ) : (
-                            <Badge variant="outline" className="text-xs">User</Badge>
+                            <Badge variant="outline" className="text-xs">Người dùng</Badge>
                           )}
                         </div>
                       </td>
@@ -380,34 +516,74 @@ export default function UsersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="accountImage">URL ảnh đại diện</Label>
-              <Input
-                id="accountImage"
-                name="accountImage"
-                value={formData.accountImage}
-                onChange={handleInputChange}
-                placeholder="https://example.com/avatar.jpg"
-              />
+              <Label htmlFor="role">Vai trò <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Chọn vai trò" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRAINEE">Học viên</SelectItem>
+                  <SelectItem value="ACADEMIC_STAFF_AFFAIR">Nhân viên học vụ</SelectItem>
+                  <SelectItem value="HEAD_OF_DEPARTMENT">Trưởng phòng</SelectItem>
+                  <SelectItem value="TRAINING_DIRECTOR">Giám đốc đào tạo</SelectItem>
+                  <SelectItem value="ADMIN">Quản trị viên</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="positionName">Vị trí</Label>
-              <Input
-                id="positionName"
-                name="positionName"
-                value={formData.positionName}
-                onChange={handleInputChange}
-                placeholder="Nhập vị trí"
-              />
+              <Label htmlFor="department">Phòng ban</Label>
+              <Select
+                value={formData.departmentId}
+                onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="department">
+                  <SelectValue placeholder="Chọn phòng ban" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
+                  {departments.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                  ) : (
+                    departments.map((dept, index) => {
+                      const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
+                      const deptName = (dept as any).departmentName || (dept as any).name;
+
+                      return (
+                        <SelectItem key={deptId || index} value={String(deptId)}>
+                          {deptName || 'N/A'}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="departmentName">Phòng ban</Label>
-              <Input
-                id="departmentName"
-                name="departmentName"
-                value={formData.departmentName}
-                onChange={handleInputChange}
-                placeholder="Nhập phòng ban"
-              />
+              <Label htmlFor="position">Vị trí</Label>
+              <Select
+                value={formData.positionId}
+                onValueChange={(value) => setFormData({ ...formData, positionId: value })}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="position">
+                  <SelectValue placeholder="Chọn vị trí" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
+                  {positions.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">Không có vị trí</div>
+                  ) : (
+                    positions.map((pos, index) => (
+                      <SelectItem key={pos.id || index} value={String(pos.id)}>
+                        {pos.positionName}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             {error && (
               <Alert variant="destructive">
@@ -474,13 +650,16 @@ export default function UsersPage() {
                   <Label className="text-sm text-muted-foreground">Vai trò</Label>
                   <div className="mt-2 flex gap-2 flex-wrap">
                     {(selectedUser.authorities || selectedUser.roles) && (selectedUser.authorities || selectedUser.roles).length > 0 ? (
-                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => (
-                        <Badge key={index} variant="secondary">
-                          {role.authority || role.roleName || role.name || 'User'}
-                        </Badge>
-                      ))
+                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => {
+                        const roleText = role.authority || role.roleName || role.name || 'User';
+                        return (
+                          <Badge key={index} variant="secondary">
+                            {getRoleInVietnamese(roleText)}
+                          </Badge>
+                        );
+                      })
                     ) : (
-                      <Badge variant="secondary">User</Badge>
+                      <Badge variant="secondary">Người dùng</Badge>
                     )}
                   </div>
                 </div>

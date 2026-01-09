@@ -660,3 +660,167 @@ export async function setCompleteStatusToActive() {
     };
   }
 }
+
+/**
+ * Set matrix status to DRAFTED for a department - FOR HEAD OF DEPARTMENT
+ * PUT /api/matrix/set-drafted/{departmentID}_for_head_department
+ */
+export async function setMatrixDraftedByDepartment(departmentId: number) {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/set-drafted/${departmentId}_for_head_department`,
+      {
+        method: 'PUT',
+        headers: {
+          'Accept': '*/*',
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to set matrix to DRAFTED status',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Set PENDING status and deadline for matrices - FOR TRAINING DIRECTOR
+ * POST /api/matrix/setPendintStatusMatrix_for_training_director
+ */
+export async function setPendingStatusMatrixForTrainingDirector(payload: {
+  startDate_deadLine: string; // ISO 8601 format: "2026-01-01T11:39:09.555Z"
+  endDate_deadLine: string;   // ISO 8601 format: "2026-12-31T11:39:09.555Z"
+}) {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/setPendintStatusMatrix_for_training_director`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to set PENDING status',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Approve or Reject matrix for a department - FOR TRAINING DIRECTOR
+ * PUT /api/matrix/set-status/department/{departmentId}_for_training_director_approve_or_reject
+ */
+export async function setMatrixStatusForTrainingDirector(
+  departmentId: number,
+  statusEnum: 'Approve' | 'Reject',
+  rejectReason?: string
+) {
+  try {
+    const formData = new FormData();
+    // Always append rejectReason, use single space " " for Approve
+    formData.append('rejectReason', rejectReason || ' ');
+
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/set-status/department/${departmentId}_for_training_director_approve_or_reject?statusEnum=${statusEnum}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Accept': '*/*',
+        },
+        body: formData,
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || `Failed to ${statusEnum.toLowerCase()} matrix`,
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+/**
+ * Get Matrix Dashboard Statistics - FOR TRAINING DIRECTOR
+ * GET /api/matrix/input_matrix_document_dashboard
+ */
+export async function getMatrixDashboard() {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/matrix/input_matrix_document_dashboard`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to get matrix dashboard',
+        data: null,
+      };
+    }
+
+    return {
+      status: 'success',
+      message: 'Matrix dashboard retrieved successfully',
+      data: result,
+    };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}

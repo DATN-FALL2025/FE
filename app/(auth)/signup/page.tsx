@@ -81,14 +81,14 @@ export default function SignupPage() {
             <p className="text-sm text-muted-foreground">Aviation Academy</p>
           </div>
         </div>
-        <h2 className="text-3xl font-bold">Create Account</h2>
-        <p className="text-muted-foreground mt-2">Join our aviation academy today</p>
+        <h2 className="text-3xl font-bold">Tạo tài khoản</h2>
+        <p className="text-muted-foreground mt-2">Tham gia học viện hàng không của chúng tôi ngay hôm nay</p>
       </div>
 
       <Card className="border-0 shadow-xl">
         <CardHeader>
-          <CardTitle>Student Registration</CardTitle>
-          <CardDescription>Fill in your details to get started</CardDescription>
+          <CardTitle>Đăng ký học viên</CardTitle>
+          <CardDescription>Điền thông tin của bạn để bắt đầu</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -180,22 +180,22 @@ export default function SignupPage() {
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
+            <span className="text-muted-foreground">Đã có tài khoản? </span>
             <Link href="/login" className="text-primary font-medium hover:underline">
-              Sign in
+              Đăng nhập
             </Link>
           </div>
         </CardContent>
       </Card>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
-        By signing up, you agree to our{" "}
+        Bằng việc đăng ký, bạn đồng ý với{" "}
         <Link href="/terms" className="text-primary hover:underline">
-          Terms of Service
+          Điều khoản dịch vụ
         </Link>{" "}
-        and{" "}
+        và{" "}
         <Link href="/privacy" className="text-primary hover:underline">
-          Privacy Policy
+          Chính sách bảo mật
         </Link>
       </p>
     </div>

@@ -13,18 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NotificationCenter } from "../notifications/notification-center";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
 import { Menu, User, Settings, LogOut, GraduationCap } from "lucide-react";
 
 export const Navbar = () => {
-  const {
-    student,
-    notifications,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
-  } = useStudentData();
+  const { student } = useStudentData();
   const { logout } = useAuthInfo();
 
   const getInitials = (name: string) => {
@@ -39,7 +33,7 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full max-w-[1920px] mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Left Side - Logo & Mobile Menu */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
@@ -61,20 +55,13 @@ export const Navbar = () => {
             </div>
             <div className="hidden sm:block">
               <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Student Portal</p>
+              <p className="text-xs text-muted-foreground">Trang học viên</p>
             </div>
           </Link>
         </div>
 
-        {/* Right Side - Notifications & Profile */}
+        {/* Right Side - Profile */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <NotificationCenter
-            notifications={notifications}
-            onMarkAsRead={markNotificationAsRead}
-            onMarkAllAsRead={markAllNotificationsAsRead}
-          />
-
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

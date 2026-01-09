@@ -278,11 +278,11 @@ export default function AcademicStaffApprovalsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { label: string; className: string } } = {
-      Pending: { label: "Pending", className: "bg-yellow-500 hover:bg-yellow-600" },
-      InProgress: { label: "In Progress", className: "bg-blue-500 hover:bg-blue-600" },
-      Approve: { label: "Approve", className: "bg-green-500 hover:bg-green-600" },
-      Reject: { label: "Reject", className: "bg-red-500 hover:bg-red-600" },
-      Complete: { label: "Complete", className: "bg-gray-500 hover:bg-gray-600" },
+      Pending: { label: "Chờ duyệt", className: "bg-yellow-500 hover:bg-yellow-600" },
+      InProgress: { label: "Đang xử lý", className: "bg-blue-500 hover:bg-blue-600" },
+      Approve: { label: "Đã duyệt", className: "bg-green-500 hover:bg-green-600" },
+      Reject: { label: "Từ chối", className: "bg-red-500 hover:bg-red-600" },
+      Complete: { label: "Hoàn thành", className: "bg-gray-500 hover:bg-gray-600" },
     };
 
     const statusInfo = statusMap[status] || { label: status, className: "bg-gray-400" };
@@ -291,10 +291,10 @@ export default function AcademicStaffApprovalsPage() {
 
   const getPriorityBadge = (status: string) => {
     if (status === "Pending") {
-      return <Badge variant="destructive">High Priority</Badge>;
+      return <Badge variant="destructive">Ưu tiên cao</Badge>;
     }
     if (status === "InProgress") {
-      return <Badge className="bg-orange-500">Medium</Badge>;
+      return <Badge className="bg-orange-500">Trung bình</Badge>;
     }
     return null;
   };
@@ -304,12 +304,12 @@ export default function AcademicStaffApprovalsPage() {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 1) return "Vừa xong";
+    if (diffInHours < 24) return `${diffInHours} giờ trước`;
 
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return "Yesterday";
-    return `${diffInDays} days ago`;
+    if (diffInDays === 1) return "Hôm qua";
+    return `${diffInDays} ngày trước`;
   };
 
   const pendingCount = applications.filter((a) => a.statusEnum === "Pending").length;
@@ -323,11 +323,11 @@ export default function AcademicStaffApprovalsPage() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="font-semibold">Application #{app.id}</p>
+                <p className="font-semibold">Đơn đăng ký #{app.id}</p>
                 {getStatusBadge(app.statusEnum)}
               </div>
               <p className="text-sm text-muted-foreground">
-                Created: {new Date(app.createAt).toLocaleDateString()}
+                Tạo lúc: {new Date(app.createAt).toLocaleDateString('vi-VN')}
               </p>
             </div>
             <span className="text-xs text-muted-foreground">{getTimeAgo(app.createAt)}</span>
@@ -336,6 +336,7 @@ export default function AcademicStaffApprovalsPage() {
           {getPriorityBadge(app.statusEnum) && (
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-orange-600" />
+              <span className="text-sm font-medium text-muted-foreground">Mức độ ưu tiên:</span>
               {getPriorityBadge(app.statusEnum)}
             </div>
           )}
@@ -343,24 +344,24 @@ export default function AcademicStaffApprovalsPage() {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              <p className="text-sm font-medium">Trainee Application</p>
+              <p className="text-sm font-medium">Đơn đăng ký học viên</p>
             </div>
-            <p className="text-sm text-muted-foreground">Status: {app.statusEnum}</p>
+            <p className="text-sm text-muted-foreground">Trạng thái: {app.statusEnum}</p>
             <p className="text-sm text-muted-foreground">
-              Active: {app.active ? "Yes" : "No"}
+              Hoạt động: {app.active ? "Có" : "Không"}
             </p>
           </div>
 
           {app.updateAt && (
             <p className="text-sm text-muted-foreground">
-              Last updated: {new Date(app.updateAt).toLocaleString()}
+              Cập nhật lần cuối: {new Date(app.updateAt).toLocaleString('vi-VN')}
             </p>
           )}
 
           <div className="flex gap-2 pt-2">
             <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewDialog(app)}>
               <Eye className="w-4 h-4 mr-2" />
-              View
+              Xem
             </Button>
             {app.statusEnum === "Approve" && (
               <Button
@@ -369,7 +370,7 @@ export default function AcademicStaffApprovalsPage() {
                 onClick={() => openCompleteDialog(app)}
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                Complete
+                Hoàn thành
               </Button>
             )}
           </div>
@@ -392,9 +393,9 @@ export default function AcademicStaffApprovalsPage() {
   return (
     <div className="space-y-8 w-full">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Student Request Approvals</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Duyệt Đơn Đăng Ký Học Viên</h1>
         <p className="text-muted-foreground mt-2 text-base">
-          Review and approve student academic requests
+          Xem xét và duyệt các đơn đăng ký của học viên
         </p>
       </div>
 
@@ -406,9 +407,9 @@ export default function AcademicStaffApprovalsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Pending Review", value: pendingCount, color: "text-yellow-600" },
-          { label: "Approve", value: approveCount, color: "text-green-600" },
-          { label: "Reject", value: rejectCount, color: "text-red-600" },
+          { label: "Chờ duyệt", value: pendingCount, color: "text-yellow-600" },
+          { label: "Đã duyệt", value: approveCount, color: "text-green-600" },
+          { label: "Từ chối", value: rejectCount, color: "text-red-600" },
         ].map((stat, i) => (
           <Card key={i} className="border-0 shadow-md">
             <CardContent className="p-6">
@@ -422,12 +423,12 @@ export default function AcademicStaffApprovalsPage() {
       <div className="flex items-center justify-between">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
           <TabsList className="grid w-full max-w-3xl grid-cols-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="approve">Approve</TabsTrigger>
-            <TabsTrigger value="reject">Reject</TabsTrigger>
-            <TabsTrigger value="complete">Complete</TabsTrigger>
-            <TabsTrigger value="inprogress">InProgress</TabsTrigger>
+            <TabsTrigger value="all">Tất cả</TabsTrigger>
+            <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
+            <TabsTrigger value="approve">Đã duyệt</TabsTrigger>
+            <TabsTrigger value="reject">Từ chối</TabsTrigger>
+            <TabsTrigger value="complete">Hoàn thành</TabsTrigger>
+            <TabsTrigger value="inprogress">Đang xử lý</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -439,7 +440,7 @@ export default function AcademicStaffApprovalsPage() {
             className="gap-2"
           >
             <LayoutGrid className="w-4 h-4" />
-            Card
+            Thẻ
           </Button>
           <Button
             variant={viewMode === "table" ? "default" : "outline"}
@@ -448,7 +449,7 @@ export default function AcademicStaffApprovalsPage() {
             className="gap-2"
           >
             <Table className="w-4 h-4" />
-            Table
+            Bảng
           </Button>
         </div>
       </div>
@@ -481,11 +482,11 @@ export default function AcademicStaffApprovalsPage() {
                     <thead className="border-b bg-muted/50">
                       <tr>
                         <th className="text-left py-4 px-6 font-medium text-sm">ID</th>
-                        <th className="text-left py-4 px-6 font-medium text-sm">Status</th>
-                        <th className="text-left py-4 px-6 font-medium text-sm">Created</th>
-                        <th className="text-left py-4 px-6 font-medium text-sm">Updated</th>
-                        <th className="text-left py-4 px-6 font-medium text-sm">Active</th>
-                        <th className="text-right py-4 px-6 font-medium text-sm">Actions</th>
+                        <th className="text-left py-4 px-6 font-medium text-sm">Trạng thái</th>
+                        <th className="text-left py-4 px-6 font-medium text-sm">Ngày tạo</th>
+                        <th className="text-left py-4 px-6 font-medium text-sm">Cập nhật</th>
+                        <th className="text-left py-4 px-6 font-medium text-sm">Hoạt động</th>
+                        <th className="text-right py-4 px-6 font-medium text-sm">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -512,7 +513,7 @@ export default function AcademicStaffApprovalsPage() {
                           </td>
                           <td className="py-4 px-6">
                             <Badge variant={app.active ? "default" : "secondary"}>
-                              {app.active ? "Yes" : "No"}
+                              {app.active ? "Có" : "Không"}
                             </Badge>
                           </td>
                           <td className="py-4 px-6">
@@ -524,7 +525,7 @@ export default function AcademicStaffApprovalsPage() {
                                 onClick={() => openViewDialog(app)}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
-                                View
+                                Xem
                               </Button>
                               {app.statusEnum === "Approve" && (
                                 <Button
@@ -534,7 +535,7 @@ export default function AcademicStaffApprovalsPage() {
                                   className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                 >
                                   <CheckCircle2 className="w-4 h-4 mr-1" />
-                                  Complete
+                                  Hoàn thành
                                 </Button>
                               )}
                             </div>
@@ -634,21 +635,27 @@ export default function AcademicStaffApprovalsPage() {
                               <Badge
                                 variant={doc.apply_or_not === "Applied" ? "default" : "secondary"}
                               >
-                                {doc.apply_or_not}
+                                {doc.apply_or_not === "Applied" ? "Đã nộp" : "Chưa nộp"}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm text-muted-foreground">Trạng thái:</p>
                               <Badge
                                 className={
-                                  doc.submissionStatus === "Approve"
+                                  doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
                                     ? "bg-green-500"
-                                    : doc.submissionStatus === "Reject"
+                                    : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
                                     ? "bg-red-500"
                                     : "bg-yellow-500"
                                 }
                               >
-                                {doc.submissionStatus}
+                                {doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
+                                  ? "Đã duyệt"
+                                  : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
+                                  ? "Từ chối"
+                                  : doc.submissionStatus === "Pending"
+                                  ? "Chờ duyệt"
+                                  : doc.submissionStatus}
                               </Badge>
                             </div>
                           </div>
@@ -677,7 +684,7 @@ export default function AcademicStaffApprovalsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Image Preview Dialog */}
+      {/* File Preview Dialog */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
         <DialogContent className="max-w-5xl max-h-[95vh] p-0">
           <DialogHeader className="p-6 pb-0">

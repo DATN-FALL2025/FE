@@ -27,7 +27,7 @@ export default function AdminDashboardPage() {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <p className="text-muted-foreground">Failed to load dashboard data</p>
+          <p className="text-muted-foreground">Không thể tải dữ liệu bảng điều khiển</p>
         </CardContent>
       </Card>
     );
@@ -37,9 +37,9 @@ export default function AdminDashboardPage() {
     <div className="space-y-8 w-full">
       {/* Page Header */}
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Bảng điều khiển quản trị</h1>
         <p className="text-muted-foreground mt-2 text-base">
-          System overview and management console
+          Tổng quan hệ thống và bảng điều khiển quản lý
         </p>
       </div>
 

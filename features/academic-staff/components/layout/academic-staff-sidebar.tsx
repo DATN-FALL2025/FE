@@ -10,20 +10,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   FileCheck,
+  Calendar,
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 const academicStaffNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/academic-staff/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Document Approvals",
+    name: "Duyệt tài liệu",
     href: "/academic-staff/approvals",
     icon: FileCheck,
+  },
+  {
+    name: "Quản lý đợt duyệt",
+    href: "/academic-staff/batch-management",
+    icon: Calendar,
   },
 ];
 
@@ -52,7 +59,7 @@ export const AcademicStaffSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Academic Management
+                
               </div>
               <ul role="list" className="space-y-1">
                 {academicStaffNavigation.map((item) => {
@@ -95,7 +102,7 @@ export const AcademicStaffSidebar = () => {
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   {role && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {translateRole(role)}
                     </p>
                   )}
                 </div>
@@ -106,7 +113,7 @@ export const AcademicStaffSidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (

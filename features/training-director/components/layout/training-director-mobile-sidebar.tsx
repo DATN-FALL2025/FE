@@ -29,7 +29,7 @@ export const TrainingDirectorMobileSidebar = () => {
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Training Director</p>
+          <p className="text-xs text-muted-foreground">Trang giám đốc đào tạo</p>
         </div>
       </div>
 

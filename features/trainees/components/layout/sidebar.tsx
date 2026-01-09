@@ -10,60 +10,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   FileText,
-  User,
-  Bell,
-  Trophy,
-  Grid3x3,
-  Shield,
   LogOut,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { getDecodedToken } from "@/lib/auth-utils";
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/trainees/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "My Documents",
+    name: "Tài liệu của tôi",
     href: "/trainees/documents",
     icon: FileText,
-  },
-  {
-    name: "Notifications",
-    href: "/trainees/notifications",
-    icon: Bell,
-  },
-  {
-    name: "Admission Result",
-    href: "/trainees/result",
-    icon: Trophy,
-  },
-  {
-    name: "Document Matrix",
-    href: "/trainees/matrix",
-    icon: Grid3x3,
-  },
-  {
-    name: "Profile",
-    href: "/trainees/profile",
-    icon: User,
-  },
-  {
-    name: "Security Settings",
-    href: "/trainees/settings",
-    icon: Shield,
   },
 ];
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const { displayName, avatar, role, logout } = useAuthInfo();
+  const { displayName, avatar, logout } = useAuthInfo();
   const [mounted, setMounted] = useState(false);
+  const [departmentName, setDepartmentName] = useState<string>("");
 
   useEffect(() => {
     setMounted(true);
+    const decoded = getDecodedToken();
+    if (decoded?.departmentName) {
+      setDepartmentName(decoded.departmentName);
+    }
   }, []);
 
   const initials = displayName
@@ -105,7 +81,7 @@ export const Sidebar = () => {
           </ul>
         </nav>
 
-        {/* User Info Section - Bottom */}
+        {/* Logout Button - Bottom */}
         <div className="mt-auto">
           <Separator className="mb-4" />
           {mounted ? (
@@ -119,9 +95,9 @@ export const Sidebar = () => {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{displayName}</p>
-                  {role && (
+                  {departmentName && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {departmentName}
                     </p>
                   )}
                 </div>
@@ -132,7 +108,7 @@ export const Sidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (

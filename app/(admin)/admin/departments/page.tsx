@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, Building2 } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, Building2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ interface Department {
   id: string;
   departmentName: string;
   departmentDescription: string;
+  departmentImage?: string;
   [key: string]: any;
 }
 
@@ -59,7 +61,18 @@ export default function DepartmentsPage() {
     departmentDescription: "",
   });
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Prevent double-fetching in React StrictMode
+  const hasLoadedData = useRef(false);
+
   useEffect(() => {
+    if (hasLoadedData.current) {
+      return;
+    }
+    hasLoadedData.current = true;
     loadDepartments();
   }, []);
 
@@ -85,6 +98,45 @@ export default function DepartmentsPage() {
 
   const resetForm = () => {
     setFormData({ departmentName: "", departmentDescription: "" });
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Vui lòng chọn file hình ảnh!');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Kích thước file không được vượt quá 5MB!');
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleCreate = async () => {
@@ -96,23 +148,39 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result: any = await createDepartment({
-        departmentName: formData.departmentName,
-        departmentDescription: formData.departmentDescription,
-      });
+      // Create FormData to send to server action
+      const submitFormData = new FormData();
+      submitFormData.append('departmentName', formData.departmentName);
+      submitFormData.append('departmentDescription', formData.departmentDescription);
+      if (imageFile) {
+        submitFormData.append('departmentImage', imageFile);
+      }
+
+      const result: any = await createDepartment(submitFormData);
 
       console.log('🏢 Create result:', result);
 
       // Check if successful (backend returns "201 CREATED" or "200 OK")
-      if (result.data || (result.status && result.status.includes('CREATED'))) {
+      const isSuccess = result && (
+        result.data ||
+        (result.status && (
+          result.status.includes('CREATED') ||
+          result.status.includes('201') ||
+          result.status.includes('200') ||
+          result.status.includes('OK')
+        ))
+      );
+
+      if (isSuccess) {
         setIsCreateOpen(false);
         resetForm();
         await loadDepartments();
         toast.success('Tạo phòng ban thành công!');
       } else {
-        toast.error(result.message || 'Tạo phòng ban thất bại!');
+        toast.error(result?.message || 'Tạo phòng ban thất bại!');
       }
     } catch (err: any) {
+      console.error('Create error:', err);
       toast.error(err.message || 'Có lỗi xảy ra!');
     } finally {
       setIsSubmitting(false);
@@ -128,24 +196,39 @@ export default function DepartmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result: any = await updateDepartmentById(Number(selectedDept.id), {
-        departmentName: formData.departmentName,
-        departmentDescription: formData.departmentDescription,
-      });
+      // Create FormData to send to server action
+      const submitFormData = new FormData();
+      submitFormData.append('departmentName', formData.departmentName);
+      submitFormData.append('departmentDescription', formData.departmentDescription);
+      if (imageFile) {
+        submitFormData.append('departmentImage', imageFile);
+      }
+
+      const result: any = await updateDepartmentById(Number(selectedDept.id), submitFormData);
 
       console.log('✏️ Update result:', result);
 
       // Check if successful
-      if (result.data || (result.status && result.status.includes('OK'))) {
+      const isSuccess = result && (
+        result.data ||
+        (result.status && (
+          result.status.includes('OK') ||
+          result.status.includes('200') ||
+          result.status.includes('UPDATED')
+        ))
+      );
+
+      if (isSuccess) {
         setIsEditOpen(false);
         resetForm();
         setSelectedDept(null);
         await loadDepartments();
         toast.success('Cập nhật phòng ban thành công!');
       } else {
-        toast.error(result.message || 'Cập nhật phòng ban thất bại!');
+        toast.error(result?.message || 'Cập nhật phòng ban thất bại!');
       }
     } catch (err: any) {
+      console.error('Update error:', err);
       toast.error(err.message || 'Có lỗi xảy ra!');
     } finally {
       setIsSubmitting(false);
@@ -184,6 +267,10 @@ export default function DepartmentsPage() {
       departmentName: dept.departmentName, 
       departmentDescription: dept.departmentDescription 
     });
+    // Set existing image preview if available
+    if (dept.departmentImage && dept.departmentImage !== 'default_image_url') {
+      setImagePreview(dept.departmentImage);
+    }
     setIsEditOpen(true);
   };
 
@@ -253,8 +340,18 @@ export default function DepartmentsPage() {
                   departments.map((dept) => (
                     <tr key={dept.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                          {dept.departmentImage && dept.departmentImage !== 'default_image_url' ? (
+                            <Image
+                              src={dept.departmentImage}
+                              alt={dept.departmentName}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <Building2 className="w-6 h-6 text-white" />
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -307,7 +404,7 @@ export default function DepartmentsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tạo phòng ban mới</DialogTitle>
             <DialogDescription>Thêm phòng ban mới vào hệ thống</DialogDescription>
@@ -333,6 +430,55 @@ export default function DepartmentsPage() {
                 onChange={(e) => setFormData({ ...formData, departmentDescription: e.target.value })}
                 disabled={isSubmitting}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image">Hình ảnh phòng ban</Label>
+              <div className="space-y-3">
+                {imagePreview ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={removeImage}
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="image"
+                      className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-10 h-10 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                      </div>
+                      <input
+                        id="image"
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -363,7 +509,7 @@ export default function DepartmentsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cập nhật phòng ban</DialogTitle>
             <DialogDescription>Chỉnh sửa thông tin phòng ban</DialogDescription>
@@ -387,6 +533,55 @@ export default function DepartmentsPage() {
                 onChange={(e) => setFormData({ ...formData, departmentDescription: e.target.value })}
                 disabled={isSubmitting}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-image">Hình ảnh phòng ban</Label>
+              <div className="space-y-3">
+                {imagePreview ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={removeImage}
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="edit-image"
+                      className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-10 h-10 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                      </div>
+                      <input
+                        id="edit-image"
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -424,8 +619,18 @@ export default function DepartmentsPage() {
           </DialogHeader>
           {selectedDept && (
             <div className="space-y-4 py-4">
-              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mx-auto">
-                <Building2 className="w-10 h-10 text-white" />
+              <div className="w-32 h-32 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mx-auto">
+                {selectedDept.departmentImage && selectedDept.departmentImage !== 'default_image_url' ? (
+                  <Image
+                    src={selectedDept.departmentImage}
+                    alt={selectedDept.departmentName}
+                    width={128}
+                    height={128}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <Building2 className="w-16 h-16 text-white" />
+                )}
               </div>
               <div className="space-y-3">
                 <div>

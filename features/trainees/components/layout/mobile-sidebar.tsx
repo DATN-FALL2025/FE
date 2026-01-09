@@ -44,7 +44,7 @@ export const MobileSidebar = () => {
         </div>
         <div>
           <h1 className="font-bold text-lg">IDMAWA</h1>
-          <p className="text-xs text-muted-foreground">Student Portal</p>
+          <p className="text-xs text-muted-foreground">Trang học viên</p>
         </div>
       </div>
 

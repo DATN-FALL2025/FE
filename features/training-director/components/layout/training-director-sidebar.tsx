@@ -20,36 +20,22 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
+import { translateRole } from "@/lib/auth-utils";
 
 const trainingDirectorNavigation = [
   {
-    name: "Dashboard",
+    name: "Trang chủ",
     href: "/training-director/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Document Matrix",
+    name: "Ma trận tài liệu",
     href: "/training-director/matrix",
     icon: FileText,
   },
   {
-    name: "Reports",
-    href: "/training-director/reports",
-    icon: BarChart3,
-  },
-  {
-    name: "Admission Results",
-    href: "/training-director/results",
-    icon: Trophy,
-  },
-  {
-    name: "Profile",
-    href: "/training-director/profile",
-    icon: User,
-  },
-  {
-    name: "Security Settings",
-    href: "/training-director/settings",
+    name: "Duyệt Ma trận",
+    href: "/training-director/approvals",
     icon: Shield,
   },
 ];
@@ -79,7 +65,7 @@ export const TrainingDirectorSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Training Management
+                Quản lý đào tạo
               </div>
               <ul role="list" className="space-y-1">
                 {trainingDirectorNavigation.map((item) => {
@@ -122,7 +108,7 @@ export const TrainingDirectorSidebar = () => {
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   {role && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {role.replace(/_/g, ' ')}
+                      {translateRole(role)}
                     </p>
                   )}
                 </div>
@@ -133,7 +119,7 @@ export const TrainingDirectorSidebar = () => {
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
-                Logout
+                Đăng xuất
               </Button>
             </>
           ) : (
