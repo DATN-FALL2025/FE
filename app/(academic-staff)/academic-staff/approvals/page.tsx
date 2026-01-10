@@ -49,6 +49,19 @@ interface TraineeApplication {
   active: boolean;
 }
 
+interface DocumentRuleValue {
+  document_rule_value_id: number;
+  value: string;
+  document_rule_id: number;
+  document_rule_name: string;
+}
+
+interface ExtractedData {
+  extract_data_id: number;
+  extract_data_name: string;
+  extract_Data_value: string;
+}
+
 interface SubmittedDocument {
   submissionId: number | null;
   documentId: number;
@@ -56,6 +69,8 @@ interface SubmittedDocument {
   apply_or_not: string;
   submissionStatus: string;
   url?: string;
+  documentRuleValueCellResponseList?: DocumentRuleValue[];
+  extractDataResponseList?: ExtractedData[];
 }
 
 interface ApplicationDetail {
@@ -621,13 +636,13 @@ export default function AcademicStaffApprovalsPage() {
                   <h3 className="font-semibold text-lg mb-4">
                     Tài liệu đã nộp ({applicationDetail.submittedDocuments.length})
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {applicationDetail.submittedDocuments.map((doc) => (
                       <div
                         key={doc.documentId}
                         className="border rounded-lg p-4 hover:bg-muted/30 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <FileText className="w-4 h-4 text-muted-foreground" />
@@ -646,6 +661,8 @@ export default function AcademicStaffApprovalsPage() {
                                     ? "bg-green-500"
                                     : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
                                     ? "bg-red-500"
+                                    : doc.submissionStatus === "InProgress"
+                                    ? "bg-blue-500"
                                     : "bg-yellow-500"
                                 }
                               >
@@ -655,6 +672,8 @@ export default function AcademicStaffApprovalsPage() {
                                   ? "Từ chối"
                                   : doc.submissionStatus === "Pending"
                                   ? "Chờ duyệt"
+                                  : doc.submissionStatus === "InProgress"
+                                  ? "Đang xử lý"
                                   : doc.submissionStatus}
                               </Badge>
                             </div>
@@ -663,13 +682,51 @@ export default function AcademicStaffApprovalsPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openImagePreview(doc.url!, doc.requiredDocumentName)}
+                              onClick={() => openImagePreview(doc.url!.split(';;')[0], doc.requiredDocumentName)}
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               Xem file
                             </Button>
                           )}
                         </div>
+
+                        {/* Document Rule Values - Quy tắc kiểm tra */}
+                        {doc.documentRuleValueCellResponseList && doc.documentRuleValueCellResponseList.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Quy tắc kiểm tra</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {doc.documentRuleValueCellResponseList.map((rule) => (
+                                <div key={rule.document_rule_value_id} className="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                                    {rule.document_rule_name}:
+                                  </span>
+                                  <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-0.5 rounded">
+                                    {rule.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Extracted Data - Dữ liệu trích xuất */}
+                        {doc.extractDataResponseList && doc.extractDataResponseList.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Dữ liệu trích xuất</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {doc.extractDataResponseList.map((data) => (
+                                <div key={data.extract_data_id} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/30 p-2 rounded">
+                                  <span className="font-medium text-blue-700 dark:text-blue-300">
+                                    {data.extract_data_name}:
+                                  </span>
+                                  <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-800 px-2 py-0.5 rounded font-mono">
+                                    {data.extract_Data_value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

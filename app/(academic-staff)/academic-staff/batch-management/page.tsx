@@ -36,7 +36,7 @@ import { Calendar, Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
-const API_BASE_URL = "https://manage-and-automate-aviation-academy-application-production.up.railway.app/api";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://manage-and-automate-aviation-academy-application-production.up.railway.app'}/api`;
 
 interface Batch {
   id?: number;

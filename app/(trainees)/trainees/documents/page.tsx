@@ -249,13 +249,6 @@ export default function StudentDocumentsPage() {
       return;
     }
 
-    // Validate requireDocumentName
-    if (!document.requiredDocumentName || document.requiredDocumentName.trim() === '') {
-      console.error("❌ requiredDocumentName is null or empty:", document);
-      toast.error("Tên tài liệu không hợp lệ. Vui lòng tải lại trang.");
-      return;
-    }
-
     // Check if this is a resubmit (document already submitted and rejected)
     const isResubmit = document.submissionId !== null && 
                        (document.submissionStatus === "Reject" || document.submissionStatus === "Rejected");
@@ -272,23 +265,48 @@ export default function StudentDocumentsPage() {
 
       const token = getClientToken();
       console.log("🔑 Token available:", token ? "Yes" : "No");
-      console.log("📤 Calling createTraineeSubmission with:", {
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
-        fileName: file.name,
-      });
+      
+      // Use requiredDocumentName or fallback to file name
+      const submissionName = document.requiredDocumentName?.trim() || file.name || `Document_${docId}`;
+      
+      let result: any;
+      
+      if (isResubmit && document.submissionId) {
+        // Use updateTraineeSubmission for resubmit
+        console.log("📤 Calling updateTraineeSubmission with:", {
+          submissionId: document.submissionId,
+          newSubmissionName: submissionName,
+          fileName: file.name,
+        });
 
-      const result: any = await createTraineeSubmission({
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
-        takeNote: "Submitted via web portal",
-        submissionDocumentFile: file,
-        token,
-      });
+        result = await updateTraineeSubmission(document.submissionId, {
+          requiredDocumentName: submissionName,
+          newTakeNote: "Nộp lại qua web portal",
+          newSubmissionDocumentFile: file,
+          token,
+        });
 
-      console.log("📥 createTraineeSubmission result:", result);
+        console.log("📥 updateTraineeSubmission result:", result);
+      } else {
+        // Use createTraineeSubmission for new submission
+        console.log("📤 Calling createTraineeSubmission with:", {
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          submissionName: submissionName,
+          fileName: file.name,
+        });
+
+        result = await createTraineeSubmission({
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          submissionName: submissionName,
+          takeNote: "Submitted via web portal",
+          submissionDocumentFile: file,
+          token,
+        });
+
+        console.log("📥 createTraineeSubmission result:", result);
+      }
 
       // Dismiss loading toast
       toast.dismiss(loadingToast);
@@ -499,14 +517,17 @@ export default function StudentDocumentsPage() {
   const getApplicationStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
       "Pending": { label: "Đang chờ xử lý", className: "bg-yellow-100 text-yellow-800", icon: Clock },
+      "InProgress": { label: "Đang xử lý", className: "bg-blue-100 text-blue-800", icon: Clock },
       "Submitted": { label: "Đã nộp", className: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
       "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
       "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
       "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
       "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+      "Complete": { label: "Hoàn thành", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
+      "Completed": { label: "Hoàn thành", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
     };
 
-    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
+    const statusInfo = statusMap[status] || { label: status || "Chưa có thông tin", className: "bg-gray-100 text-gray-800", icon: AlertCircle };
     const Icon = statusInfo.icon;
 
     return (
@@ -571,149 +592,17 @@ export default function StudentDocumentsPage() {
         </p>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Application Info */}
-        <Card className="shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Thông Tin Đơn Đăng Ký</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Chi tiết về đơn đăng ký của bạn
-            </p>
+      {/* Document Upload - Full Width */}
+      <Card className="shadow-sm">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-bold mb-2">Tải Lên Tài Liệu</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Tải lên tất cả tài liệu cần thiết cho vị trí đã chọn
+          </p>
 
-            {/* Application Details */}
-            <div className="space-y-4 mb-8">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Họ tên</label>
-                <p className="text-base font-semibold">{applicationDetail.fullName}</p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Vị trí ứng tuyển</label>
-                <p className="text-base font-semibold">{applicationDetail.positionName}</p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Phòng ban</label>
-                <p className="text-base font-semibold">{applicationDetail.departmentName}</p>
-              </div>
-              {applicationDetail.positionDescription && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Mô tả vị trí</label>
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">{applicationDetail.positionDescription}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Trạng thái đơn</label>
-                <div>{getApplicationStatusBadge(applicationDetail.traineeApplicationStatus)}</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Ngày tạo đơn
-                </label>
-                <p className="text-sm">
-                  {new Date(applicationDetail.traineeApplicationCreateAt).toLocaleString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-              {applicationDetail.traineeApplicationUpdateAt && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Cập nhật lần cuối
-                  </label>
-                  <p className="text-sm">
-                    {new Date(applicationDetail.traineeApplicationUpdateAt).toLocaleString('vi-VN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Document Statistics */}
-            <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tổng số tài liệu</span>
-                <span className="font-bold">{totalCount}</span>
-              </div>
-              
-              {/* Submission Status */}
-              <div className="space-y-2 pt-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái nộp</p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-green-600" />
-                    Đã nộp
-                  </span>
-                  <span className="font-bold text-green-600">{submittedCount}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-yellow-600" />
-                    Chưa nộp
-                  </span>
-                  <span className="font-bold text-yellow-600">{totalCount - submittedCount}</span>
-                </div>
-              </div>
-              
-              {/* Approval Status */}
-              {submittedCount > 0 && (
-                <div className="space-y-2 pt-2 border-t">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái duyệt</p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
-                      Đã duyệt
-                    </span>
-                    <span className="font-bold text-green-600">{approvedCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-blue-600" />
-                      Chờ duyệt
-                    </span>
-                    <span className="font-bold text-blue-600">{pendingCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <XCircle className="w-3 h-3 text-red-600" />
-                      Từ chối
-                    </span>
-                    <span className="font-bold text-red-600">{rejectedCount}</span>
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <span className="text-muted-foreground">Tiến độ hoàn tất</span>
-                <span className="font-bold">
-                  {totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right Column - Document Upload */}
-        <Card className="shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Tải Lên Tài Liệu</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Tải lên tất cả tài liệu cần thiết cho vị trí đã chọn
-            </p>
-
-            {/* Document List */}
-            <div className="space-y-3 mb-6 overflow-y-auto">
-              {documents.length === 0 ? (
+          {/* Document List */}
+          <div className="space-y-3 mb-6 overflow-y-auto">
+            {documents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>Chưa có tài liệu nào được yêu cầu</p>
@@ -873,7 +762,6 @@ export default function StudentDocumentsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* File Preview Modal */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
@@ -977,7 +865,7 @@ export default function StudentDocumentsPage() {
                     const result: any = await updateTraineeSubmission(
                       selectedSubmission.submissionId,
                       {
-                        newSubmissionName: selectedSubmission.requiredDocumentName,
+                        requiredDocumentName: selectedSubmission.requiredDocumentName,
                         newTakeNote: resubmitNote || "Nộp lại tài liệu",
                         newSubmissionDocumentFile: resubmitFile,
                         token,

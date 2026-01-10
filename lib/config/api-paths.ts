@@ -10,7 +10,7 @@
  */
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://manage-and-automate-aviation-academy.onrender.com';
+  'https://manage-and-automate-aviation-academy-application-production.up.railway.app';
 
 /**
  * Authentication & Account APIs

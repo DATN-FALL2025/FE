@@ -1,6 +1,6 @@
 'use server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manage-and-automate-aviation-academy.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manage-and-automate-aviation-academy-application-production.up.railway.app';
 
 // Timeout configuration (20 seconds for matrix - faster than position)
 const FETCH_TIMEOUT = 20000;

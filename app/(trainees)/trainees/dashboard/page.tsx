@@ -11,14 +11,17 @@ import {
   CheckCircle2, 
   Clock, 
   Users,
-  Download,
   Upload,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  XCircle,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
+import Link from "next/link";
 
 export default function StudentDashboardPage() {
-  const { student, documents, progress, loading } = useStudentData();
+  const { student, documents, progress, loading, applicationDetail, refreshData } = useStudentData();
 
   if (loading) {
     return (
@@ -45,31 +48,65 @@ export default function StudentDashboardPage() {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <p className="text-muted-foreground">Không thể tải dữ liệu sinh viên</p>
+          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground mb-4">Không thể tải dữ liệu sinh viên</p>
+          <Button onClick={refreshData} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Thử lại
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
-  // Calculate stats
+  // Calculate stats from real data
   const totalDocs = progress.totalDocuments;
   const approvedDocs = progress.approvedDocuments;
   const pendingDocs = progress.pendingDocuments;
-  const completionPercent = Math.round((approvedDocs / totalDocs) * 100);
+  const rejectedDocs = progress.rejectedDocuments;
+  const notSubmittedDocs = totalDocs - (approvedDocs + pendingDocs + rejectedDocs);
+  const completionPercent = totalDocs > 0 ? Math.round((approvedDocs / totalDocs) * 100) : 0;
 
-  // Get document list with statuses
-  const documentList = documents.slice(0, 4);
+  // Get document list (show first 6)
+  const documentList = documents.slice(0, 6);
+
+  // Get application status
+  const getApplicationStatusBadge = (status: string) => {
+    const statusMap: { [key: string]: { label: string; className: string } } = {
+      "Pending": { label: "Đang chờ xử lý", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+      "InProgress": { label: "Đang xử lý", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      "Submitted": { label: "Đã nộp", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      "Approve": { label: "Đã duyệt", className: "bg-green-50 text-green-700 border-green-200" },
+      "Approved": { label: "Đã duyệt", className: "bg-green-50 text-green-700 border-green-200" },
+      "Reject": { label: "Từ chối", className: "bg-red-50 text-red-700 border-red-200" },
+      "Rejected": { label: "Từ chối", className: "bg-red-50 text-red-700 border-red-200" },
+      "Complete": { label: "Hoàn thành", className: "bg-green-50 text-green-700 border-green-200" },
+      "Completed": { label: "Hoàn thành", className: "bg-green-50 text-green-700 border-green-200" },
+    };
+    const statusInfo = statusMap[status] || { label: status || "Chưa có thông tin", className: "bg-gray-50 text-gray-600 border-gray-200" };
+    return (
+      <Badge variant="outline" className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    );
+  };
 
   return (
     <div className="space-y-6 w-full pb-8">
       {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Dashboard Hồ Sơ
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Theo dõi tiến độ và trạng thái hồ sơ của bạn
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Dashboard Hồ Sơ
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Theo dõi tiến độ và trạng thái hồ sơ của bạn
+          </p>
+        </div>
+        <Button onClick={refreshData} variant="outline" size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Làm mới
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -102,7 +139,7 @@ export default function StudentDashboardPage() {
                 <p className="text-4xl font-bold text-green-600">{approvedDocs}</p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -114,30 +151,30 @@ export default function StudentDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">
-                  Đang xử lý
+                  Chờ duyệt
                 </p>
                 <p className="text-4xl font-bold text-orange-600">{pendingDocs}</p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-orange-600" />
+                <Clock className="w-6 h-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Registration Position */}
+        {/* Position */}
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1 min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">
                   Vị trí đăng ký
                 </p>
-                <p className="text-sm font-semibold text-blue-600 leading-tight">
-                  Nhân viên vận hành ô tô thông thường
+                <p className="text-sm font-semibold text-blue-600 leading-tight truncate" title={applicationDetail?.positionName || ""}>
+                  {applicationDetail?.positionName || "Chưa có thông tin"}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
@@ -196,15 +233,44 @@ export default function StudentDashboardPage() {
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Trạng thái hồ sơ</span>
-                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                  Đang xử lý
-                </Badge>
+                {getApplicationStatusBadge(applicationDetail?.traineeApplicationStatus || "Pending")}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Ngày nộp</span>
+                <span className="text-sm text-muted-foreground">Phòng ban</span>
                 <span className="text-sm font-semibold">
-                  {progress.deadline.toLocaleDateString("vi-VN")}
+                  {applicationDetail?.departmentName || "Chưa có thông tin"}
                 </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Ngày tạo đơn</span>
+                <span className="text-sm font-semibold">
+                  {applicationDetail?.traineeApplicationCreateAt 
+                    ? new Date(applicationDetail.traineeApplicationCreateAt).toLocaleDateString("vi-VN")
+                    : "Chưa có thông tin"}
+                </span>
+              </div>
+              
+              {/* Document Status Summary */}
+              <div className="pt-3 border-t space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Chi tiết trạng thái</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>Đã duyệt: {approvedDocs}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <span>Chờ duyệt: {pendingDocs}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    <span>Từ chối: {rejectedDocs}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span>Chưa nộp: {notSubmittedDocs}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -213,59 +279,80 @@ export default function StudentDashboardPage() {
         {/* Document List */}
         <Card className="shadow-sm">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-2">Tài Liệu Hồ Sơ</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold">Tài Liệu Hồ Sơ</h3>
+              <Link href="/trainees/documents">
+                <Button variant="ghost" size="sm">
+                  Xem tất cả
+                </Button>
+              </Link>
+            </div>
             <p className="text-sm text-muted-foreground mb-6">
-              Danh sách tài liệu đã nộp và trạng thái
+              Danh sách tài liệu và trạng thái
             </p>
 
             {/* Document Items */}
-            <div className="space-y-3 mb-6">
-              {documentList.map((doc, index) => {
-                const isApproved = doc.status === "approved";
-                const isPending = doc.status === "pending_review" || doc.status === "submitted";
-                const isNotSubmitted = !isApproved && !isPending;
+            <div className="space-y-3 mb-6 max-h-[320px] overflow-y-auto">
+              {documentList.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Chưa có tài liệu nào</p>
+                </div>
+              ) : (
+                documentList.map((doc) => {
+                  const isApproved = doc.status === "approved";
+                  const isPending = doc.status === "pending_review" || doc.status === "submitted";
+                  const isRejected = doc.status === "rejected";
+                  const isNotSubmitted = doc.status === "not_submitted";
 
-                return (
-                  <div
-                    key={doc.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isApproved
-                        ? 'bg-green-50'
-                        : isPending
-                        ? 'bg-yellow-50'
-                        : 'bg-blue-50'
-                    }`}>
-                      {isApproved ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      ) : isPending ? (
-                        <FileText className="w-5 h-5 text-yellow-600" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-blue-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Nộp ngày: {doc.uploadedAt?.toLocaleDateString("vi-VN") || "N/A"}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        isApproved
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : isPending
-                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                          : 'bg-gray-50 text-gray-600 border-gray-200'
-                      }
+                  return (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                     >
-                      {isApproved ? 'Đã duyệt' : isPending ? 'Đang xử lý' : 'Chưa hoàn thành'}
-                    </Badge>
-                  </div>
-                );
-              })}
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isApproved
+                          ? 'bg-green-50'
+                          : isPending
+                          ? 'bg-yellow-50'
+                          : isRejected
+                          ? 'bg-red-50'
+                          : 'bg-gray-50'
+                      }`}>
+                        {isApproved ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        ) : isPending ? (
+                          <Clock className="w-5 h-5 text-yellow-600" />
+                        ) : isRejected ? (
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        ) : (
+                          <Upload className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" title={doc.name}>{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isNotSubmitted ? "Chưa nộp" : doc.uploadedAt?.toLocaleDateString("vi-VN") || "N/A"}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          isApproved
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : isPending
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            : isRejected
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                        }
+                      >
+                        {isApproved ? 'Đã duyệt' : isPending ? 'Chờ duyệt' : isRejected ? 'Từ chối' : 'Chưa nộp'}
+                      </Badge>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             {/* Progress Bar */}
@@ -278,6 +365,16 @@ export default function StudentDashboardPage() {
                 value={completionPercent}
                 className="h-2.5 [&>div]:bg-blue-600"
               />
+              
+              {/* Action Button */}
+              {notSubmittedDocs > 0 && (
+                <Link href="/trainees/documents" className="block mt-4">
+                  <Button className="w-full">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Nộp tài liệu ({notSubmittedDocs} còn lại)
+                  </Button>
+                </Link>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -285,4 +382,3 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
-

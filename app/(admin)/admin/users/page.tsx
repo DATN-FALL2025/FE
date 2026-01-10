@@ -289,11 +289,12 @@ export default function UsersPage() {
       const accountsSheet = workbook.Sheets["Accounts"];
       const accountsData = XLSX.utils.sheet_to_json(accountsSheet);
 
-      // Map accounts data (no role field)
+      // Map accounts data with default role as TRAINEE
       const accounts = accountsData.map((row: any) => ({
         userName: row.userName || row.username || "",
         password: row.password || "",
         gmail: row.gmail || row.email || "",
+        role: row.role || "TRAINEE",
         positionName: row.positionName || row.position || "",
         departmentName: row.departmentName || row.department || ""
       }));
