@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   FileText,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { getDecodedToken } from "@/lib/auth-utils";
@@ -25,6 +26,11 @@ const navigation = [
     name: "Tài liệu của tôi",
     href: "/trainees/documents",
     icon: FileText,
+  },
+  {
+    name: "Xem yêu cầu hồ sơ",
+    href: "/trainees/document-requirements",
+    icon: ClipboardList,
   },
 ];
 

@@ -11,6 +11,7 @@ import {
   FileCheck,
   Calendar,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
@@ -25,6 +26,11 @@ const academicStaffNavigation = [
     name: "Quản lý đợt duyệt",
     href: "/academic-staff/batch-management",
     icon: Calendar,
+  },
+  {
+    name: "Xem yêu cầu hồ sơ",
+    href: "/academic-staff/document-requirements",
+    icon: ClipboardList,
   },
 ];
 

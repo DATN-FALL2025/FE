@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Settings,
   GraduationCap,
+  ClipboardList,
 } from "lucide-react";
 
 const navigation = [
@@ -24,6 +25,11 @@ const navigation = [
     name: "My Documents",
     href: "/trainees/documents",
     icon: FileText,
+  },
+  {
+    name: "Xem yêu cầu hồ sơ",
+    href: "/trainees/document-requirements",
+    icon: ClipboardList,
   },
   {
     name: "Profile",

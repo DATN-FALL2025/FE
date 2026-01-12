@@ -18,6 +18,7 @@ import {
   Trophy,
   User,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
@@ -37,6 +38,11 @@ const trainingDirectorNavigation = [
     name: "Duyệt Ma trận",
     href: "/training-director/approvals",
     icon: Shield,
+  },
+  {
+    name: "Xem quy tắc",
+    href: "/training-director/view-rules",
+    icon: ClipboardList,
   },
 ];
 

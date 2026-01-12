@@ -33,25 +33,34 @@ import { getAllMatrix, setMatrixStatusForTrainingDirector, getMatrixDashboard } 
 import { getAllDepartments } from "@/lib/actions/department";
 import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
+import MatrixTimeDisplay from "@/components/shared/matrix-time-display";
 
-// Helper function to get status badge
-function getStatusBadge(status: string | null) {
-  if (!status) {
-    return { label: "Chưa gửi", className: "bg-gray-500" };
+// Helper function to get status badge for matrixStatusEnum
+function getMatrixStatusBadge(matrixStatus: string | null, overallStatus: string | null) {
+  // Nếu đã được phê duyệt (statusEnum = Approve)
+  if (overallStatus === 'Approve' || overallStatus === 'Approved') {
+    return { label: "Đã phê duyệt", className: "bg-green-500" };
+  }
+  
+  // Nếu bị từ chối
+  if (overallStatus === 'Reject' || overallStatus === 'Rejected') {
+    return { label: "Đã từ chối", className: "bg-red-500" };
+  }
+
+  // Hiển thị theo matrixStatusEnum
+  if (!matrixStatus) {
+    return { label: "Đang xử lý", className: "bg-yellow-500" };
   }
 
   const statusMap: Record<string, { label: string; className: string }> = {
-    'Drafted': { label: "Chờ duyệt", className: "bg-blue-500" },
+    'Drafted': { label: "Đã gửi - Chờ duyệt", className: "bg-blue-500" },
+    'Undrafted': { label: "Chưa gửi", className: "bg-gray-500" },
     'Pending': { label: "Đang xử lý", className: "bg-yellow-500" },
-    'Approved': { label: "Đã phê duyệt", className: "bg-green-500" },
-    'Approve': { label: "Đã phê duyệt", className: "bg-green-500" },
-    'Rejected': { label: "Đã từ chối", className: "bg-red-500" },
-    'Reject': { label: "Đã từ chối", className: "bg-red-500" },
     'InProgress': { label: "Đang xử lý", className: "bg-yellow-500" },
-    'Complete': { label: "Hoàn thành", className: "bg-green-600" }
+    'Complete': { label: "Hoàn thành", className: "bg-green-600" },
   };
 
-  return statusMap[status] || { label: status, className: "bg-gray-500" };
+  return statusMap[matrixStatus] || { label: matrixStatus, className: "bg-gray-500" };
 }
 
 export default function TrainingDirectorApprovalsPage() {
@@ -211,6 +220,9 @@ export default function TrainingDirectorApprovalsPage() {
 
   return (
     <div className="space-y-6 w-full">
+      {/* Matrix Time Display */}
+      <MatrixTimeDisplay />
+
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -403,12 +415,10 @@ export default function TrainingDirectorApprovalsPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Status Badge - Overall status from positions */}
-                  {overallStatus && (
-                    <Badge className={`${getStatusBadge(overallStatus).className} text-white`}>
-                      {getStatusBadge(overallStatus).label}
-                    </Badge>
-                  )}
+                  {/* Status Badge - Based on matrixStatusEnum and overallStatus */}
+                  <Badge className={`${getMatrixStatusBadge(matrixStatus, overallStatus).className} text-white`}>
+                    {getMatrixStatusBadge(matrixStatus, overallStatus).label}
+                  </Badge>
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2">
@@ -504,10 +514,6 @@ export default function TrainingDirectorApprovalsPage() {
                           position.documentCollumResponseList?.forEach((doc: any) => {
                             positionDocuments.set(doc.document_id, doc);
                           });
-
-                          // Get position status
-                          const positionStatus = position.statusEnum || null;
-                          const statusBadge = getStatusBadge(positionStatus);
 
                           return (
                             <tr key={position.positionId} className="border-b hover:bg-muted/20">

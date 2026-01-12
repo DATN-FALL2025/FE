@@ -343,7 +343,7 @@ if (!token) {
 ```typescript
 // Handle null values gracefully
 const positionName = app.positionName || "Chưa được phân công";
-const departmentName = app.departmentName || "Chưa có phòng ban";
+const departmentName = app.departmentName || "Chưa có khoa";
 ```
 
 ### Issue 3: User info not showing

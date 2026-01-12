@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-  Download,
-  Upload,
   AlertCircle,
   Loader2,
   Filter,
@@ -55,10 +53,13 @@ import {
 import { getAllDepartments } from "@/lib/actions/department";
 import { getAllPositions } from "@/lib/actions/position";
 import { getAllDocuments } from "@/lib/actions/document";
+import { setPendingStatusMatrix, setCompleteStatusMatrix } from "@/lib/actions/matrix-time";
 import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
 import type { ApiResponse as PositionApiResponse, Position } from "@/types/position";
 import type { ApiResponse as DocumentApiResponse, Document } from "@/types/document";
+import MatrixTimeDisplay from "@/components/shared/matrix-time-display";
+import MatrixCellHoverPopup from "@/components/shared/matrix-cell-hover-popup";
 
 // Helper function to remove Vietnamese accents for search
 function removeVietnameseAccents(str: string): string {
@@ -89,12 +90,16 @@ export default function TrainingDirectorMatrixPage() {
   const [addColumnMode, setAddColumnMode] = useState<"single" | "multiple">("single");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeadlineDialogOpen, setIsDeadlineDialogOpen] = useState(false);
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [deadlineStartDate, setDeadlineStartDate] = useState<string>("");
+  const [deadlineEndDate, setDeadlineEndDate] = useState<string>("");
+  const [isActiveDialogOpen, setIsActiveDialogOpen] = useState(false);
+  const [activeStartDate, setActiveStartDate] = useState<string>("");
+  const [activeEndDate, setActiveEndDate] = useState<string>("");
   const [isApproveRejectDialogOpen, setIsApproveRejectDialogOpen] = useState(false);
   const [selectedDepartmentForApproval, setSelectedDepartmentForApproval] = useState<number | null>(null);
   const [approvalAction, setApprovalAction] = useState<'Approve' | 'Reject'>('Approve');
   const [rejectReason, setRejectReason] = useState<string>(" ");
+  const [matrixTimeKey, setMatrixTimeKey] = useState(0); // For refreshing MatrixTimeDisplay
 
   // Client-side filtered data based on department selection and search
   let matrixData = filterDepartmentId === "all"
@@ -531,7 +536,7 @@ export default function TrainingDirectorMatrixPage() {
   };
 
   const handleSetDeadline = async () => {
-    if (!startDate || !endDate) {
+    if (!deadlineStartDate || !deadlineEndDate) {
       toast({
         title: "Lỗi",
         description: "Vui lòng chọn ngày bắt đầu và kết thúc",
@@ -542,25 +547,90 @@ export default function TrainingDirectorMatrixPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await setPendingStatusMatrixForTrainingDirector({
-        startDate_deadLine: new Date(startDate).toISOString(),
-        endDate_deadLine: new Date(endDate).toISOString(),
-      });
+      const token = localStorage.getItem("token");
+      
+      // Format: YYYY-MM-DDT00:00:00.000Z for start, YYYY-MM-DDT23:59:00.000Z for end
+      const startDatePart = deadlineStartDate.slice(0, 10);
+      const endDatePart = deadlineEndDate.slice(0, 10);
+      
+      const result: any = await setPendingStatusMatrix({
+        startDate_deadLine: `${startDatePart}T00:00:00.000Z`,
+        endDate_deadLine: `${endDatePart}T23:59:00.000Z`
+      }, token);
 
-      if (result.status === 'error' || result.status !== '200 OK') {
+      if (result.status === 'error' || (result.status !== '200 OK' && result.status !== 'success')) {
+        // Dịch lỗi sang tiếng Việt
+        let errorMessage = result.message || "Không thể tạo deadline";
+        if (errorMessage.includes("Start Date dead line must occur after the current time")) {
+          errorMessage = "Ngày bắt đầu deadline phải sau thời gian hiện tại";
+        } else if (errorMessage.includes("End Date dead line must occur after Start Date")) {
+          errorMessage = "Ngày kết thúc deadline phải sau ngày bắt đầu";
+        }
         toast({
           title: "Lỗi",
-          description: result.message || "Không thể thiết lập deadline",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Thành công",
-          description: result.message || "Đã thiết lập deadline thành công",
+          description: "Tạo deadline thành công",
         });
         setIsDeadlineDialogOpen(false);
-        setStartDate("");
-        setEndDate("");
+        setDeadlineStartDate("");
+        setDeadlineEndDate("");
+        setMatrixTimeKey(prev => prev + 1); // Refresh MatrixTimeDisplay
+        await reloadMatrix();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Đã xảy ra lỗi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSetActive = async () => {
+    if (!activeStartDate || !activeEndDate) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn ngày bắt đầu và kết thúc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Format: YYYY-MM-DDT00:00:00.000Z for start, YYYY-MM-DDT23:59:00.000Z for end
+      const startDatePart = activeStartDate.slice(0, 10);
+      const endDatePart = activeEndDate.slice(0, 10);
+      
+      const result: any = await setCompleteStatusMatrix({
+        startDate: `${startDatePart}T00:00:00.000Z`,
+        endDate: `${endDatePart}T23:59:00.000Z`
+      }, token);
+
+      if (result.status === 'error' || (result.status !== '200 OK' && result.status !== 'success')) {
+        toast({
+          title: "Lỗi",
+          description: result.message || "Không thể kích hoạt ma trận",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: result.message || "Đã kích hoạt ma trận thành công",
+        });
+        setIsActiveDialogOpen(false);
+        setActiveStartDate("");
+        setActiveEndDate("");
+        setMatrixTimeKey(prev => prev + 1); // Refresh MatrixTimeDisplay
         await reloadMatrix();
       }
     } catch (error: any) {
@@ -576,6 +646,14 @@ export default function TrainingDirectorMatrixPage() {
 
   return (
     <div className="space-y-6 w-full">
+      {/* Matrix Time Display */}
+      <MatrixTimeDisplay 
+        key={matrixTimeKey}
+        showActions={true}
+        onSetDeadline={() => setIsDeadlineDialogOpen(true)}
+        onSetActive={() => setIsActiveDialogOpen(true)}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -583,16 +661,6 @@ export default function TrainingDirectorMatrixPage() {
           <p className="text-muted-foreground mt-2 text-base">
             Cấu hình yêu cầu tài liệu cho các vị trí đào tạo theo khoa
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
         </div>
       </div>
 
@@ -908,13 +976,15 @@ export default function TrainingDirectorMatrixPage() {
                                   return (
                                     <td key={docId} className="p-4 text-center border-l">
                                       {doc ? (
-                                        <div className="flex items-center justify-center gap-2">
-                                          {doc.required ? (
-                                            <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                          ) : (
-                                            <div className="h-5 w-5 rounded border-2 border-muted-foreground/30" />
-                                          )}
-                                        </div>
+                                        <MatrixCellHoverPopup matrixId={doc.matrixId} disabled={!doc.required}>
+                                          <div className="flex items-center justify-center gap-2">
+                                            {doc.required ? (
+                                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                            ) : (
+                                              <div className="h-5 w-5 rounded border-2 border-muted-foreground/30" />
+                                            )}
+                                          </div>
+                                        </MatrixCellHoverPopup>
                                       ) : (
                                         <div className="text-muted-foreground">—</div>
                                       )}
@@ -1123,32 +1193,75 @@ export default function TrainingDirectorMatrixPage() {
       )}
 
       {/* Deadline Setting Dialog */}
-      <Dialog open={isDeadlineDialogOpen} onOpenChange={setIsDeadlineDialogOpen}>
+      <Dialog open={isDeadlineDialogOpen} onOpenChange={(open) => {
+        setIsDeadlineDialogOpen(open);
+        if (open) {
+          // Set default start date: 00:00 ngày hôm sau
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() + 1);
+          startDate.setHours(0, 0, 0, 0);
+          const startYear = startDate.getFullYear();
+          const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+          const startDay = String(startDate.getDate()).padStart(2, '0');
+          setDeadlineStartDate(`${startYear}-${startMonth}-${startDay}T00:00`);
+          
+          // Set default end date: 7 ngày sau, 23:59
+          const endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 7);
+          endDate.setHours(23, 59, 0, 0);
+          const endYear = endDate.getFullYear();
+          const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+          const endDay = String(endDate.getDate()).padStart(2, '0');
+          setDeadlineEndDate(`${endYear}-${endMonth}-${endDay}T23:59`);
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Thiết lập Deadline</DialogTitle>
+            <DialogTitle>Tạo Deadline</DialogTitle>
             <DialogDescription>
-              Đặt thời gian bắt đầu và kết thúc cho việc xét duyệt ma trận
+              Đặt thời gian bắt đầu và kết thúc cho việc xét duyệt ma trận 
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Ngày bắt đầu</Label>
+              <Label htmlFor="deadlineStartDate">Ngày bắt đầu (00:00)</Label>
               <Input
-                id="startDate"
-                type="datetime-local"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                id="deadlineStartDate"
+                type="date"
+                value={deadlineStartDate.slice(0, 10)}
+                min={(() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  const y = tomorrow.getFullYear();
+                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  return `${y}-${m}-${d}`;
+                })()}
+                onChange={(e) => {
+                  // Set time to 00:00
+                  setDeadlineStartDate(e.target.value + "T00:00");
+                }}
                 disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">Ngày kết thúc</Label>
+              <Label htmlFor="deadlineEndDate">Ngày kết thúc (23:59)</Label>
               <Input
-                id="endDate"
-                type="datetime-local"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                id="deadlineEndDate"
+                type="date"
+                value={deadlineEndDate.slice(0, 10)}
+                min={deadlineStartDate ? deadlineStartDate.slice(0, 10) : (() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  const y = tomorrow.getFullYear();
+                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  return `${y}-${m}-${d}`;
+                })()}
+                onChange={(e) => {
+                  // Set time to 23:59
+                  setDeadlineEndDate(e.target.value + "T23:59");
+                }}
                 disabled={isSubmitting}
               />
             </div>
@@ -1158,8 +1271,8 @@ export default function TrainingDirectorMatrixPage() {
               variant="outline"
               onClick={() => {
                 setIsDeadlineDialogOpen(false);
-                setStartDate("");
-                setEndDate("");
+                setDeadlineStartDate("");
+                setDeadlineEndDate("");
               }}
               disabled={isSubmitting}
             >
@@ -1167,7 +1280,7 @@ export default function TrainingDirectorMatrixPage() {
             </Button>
             <Button
               onClick={handleSetDeadline}
-              disabled={isSubmitting || !startDate || !endDate}
+              disabled={isSubmitting || !deadlineStartDate || !deadlineEndDate}
             >
               {isSubmitting ? (
                 <>
@@ -1176,6 +1289,100 @@ export default function TrainingDirectorMatrixPage() {
                 </>
               ) : (
                 "Lưu"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Active Setting Dialog */}
+      <Dialog open={isActiveDialogOpen} onOpenChange={(open) => {
+        setIsActiveDialogOpen(open);
+        if (open) {
+          // Set default start date: 00:00 ngày hôm sau
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() + 1);
+          startDate.setHours(0, 0, 0, 0);
+          const startYear = startDate.getFullYear();
+          const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+          const startDay = String(startDate.getDate()).padStart(2, '0');
+          setActiveStartDate(`${startYear}-${startMonth}-${startDay}T00:00`);
+          
+          // Set default end date: 1 năm sau, 23:59
+          const endDate = new Date(startDate);
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          const endYear = endDate.getFullYear();
+          const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+          const endDay = String(endDate.getDate()).padStart(2, '0');
+          setActiveEndDate(`${endYear}-${endMonth}-${endDay}T23:59`);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Kích hoạt Ma trận</DialogTitle>
+            <DialogDescription>
+              Đặt thời gian hoạt động cho ma trận
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="activeStartDate">Ngày bắt đầu (00:00)</Label>
+              <Input
+                id="activeStartDate"
+                type="date"
+                value={activeStartDate.slice(0, 10)}
+                min={(() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  const y = tomorrow.getFullYear();
+                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  return `${y}-${m}-${d}`;
+                })()}
+                onChange={(e) => {
+                  setActiveStartDate(e.target.value + "T00:00");
+                }}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="activeEndDate">Ngày kết thúc (23:59)</Label>
+              <Input
+                id="activeEndDate"
+                type="date"
+                value={activeEndDate.slice(0, 10)}
+                min={activeStartDate ? activeStartDate.slice(0, 10) : undefined}
+                onChange={(e) => {
+                  setActiveEndDate(e.target.value + "T23:59");
+                }}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsActiveDialogOpen(false);
+                setActiveStartDate("");
+                setActiveEndDate("");
+              }}
+              disabled={isSubmitting}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSetActive}
+              disabled={isSubmitting || !activeStartDate || !activeEndDate}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang kích hoạt...
+                </>
+              ) : (
+                "Kích hoạt"
               )}
             </Button>
           </DialogFooter>

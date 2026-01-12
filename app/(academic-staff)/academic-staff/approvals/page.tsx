@@ -14,6 +14,7 @@ import {
   Loader2,
   LayoutGrid,
   Table,
+  Calendar,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ import {
   getTraineeApplicationsByStatus,
   completeTraineeApplication,
   getTraineeApplicationDetailByStaff,
+  getNearestBatch,
 } from "@/lib/actions/trainee-submission";
 
 interface TraineeApplication {
@@ -69,6 +71,7 @@ interface SubmittedDocument {
   apply_or_not: string;
   submissionStatus: string;
   url?: string;
+  report?: string;
   documentRuleValueCellResponseList?: DocumentRuleValue[];
   extractDataResponseList?: ExtractedData[];
 }
@@ -87,6 +90,12 @@ interface ApplicationDetail {
   submittedDocuments: SubmittedDocument[];
 }
 
+interface BatchInfo {
+  startDate: string;
+  endDate: string;
+  status: boolean;
+}
+
 export default function AcademicStaffApprovalsPage() {
   const [applications, setApplications] = useState<TraineeApplication[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -97,6 +106,7 @@ export default function AcademicStaffApprovalsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [batchInfo, setBatchInfo] = useState<BatchInfo | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [applicationDetail, setApplicationDetail] = useState<ApplicationDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -110,7 +120,19 @@ export default function AcademicStaffApprovalsPage() {
     if (hasLoadedData.current) return;
     hasLoadedData.current = true;
     loadApplications(true);
+    loadBatchInfo();
   }, []);
+
+  const loadBatchInfo = async () => {
+    try {
+      const result: any = await getNearestBatch();
+      if (result.status === "200 OK" && result.data) {
+        setBatchInfo(result.data);
+      }
+    } catch (err) {
+      console.error("Error loading batch info:", err);
+    }
+  };
 
   const loadApplications = async (isInitial = false) => {
     if (isInitial) {
@@ -420,6 +442,35 @@ export default function AcademicStaffApprovalsPage() {
         </div>
       )}
 
+      {/* Thông tin đợt nộp */}
+      {batchInfo && (
+        <Card className="border-0 shadow-md bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-lg">Thông tin đợt nộp hồ sơ</h3>
+              <Badge className={batchInfo.status ? "bg-green-500" : "bg-red-500"}>
+                {batchInfo.status ? "Đang mở" : "Đã đóng"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Ngày bắt đầu</p>
+                <p className="font-medium">{new Date(batchInfo.startDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Ngày kết thúc</p>
+                <p className="font-medium">{new Date(batchInfo.endDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           { label: "Chờ duyệt", value: pendingCount, color: "text-yellow-600" },
@@ -603,7 +654,7 @@ export default function AcademicStaffApprovalsPage() {
                       <p className="font-medium">{applicationDetail.positionName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phòng ban</p>
+                      <p className="text-sm text-muted-foreground">Khoa</p>
                       <p className="font-medium">{applicationDetail.departmentName}</p>
                     </div>
                     <div>
@@ -724,6 +775,16 @@ export default function AcademicStaffApprovalsPage() {
                                   </span>
                                 </div>
                               ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Report / Lý do - Chỉ hiển thị khi bị từ chối */}
+                        {doc.report && (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Lý do từ chối</p>
+                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg whitespace-pre-wrap text-sm text-red-800 dark:text-red-200">
+                              {doc.report}
                             </div>
                           </div>
                         )}

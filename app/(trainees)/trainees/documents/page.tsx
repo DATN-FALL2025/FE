@@ -22,6 +22,7 @@ import {
   getTraineeApplicationDetailByTrainee,
   uploadTraineeApplication,
   getTraineeSubmissionDetail,
+  getNearestBatch,
 } from "@/lib/actions";
 import {
   createTraineeSubmission,
@@ -59,8 +60,9 @@ interface SubmissionDetail {
   submissionStatus: string;
   submission_name: string;
   takeNote: string;
-  fileDownloadUrl: string;
+  fileDownloadUrl: string | string[];
   uploadTime: string;
+  report?: string;
   documentRuleValueCellResponseList?: DocumentRuleValue[];
   extractDataResponseList?: ExtractedData[];
 }
@@ -77,6 +79,12 @@ interface ApplicationDetail {
   accountId: number;
   fullName: string;
   submittedDocuments: SubmittedDocument[];
+}
+
+interface BatchInfo {
+  startDate: string;
+  endDate: string;
+  status: boolean;
 }
 
 export default function StudentDocumentsPage() {
@@ -103,6 +111,10 @@ export default function StudentDocumentsPage() {
   const [resubmitFile, setResubmitFile] = useState<File | null>(null);
   const [resubmitNote, setResubmitNote] = useState("");
   const [isResubmitting, setIsResubmitting] = useState(false);
+  
+  // Batch info state
+  const [batchInfo, setBatchInfo] = useState<BatchInfo | null>(null);
+  const [isBatchOpen, setIsBatchOpen] = useState(false);
   
   // Get user info from decoded token
   const [userInfo, setUserInfo] = useState<{
@@ -199,6 +211,26 @@ export default function StudentDocumentsPage() {
     };
 
     fetchApplicationDetail();
+  }, []);
+
+  // Fetch batch info on mount
+  useEffect(() => {
+    const fetchBatchInfo = async () => {
+      try {
+        const result: any = await getNearestBatch();
+        if (result.status === "200 OK" && result.data) {
+          setBatchInfo(result.data);
+          // Check if current time is within batch period
+          const now = new Date();
+          const startDate = new Date(result.data.startDate);
+          const endDate = new Date(result.data.endDate);
+          setIsBatchOpen(result.data.status && now >= startDate && now <= endDate);
+        }
+      } catch (error) {
+        console.error("Error fetching batch info:", error);
+      }
+    };
+    fetchBatchInfo();
   }, []);
 
   const handleFileSelect = (docId: number, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -592,6 +624,40 @@ export default function StudentDocumentsPage() {
         </p>
       </div>
 
+      {/* Thông tin đợt nộp */}
+      {batchInfo && (
+        <Card className={`shadow-sm ${isBatchOpen ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200' : 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold">Đợt nộp hồ sơ</h3>
+              <Badge className={isBatchOpen ? "bg-green-500" : "bg-red-500"}>
+                {isBatchOpen ? "Đang mở" : "Đã đóng"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Bắt đầu: </span>
+                <span className="font-medium">{new Date(batchInfo.startDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Kết thúc: </span>
+                <span className="font-medium">{new Date(batchInfo.endDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</span>
+              </div>
+            </div>
+            {!isBatchOpen && (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+                ⚠️ Đợt nộp hồ sơ đã kết thúc. Bạn không thể nộp hoặc cập nhật tài liệu.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Document Upload - Full Width */}
       <Card className="shadow-sm">
         <CardContent className="p-6">
@@ -627,9 +693,9 @@ export default function StudentDocumentsPage() {
                         onChange={(e) => handleFileSelect(doc.documentId, e)}
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       />
-                      {/* Only show upload button if not submitted OR if rejected */}
-                      {(doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") || 
-                       (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
+                      {/* Only show upload button if not submitted OR if rejected AND batch is open */}
+                      {isBatchOpen && ((doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") || 
+                       (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")) ? (
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 shrink-0"
@@ -831,7 +897,7 @@ export default function StudentDocumentsPage() {
               )}
             </div>
             
-            {/* Note */}
+            {/* Note */} 
             <div className="space-y-2">
               <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
               <textarea
@@ -986,6 +1052,19 @@ export default function StudentDocumentsPage() {
                 </div>
               )}
 
+              {/* Report / Lý do - Chỉ hiển thị khi bị từ chối */}
+              {selectedSubmission.report && (selectedSubmission.submissionStatus === "Reject" || selectedSubmission.submissionStatus === "Rejected") && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Lý do từ chối
+                  </label>
+                  <div className="text-base p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg whitespace-pre-wrap text-red-800 dark:text-red-200">
+                    {selectedSubmission.report}
+                  </div>
+                </div>
+              )}
+
               {/* File Download */}
               {selectedSubmission.fileDownloadUrl && (
                 <div className="space-y-2">
@@ -996,7 +1075,12 @@ export default function StudentDocumentsPage() {
                   <div className="flex gap-2">
                     <Button
                       className="flex-1"
-                      onClick={() => window.open(selectedSubmission.fileDownloadUrl, '_blank')}
+                      onClick={() => {
+                        const url = Array.isArray(selectedSubmission.fileDownloadUrl) 
+                          ? selectedSubmission.fileDownloadUrl[0] 
+                          : selectedSubmission.fileDownloadUrl;
+                        window.open(url, '_blank');
+                      }}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Tải xuống file
@@ -1004,7 +1088,9 @@ export default function StudentDocumentsPage() {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        const fileUrl = selectedSubmission.fileDownloadUrl;
+                        const fileUrl = Array.isArray(selectedSubmission.fileDownloadUrl) 
+                          ? selectedSubmission.fileDownloadUrl[0] 
+                          : selectedSubmission.fileDownloadUrl;
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
                         const isPdf = /\.pdf$/i.test(fileUrl);
                         
@@ -1069,8 +1155,8 @@ export default function StudentDocumentsPage() {
                 </div>
               )}
               
-              {/* Resubmit Button - Only show if status is Reject */}
-              {selectedSubmission.submissionStatus === "Reject" && (
+              {/* Resubmit Button - Only show if status is Reject AND batch is open */}
+              {selectedSubmission.submissionStatus === "Reject" && isBatchOpen && (
                 <div className="pt-4 border-t">
                   <Button
                     className="w-full bg-orange-600 hover:bg-orange-700"
@@ -1083,6 +1169,15 @@ export default function StudentDocumentsPage() {
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Nộp lại tài liệu
                   </Button>
+                </div>
+              )}
+              
+              {/* Show message if batch is closed */}
+              {selectedSubmission.submissionStatus === "Reject" && !isBatchOpen && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                    ⚠️ Đợt nộp hồ sơ đã kết thúc. Không thể nộp lại tài liệu.
+                  </p>
                 </div>
               )}
 

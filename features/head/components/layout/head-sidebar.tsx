@@ -15,6 +15,7 @@ import {
   Settings,
   BookOpen,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
@@ -29,6 +30,11 @@ const headNavigation = [
     name: "Ma trận tài liệu",
     href: "/head/matrix",
     icon: FileCheck,
+  },
+  {
+    name: "Xem quy tắc",
+    href: "/head/view-rules",
+    icon: ClipboardList,
   },
 ];
 
@@ -56,7 +62,7 @@ export const HeadSidebar = () => {
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Quản lý phòng ban
+                Quản lý khoa
               </div>
               <ul role="list" className="space-y-1">
                 {headNavigation.map((item) => {

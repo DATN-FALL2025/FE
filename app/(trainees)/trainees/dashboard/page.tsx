@@ -236,7 +236,7 @@ export default function StudentDashboardPage() {
                 {getApplicationStatusBadge(applicationDetail?.traineeApplicationStatus || "Pending")}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Phòng ban</span>
+                <span className="text-sm text-muted-foreground">Khoa</span>
                 <span className="text-sm font-semibold">
                   {applicationDetail?.departmentName || "Chưa có thông tin"}
                 </span>

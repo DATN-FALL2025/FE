@@ -87,7 +87,7 @@ export default function DepartmentsPage() {
       if (result.data && Array.isArray(result.data)) {
         setDepartments(result.data);
       } else {
-        setError(result.message || 'Không thể tải danh sách phòng ban');
+        setError(result.message || 'Không thể tải danh sách khoa');
       }
     } catch (err) {
       setError('Có lỗi xảy ra khi tải dữ liệu');
@@ -175,9 +175,9 @@ export default function DepartmentsPage() {
         setIsCreateOpen(false);
         resetForm();
         await loadDepartments();
-        toast.success('Tạo phòng ban thành công!');
+        toast.success('Tạo khoa thành công!');
       } else {
-        toast.error(result?.message || 'Tạo phòng ban thất bại!');
+        toast.error(result?.message || 'Tạo khoa thất bại!');
       }
     } catch (err: any) {
       console.error('Create error:', err);
@@ -223,9 +223,9 @@ export default function DepartmentsPage() {
         resetForm();
         setSelectedDept(null);
         await loadDepartments();
-        toast.success('Cập nhật phòng ban thành công!');
+        toast.success('Cập nhật khoa thành công!');
       } else {
-        toast.error(result?.message || 'Cập nhật phòng ban thất bại!');
+        toast.error(result?.message || 'Cập nhật khoa thất bại!');
       }
     } catch (err: any) {
       console.error('Update error:', err);
@@ -250,9 +250,9 @@ export default function DepartmentsPage() {
         setIsDeleteOpen(false);
         setSelectedDept(null);
         await loadDepartments();
-        toast.success('Xóa phòng ban thành công!');
+        toast.success('Xóa khoa thành công!');
       } else {
-        toast.error(result.message || 'Xóa phòng ban thất bại!');
+        toast.error(result.message || 'Xóa khoa thất bại!');
       }
     } catch (err: any) {
       toast.error(err.message || 'Có lỗi xảy ra!');
@@ -299,14 +299,14 @@ export default function DepartmentsPage() {
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý phòng ban</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý khoa</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Quản lý các phòng ban trong tổ chức
+            Quản lý các khoa trong tổ chức
           </p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4" />
-          Tạo phòng ban mới
+          Tạo khoa mới
         </Button>
       </div>
 
@@ -324,7 +324,7 @@ export default function DepartmentsPage() {
               <thead className="border-b bg-muted/50">
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Icon</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Tên phòng ban</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Tên khoa</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Mô tả</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
@@ -333,7 +333,7 @@ export default function DepartmentsPage() {
                 {departments.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center py-12 text-muted-foreground">
-                      Chưa có phòng ban nào. Hãy tạo phòng ban mới!
+                      Chưa có khoa nào. Hãy tạo khoa mới!
                     </td>
                   </tr>
                 ) : (
@@ -406,12 +406,12 @@ export default function DepartmentsPage() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Tạo phòng ban mới</DialogTitle>
-            <DialogDescription>Thêm phòng ban mới vào hệ thống</DialogDescription>
+            <DialogTitle>Tạo khoa mới</DialogTitle>
+            <DialogDescription>Thêm khoa mới vào hệ thống</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Tên phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">Tên khoa <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 placeholder="VD: Phòng IT"
@@ -424,7 +424,7 @@ export default function DepartmentsPage() {
               <Label htmlFor="description">Mô tả <span className="text-red-500">*</span></Label>
               <Textarea
                 id="description"
-                placeholder="Mô tả về phòng ban..."
+                placeholder="Mô tả về khoa..."
                 rows={4}
                 value={formData.departmentDescription}
                 onChange={(e) => setFormData({ ...formData, departmentDescription: e.target.value })}
@@ -432,7 +432,7 @@ export default function DepartmentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image">Hình ảnh phòng ban</Label>
+              <Label htmlFor="image">Hình ảnh khoa</Label>
               <div className="space-y-3">
                 {imagePreview ? (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
@@ -511,12 +511,12 @@ export default function DepartmentsPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Cập nhật phòng ban</DialogTitle>
-            <DialogDescription>Chỉnh sửa thông tin phòng ban</DialogDescription>
+            <DialogTitle>Cập nhật khoa</DialogTitle>
+            <DialogDescription>Chỉnh sửa thông tin khoa</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Tên phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-name">Tên khoa <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
                 value={formData.departmentName}
@@ -535,7 +535,7 @@ export default function DepartmentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-image">Hình ảnh phòng ban</Label>
+              <Label htmlFor="edit-image">Hình ảnh khoa</Label>
               <div className="space-y-3">
                 {imagePreview ? (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
@@ -614,8 +614,8 @@ export default function DepartmentsPage() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Chi tiết phòng ban</DialogTitle>
-            <DialogDescription>Thông tin chi tiết về phòng ban</DialogDescription>
+            <DialogTitle>Chi tiết khoa</DialogTitle>
+            <DialogDescription>Thông tin chi tiết về khoa</DialogDescription>
           </DialogHeader>
           {selectedDept && (
             <div className="space-y-4 py-4">
@@ -634,7 +634,7 @@ export default function DepartmentsPage() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <Label className="text-sm text-muted-foreground">Tên phòng ban</Label>
+                  <Label className="text-sm text-muted-foreground">Tên khoa</Label>
                   <p className="mt-1 font-medium text-lg">{selectedDept.departmentName}</p>
                 </div>
                 <div>
@@ -654,9 +654,9 @@ export default function DepartmentsPage() {
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa phòng ban</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận xóa khoa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa phòng ban <span className="font-semibold">{selectedDept?.departmentName}</span>? 
+              Bạn có chắc chắn muốn xóa khoa <span className="font-semibold">{selectedDept?.departmentName}</span>? 
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>

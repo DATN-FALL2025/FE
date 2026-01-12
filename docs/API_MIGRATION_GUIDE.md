@@ -1,20 +1,51 @@
 # 🔄 API Migration Guide - Render to Railway
 
-**Date:** December 31, 2025  
-**Status:** 🚨 URGENT - Cần cập nhật ngay
+**Date:** January 12, 2026  
+**Status:** ✅ COMPLETED - Migration hoàn tất
 
 ---
 
 ## 📊 Overview
 
-Hệ thống đã chuyển từ Render server sang Railway server với URL mới và một số thay đổi về API.
+Hệ thống đã chuyển từ Render server sang Railway server với URL mới. Migration đã hoàn tất.
 
 ### Server URLs
 
-| Environment | Old (Render) | New (Railway) |
-|-------------|--------------|---------------|
-| **Production** | `https://manage-and-automate-aviation-academy.onrender.com` | `https://manage-and-automate-aviation-academy-application-production.up.railway.app` |
-| **API Docs** | `/v3/api-docs` | `/v3/api-docs` |
+| Environment | Old (Render) | New (Railway) | Status |
+|-------------|--------------|---------------|--------|
+| **Production** | `https://manage-and-automate-aviation-academy.onrender.com` | `https://manage-and-automate-aviation-academy-application-production.up.railway.app` | ✅ Active |
+| **API Docs** | `/v3/api-docs` | `/v3/api-docs` | ✅ OAS 3.1 |
+
+---
+
+## 🆕 New APIs Added (January 2026)
+
+### Batch Management (Mới)
+- `GET /api/batch` - Lấy danh sách batch
+- `GET /api/batch/active-batch` - Lấy batch đang active
+- `GET /api/batch/nearest_batch` - Lấy batch gần nhất
+- `POST /api/batch/create-batch` - Tạo batch mới
+- `PUT /api/batch/update-batch/{id}` - Cập nhật batch
+- `DELETE /api/batch/delete-batch/{id}` - Xóa batch
+
+### Document Rule Value
+- `POST /api/document_rule_value/create_document_rule_value` - Tạo giá trị rule
+- `PUT /api/document_rule_value/update_document_rule_value` - Cập nhật giá trị rule
+
+### Document Management
+- `GET /api/admin/documents/get-document-rule-list-by-document/{documentId}` - Lấy danh sách rules theo document
+
+### Matrix Dashboard
+- `GET /api/matrix/matrix_details` - Chi tiết matrix
+- `GET /api/matrix/input_matrix_document_dashboard` - Dashboard matrix
+- `GET /api/matrix/get_matrix_filter_by_position_department` - Lọc matrix
+
+### Trainee Application Dashboard
+- `GET /api/trainee_application/overall-stats_trainee_application_for_staff_academic_affair` - Thống kê cho staff
+- `GET /api/trainee_application/TraineeApplicationDashboardByTrainee` - Dashboard cho trainee
+
+### Upload
+- `PUT /api/admin/uploads/file` - Cập nhật file đã upload
 
 ---
 
@@ -390,6 +421,6 @@ If you encounter issues:
 
 ---
 
-**Migration Priority:** 🔴 HIGH  
-**Estimated Time:** 30-60 minutes  
-**Risk Level:** Medium (có rollback plan)
+**Migration Priority:** ✅ COMPLETED  
+**Estimated Time:** N/A  
+**Risk Level:** Low (đã hoàn tất migration)

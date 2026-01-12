@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
-import { Menu, User, Settings, LogOut, GraduationCap } from "lucide-react";
+import { Menu, User, LogOut, GraduationCap } from "lucide-react";
 
 export const Navbar = () => {
   const { student } = useStudentData();
@@ -97,10 +97,6 @@ export const Navbar = () => {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

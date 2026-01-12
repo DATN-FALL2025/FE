@@ -536,18 +536,18 @@ export default function UsersPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Phòng ban</Label>
+              <Label htmlFor="department">Khoa</Label>
               <Select
                 value={formData.departmentId}
                 onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;

@@ -174,7 +174,7 @@ export default function PositionsPage() {
     if (!formData.positionName || !formData.positionDescription || !formData.departmentID) {
       toast({
         title: "Thông tin thiếu",
-        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        description: "Vui lòng điền đầy đủ thông tin và chọn khoa!",
         variant: "destructive",
       });
       return;
@@ -246,7 +246,7 @@ export default function PositionsPage() {
     if (!selectedPosition || !formData.positionName || !formData.positionDescription || !formData.departmentID) {
       toast({
         title: "Thông tin thiếu",
-        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        description: "Vui lòng điền đầy đủ thông tin và chọn khoa!",
         variant: "destructive",
       });
       return;
@@ -413,7 +413,7 @@ export default function PositionsPage() {
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Hình ảnh</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên vị trí</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Phòng ban</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Khoa</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
@@ -457,7 +457,7 @@ export default function PositionsPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="text-sm text-muted-foreground">
-                          {position.department?.departmentName || 'Chưa gán phòng ban'}
+                          {position.department?.departmentName || 'Chưa gán khoa'}
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -530,18 +530,18 @@ export default function PositionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="department">Khoa <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
                 onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
@@ -664,18 +664,18 @@ export default function PositionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-department">Khoa <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
                 onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="edit-department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;

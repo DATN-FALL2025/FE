@@ -8,11 +8,13 @@ import {
   FileCheck,
   BookOpen,
   Calendar,
+  ClipboardList,
 } from "lucide-react";
 
 const academicStaffNavigation = [
   { name: "Duyệt tài liệu", href: "/academic-staff/approvals", icon: FileCheck },
   { name: "Quản lý đợt duyệt", href: "/academic-staff/batch-management", icon: Calendar },
+  { name: "Xem yêu cầu hồ sơ", href: "/academic-staff/document-requirements", icon: ClipboardList },
 ];
 
 export const AcademicStaffMobileSidebar = () => {

@@ -824,3 +824,92 @@ export async function getMatrixDashboard() {
     };
   }
 }
+
+/**
+ * Get Matrix filtered by Position and/or Department
+ * GET /api/matrix/get_matrix_filter_by_position_department
+ * @param positionId - Optional position ID to filter
+ * @param departmentId - Optional department ID to filter
+ */
+export async function getMatrixFilterByPositionDepartment(
+  positionId?: number,
+  departmentId?: number
+) {
+  try {
+    const params = new URLSearchParams();
+    if (positionId) params.append('positionId', positionId.toString());
+    if (departmentId) params.append('departmentId', departmentId.toString());
+
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/api/matrix/get_matrix_filter_by_position_department${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to get matrix data',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
+
+
+/**
+ * Get Matrix Details by Matrix IDs
+ * GET /api/matrix/matrix_details?matrixIds=457
+ * @param matrixIds - Array of matrix IDs to get details for
+ */
+export async function getMatrixDetails(matrixIds: number[]) {
+  try {
+    const params = new URLSearchParams();
+    matrixIds.forEach(id => params.append('matrixIds', id.toString()));
+
+    const url = `${API_BASE_URL}/api/matrix/matrix_details?${params.toString()}`;
+
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: result.message || 'Failed to get matrix details',
+        data: null,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error connecting to server',
+      data: null,
+    };
+  }
+}
