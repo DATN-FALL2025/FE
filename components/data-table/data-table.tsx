@@ -55,16 +55,16 @@ export function DataTable<TData, TValue>({
         columnLabels={columnLabels}
         newRowLink={newRowLink}
       />
-      <div className="rounded-md border border-black dark:border-gray-600">
+      <div className="rounded-md border border-black">
         <div className="overflow-auto">
           <Table>
-            <TableHeader className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
+            <TableHeader className="bg-gray-100 sticky top-0 z-10">
               {dataTable.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="text-gray-900 dark:text-gray-100 font-bold"
+                      className="text-gray-900 font-bold"
                     >
                       {header.isPlaceholder
                         ? null
@@ -83,12 +83,12 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="hover:bg-gray-100"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="text-gray-800 dark:text-gray-200 font-semibold"
+                        className="text-gray-800 font-semibold"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -102,7 +102,7 @@ export function DataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="h-24 text-center text-gray-600 dark:text-gray-300"
+                    className="h-24 text-center text-gray-600"
                   >
                     Không có dữ liệu
                   </TableCell>

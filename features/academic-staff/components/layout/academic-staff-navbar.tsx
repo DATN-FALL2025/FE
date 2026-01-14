@@ -38,14 +38,14 @@ export const AcademicStaffNavbar = () => {
     .substring(0, 2) || 'AS';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b header-dark backdrop-blur supports-[backdrop-filter]:bg-sidebar-background/95">
       <div className="flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Left Side - Logo & Mobile Menu */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-white/10">
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
@@ -60,8 +60,8 @@ export const AcademicStaffNavbar = () => {
               <BookOpen className="w-6 h-6 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Trang nhân viên học vụ</p>
+              <h1 className="font-bold text-lg text-sidebar-foreground">IDMAWA</h1>
+              <p className="text-xs text-sidebar-foreground/70">Trang nhân viên học vụ</p>
             </div>
           </Link>
         </div>
@@ -72,7 +72,7 @@ export const AcademicStaffNavbar = () => {
           {mounted ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
                   <Avatar className="h-10 w-10 border-2 border-primary/10">
                     {avatar && <AvatarImage src={avatar} alt={userName} />}
                     <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -111,7 +111,7 @@ export const AcademicStaffNavbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+            <div className="h-10 w-10 rounded-full bg-white/20 animate-pulse" />
           )}
         </div>
       </div>

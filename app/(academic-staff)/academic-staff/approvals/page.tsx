@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   Table,
   Calendar,
+  XCircle,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -111,7 +112,7 @@ export default function AcademicStaffApprovalsPage() {
   const [applicationDetail, setApplicationDetail] = useState<ApplicationDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string>("");
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
 
   const hasLoadedData = useRef(false);
@@ -288,7 +289,38 @@ export default function AcademicStaffApprovalsPage() {
       console.log("📄 Application detail result:", result);
 
       if (result && result.data) {
-        setApplicationDetail(result.data);
+        const detail = result.data;
+        
+        // Load detailed reports for all submitted documents
+        if (detail.submittedDocuments && detail.submittedDocuments.length > 0) {
+          const detailedDocs = await Promise.all(
+            detail.submittedDocuments.map(async (doc: any) => {
+              if (doc.submissionId) {
+                try {
+                  const detailResponse = await fetch(
+                    `https://manage-and-automate-aviation-academy-application-production.up.railway.app/api/trainee_submission/get_trainee_submission_detail/${doc.submissionId}`,
+                    {
+                      headers: {
+                        'Accept': '*/*',
+                        ...(token && { 'Authorization': `Bearer ${token}` })
+                      }
+                    }
+                  );
+                  const detailResult = await detailResponse.json();
+                  if (detailResult.status === "200 OK" && detailResult.data?.report) {
+                    return { ...doc, report: detailResult.data.report };
+                  }
+                } catch (error) {
+                  console.error(`Error loading detail for submission ${doc.submissionId}:`, error);
+                }
+              }
+              return doc;
+            })
+          );
+          detail.submittedDocuments = detailedDocs;
+        }
+        
+        setApplicationDetail(detail);
       } else {
         toast({
           title: "Lỗi",
@@ -308,7 +340,9 @@ export default function AcademicStaffApprovalsPage() {
   };
 
   const openImagePreview = (url: string, documentName: string) => {
-    setPreviewImageUrl(url);
+    // Split multiple URLs by ;;
+    const urls = url.split(';;').filter(u => u.trim());
+    setPreviewUrls(urls);
     setPreviewDocumentName(documentName);
     setIsImagePreviewOpen(true);
   };
@@ -444,7 +478,7 @@ export default function AcademicStaffApprovalsPage() {
 
       {/* Thông tin đợt nộp */}
       {batchInfo && (
-        <Card className="border-0 shadow-md bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+        <Card className="border-0 shadow-md bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-3">
               <Calendar className="w-5 h-5 text-blue-600" />
@@ -733,10 +767,10 @@ export default function AcademicStaffApprovalsPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openImagePreview(doc.url!.split(';;')[0], doc.requiredDocumentName)}
+                              onClick={() => openImagePreview(doc.url!, doc.requiredDocumentName)}
                             >
                               <Eye className="w-4 h-4 mr-1" />
-                              Xem file
+                              Xem file ({doc.url.split(';;').length})
                             </Button>
                           )}
                         </div>
@@ -747,11 +781,11 @@ export default function AcademicStaffApprovalsPage() {
                             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Quy tắc kiểm tra</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {doc.documentRuleValueCellResponseList.map((rule) => (
-                                <div key={rule.document_rule_value_id} className="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                                <div key={rule.document_rule_value_id} className="flex items-center gap-2 text-sm bg-slate-100 p-2 rounded">
+                                  <span className="font-medium text-slate-700">
                                     {rule.document_rule_name}:
                                   </span>
-                                  <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-0.5 rounded">
+                                  <span className="text-slate-900 bg-white px-2 py-0.5 rounded">
                                     {rule.value}
                                   </span>
                                 </div>
@@ -766,11 +800,11 @@ export default function AcademicStaffApprovalsPage() {
                             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Dữ liệu trích xuất</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {doc.extractDataResponseList.map((data) => (
-                                <div key={data.extract_data_id} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/30 p-2 rounded">
-                                  <span className="font-medium text-blue-700 dark:text-blue-300">
+                                <div key={data.extract_data_id} className="flex items-center gap-2 text-sm bg-blue-50 p-2 rounded">
+                                  <span className="font-medium text-blue-700">
                                     {data.extract_data_name}:
                                   </span>
-                                  <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-800 px-2 py-0.5 rounded font-mono">
+                                  <span className="text-blue-900 bg-white px-2 py-0.5 rounded font-mono">
                                     {data.extract_Data_value}
                                   </span>
                                 </div>
@@ -779,12 +813,73 @@ export default function AcademicStaffApprovalsPage() {
                           </div>
                         )}
 
-                        {/* Report / Lý do - Chỉ hiển thị khi bị từ chối */}
-                        {doc.report && (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") && (
+                        {/* Report / Lý do - Hiển thị cho cả đã duyệt và từ chối */}
+                        {doc.report && (
                           <div className="mt-3 pt-3 border-t">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Lý do từ chối</p>
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg whitespace-pre-wrap text-sm text-red-800 dark:text-red-200">
-                              {doc.report}
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-3 flex items-center gap-2">
+                              {(doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
+                                <>
+                                  <XCircle className="w-4 h-4" />
+                                  Lý do từ chối
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Báo cáo kiểm tra
+                                </>
+                              )}
+                            </p>
+                            <div className={`rounded-lg border ${
+                              (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                                ? "bg-red-950/20 border-red-800"
+                                : "bg-green-950/20 border-green-800"
+                            }`}>
+                              {doc.report.split('\n').map((line, idx) => {
+                                const trimmedLine = line.trim();
+                                if (!trimmedLine) return null;
+                                
+                                // Check if it's a main rule (no indentation or starts with rule name)
+                                const isMainRule = !line.startsWith('   ') && !line.startsWith('\t');
+                                const isDetail = line.includes('└─ Chi tiết:') || line.includes('Chi tiết:');
+                                
+                                if (isMainRule && !isDetail) {
+                                  return (
+                                    <div key={idx} className={`flex items-start gap-3 p-3 border-b last:border-b-0 ${
+                                      (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                                        ? "border-red-800/50"
+                                        : "border-green-800/50"
+                                    }`}>
+                                      <CheckCircle2 className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                                        (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                                          ? "text-red-400"
+                                          : "text-green-400"
+                                      }`} />
+                                      <div className="flex-1">
+                                        <p className={`font-semibold text-sm ${
+                                          (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                                            ? "text-red-200"
+                                            : "text-green-200"
+                                        }`}>
+                                          {trimmedLine}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                } else if (isDetail) {
+                                  const detailText = trimmedLine.replace('└─ Chi tiết:', '').replace('Chi tiết:', '').trim();
+                                  return (
+                                    <div key={idx} className={`pl-11 pr-3 pb-3 text-sm ${
+                                      (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                                        ? "text-red-300"
+                                        : "text-green-300"
+                                    }`}>
+                                      <span className="opacity-80">Chi tiết: </span>
+                                      {detailText}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
                             </div>
                           </div>
                         )}
@@ -807,42 +902,65 @@ export default function AcademicStaffApprovalsPage() {
         <DialogContent className="max-w-5xl max-h-[95vh] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle>{previewDocumentName}</DialogTitle>
-            <DialogDescription>Xem trước tài liệu</DialogDescription>
+            <DialogDescription>
+              Xem trước tài liệu ({previewUrls.length} file)
+            </DialogDescription>
           </DialogHeader>
-          <div className="relative w-full h-[75vh] bg-muted/20 flex items-center justify-center p-6">
-            {previewImageUrl ? (
-              <Image
-                src={previewImageUrl}
-                alt={previewDocumentName}
-                fill
-                className="object-contain rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `
-                      <div class="text-center">
-                        <p class="text-muted-foreground mb-4">Không thể hiển thị hình ảnh</p>
-                        <a href="${previewImageUrl}" target="_blank" class="text-blue-600 hover:underline">
-                          Mở trong tab mới
-                        </a>
-                      </div>
-                    `;
-                  }
-                }}
-              />
+          <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            {previewUrls.length > 0 ? (
+              previewUrls.map((url, index) => {
+                const isPdf = url.toLowerCase().endsWith('.pdf');
+                
+                return (
+                  <div key={index} className="border rounded-lg overflow-hidden">
+                    <div className="bg-muted/50 px-4 py-2">
+                      <span className="text-sm font-medium">
+                        File {index + 1}
+                      </span>
+                    </div>
+                    <div className="relative w-full bg-muted/20">
+                      {isPdf ? (
+                        <iframe
+                          src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
+                          className="w-full h-[500px] border-0"
+                          title={`PDF ${index + 1}`}
+                        />
+                      ) : (
+                        <div className="relative w-full h-[400px]">
+                          <Image
+                            src={url}
+                            alt={`${previewDocumentName} - ${index + 1}`}
+                            fill
+                            className="object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
+                                  <div class="flex items-center justify-center h-full">
+                                    <div class="text-center p-4">
+                                      <p class="text-muted-foreground mb-2">Không thể hiển thị file</p>
+                                      <a href="${url}" target="_blank" class="text-blue-600 hover:underline text-sm">
+                                        Mở trong tab mới
+                                      </a>
+                                    </div>
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <p className="text-muted-foreground">Không có hình ảnh</p>
+              <p className="text-muted-foreground text-center py-8">Không có file</p>
             )}
           </div>
-          <div className="p-6 pt-0 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => window.open(previewImageUrl, "_blank")}
-            >
-              Mở trong tab mới
-            </Button>
+          <div className="p-6 pt-0 flex justify-end">
             <Button onClick={() => setIsImagePreviewOpen(false)}>Đóng</Button>
           </div>
         </DialogContent>

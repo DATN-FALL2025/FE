@@ -52,13 +52,13 @@ export const AcademicStaffSidebar = () => {
     .substring(0, 2) || 'AS';
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col lg:pt-16 border-r">
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-background px-6 py-8">
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col lg:pt-16 sidebar-dark border-r">
+      <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-8">
         {/* Main Navigation */}
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             <li>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <div className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider mb-2">
                 
               </div>
               <ul role="list" className="space-y-1">
@@ -70,8 +70,8 @@ export const AcademicStaffSidebar = () => {
                         <Button
                           variant={isActive ? "secondary" : "ghost"}
                           className={cn(
-                            "w-full justify-start gap-3",
-                            isActive && "bg-primary/10 text-primary hover:bg-primary/20"
+                            "w-full justify-start gap-3 text-sidebar-foreground hover:bg-white/10",
+                            isActive && "bg-primary text-primary-foreground hover:bg-primary/90"
                           )}
                         >
                           <item.icon className="h-5 w-5" />
@@ -91,7 +91,7 @@ export const AcademicStaffSidebar = () => {
           <Separator className="mb-4" />
           {mounted ? (
             <>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/10">
                 <Avatar className="h-10 w-10">
                   {avatar && <AvatarImage src={avatar} alt={displayName} />}
                   <AvatarFallback className="bg-primary text-primary-foreground">
@@ -99,9 +99,9 @@ export const AcademicStaffSidebar = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{displayName}</p>
+                  <p className="text-sm font-medium truncate text-sidebar-foreground">{displayName}</p>
                   {role && (
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-sidebar-foreground/70 truncate">
                       {translateRole(role)}
                     </p>
                   )}
@@ -109,7 +109,7 @@ export const AcademicStaffSidebar = () => {
               </div>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full justify-start gap-3 mt-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
                 onClick={logout}
               >
                 <LogOut className="h-5 w-5" />
@@ -118,11 +118,11 @@ export const AcademicStaffSidebar = () => {
             </>
           ) : (
             // Loading skeleton during SSR/hydration
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 animate-pulse">
-              <div className="h-10 w-10 rounded-full bg-muted" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/10 animate-pulse">
+              <div className="h-10 w-10 rounded-full bg-white/20" />
               <div className="flex-1 min-w-0 space-y-2">
-                <div className="h-4 w-24 bg-muted rounded" />
-                <div className="h-3 w-16 bg-muted rounded" />
+                <div className="h-4 w-24 bg-white/20 rounded" />
+                <div className="h-3 w-16 bg-white/20 rounded" />
               </div>
             </div>
           )}

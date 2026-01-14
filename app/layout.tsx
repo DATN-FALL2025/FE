@@ -31,11 +31,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: "dark light",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  colorScheme: "light",
+  themeColor: "white",
 };
 
 export default function RootLayout({
@@ -55,8 +52,9 @@ export default function RootLayout({
        <NextTopLoader height={5} color="#E87931"/>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
+          forcedTheme="light"
           disableTransitionOnChange
         >
           {/* <SessionProviders>

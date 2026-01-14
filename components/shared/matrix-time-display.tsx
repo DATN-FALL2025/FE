@@ -117,8 +117,8 @@ export default function MatrixTimeDisplay({
 
   return (
     <Card className={`shadow-sm ${displayActive 
-      ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800' 
-      : 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200 dark:border-yellow-800'
+      ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
+      : 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200'
     }`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
