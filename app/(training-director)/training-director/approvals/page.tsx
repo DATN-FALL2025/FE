@@ -54,7 +54,7 @@ function getMatrixStatusBadge(matrixStatus: string | null, overallStatus: string
 
   const statusMap: Record<string, { label: string; className: string }> = {
     'Drafted': { label: "Đã gửi - Chờ duyệt", className: "bg-blue-500" },
-    'Undrafted': { label: "Chưa gửi", className: "bg-gray-500" },
+    'Undrafted': { label: "Phòng Khải Thác Bay", className: "bg-gray-500" },
     'Pending': { label: "Đang xử lý", className: "bg-yellow-500" },
     'InProgress': { label: "Đang xử lý", className: "bg-yellow-500" },
     'Complete': { label: "Hoàn thành", className: "bg-green-600" },
