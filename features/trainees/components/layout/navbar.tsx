@@ -32,14 +32,14 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b header-dark backdrop-blur supports-[backdrop-filter]:bg-sidebar-background/95">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Left Side - Logo & Mobile Menu */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-white/10">
+              <Button variant="ghost" size="icon">
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
@@ -54,8 +54,8 @@ export const Navbar = () => {
               <GraduationCap className="w-6 h-6 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-bold text-lg text-sidebar-foreground">IDMAWA</h1>
-              <p className="text-xs text-sidebar-foreground/70">Trang học viên</p>
+              <h1 className="font-bold text-lg">IDMAWA</h1>
+              <p className="text-xs text-muted-foreground">Trang học viên</p>
             </div>
           </Link>
         </div>
@@ -65,7 +65,7 @@ export const Navbar = () => {
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10 border-2 border-primary/10">
                   <AvatarImage
                     src={student?.avatar}

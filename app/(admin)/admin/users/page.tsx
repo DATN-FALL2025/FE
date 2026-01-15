@@ -360,7 +360,7 @@ export default function UsersPage() {
             <Button variant="outline" className="gap-2" disabled={isSubmitting} asChild>
               <span>
                 <Upload className="w-4 h-4" />
-                Nộp mẫu Excel
+                Import Excel
               </span>
             </Button>
           </label>

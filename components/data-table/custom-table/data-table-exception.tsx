@@ -96,7 +96,7 @@ export function DataTableException<TData, TValue>({
                 <TableCell colSpan={columns.length}>
                   <div className="flex flex-col items-center p-6 space-y-2 text-center">
                     <CheckCircle2 className="w-12 h-12 text-green-500" />
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-white">
                       Hiện tại đang không có bất kì một đơn ngoại lệ nào !
                     </span>
                   </div>

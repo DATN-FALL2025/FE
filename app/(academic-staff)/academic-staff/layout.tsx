@@ -10,17 +10,17 @@ export default function AcademicStaffLayout({
 }) {
   return (
     <RoleGuard allowedRoles={["ACADEMIC_STAFF_AFFAIR"]}>
-      <div className="min-h-screen bg-muted">
+      <div className="min-h-screen bg-background">
         {/* Navbar */}
         <AcademicStaffNavbar />
 
-        <div className="flex min-h-screen">
+        <div className="flex">
           {/* Sidebar */}
           <AcademicStaffSidebar />
 
           {/* Main Content */}
-          <main className="flex-1 lg:ml-64 pt-16 min-h-screen bg-white">
-            <div className="w-full min-h-screen p-6 lg:p-8">
+          <main className="flex-1 ">
+            <div className="container mx-auto p-6 lg:p-8">
               {children}
             </div>
           </main>
