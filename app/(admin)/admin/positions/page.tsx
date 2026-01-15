@@ -208,12 +208,14 @@ export default function PositionsPage() {
 
       const result: any = await createPosition(positionFormData, token || undefined);
 
-      // Check if successful - API might return {status: "200 OK", data: {...}}
+      // Check if successful - API might return {status: "200 OK", data: {...}} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -266,12 +268,14 @@ export default function PositionsPage() {
 
       const result: any = await updatePositionById(Number(selectedPosition.id), updateFormData, token || undefined);
 
-      // Check if successful
+      // Check if successful - API might return {status: "200 OK"} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -310,12 +314,14 @@ export default function PositionsPage() {
       const token = getToken();
       const result: any = await deletePositionById(Number(selectedPosition.id), token || undefined);
 
-      // Check if successful
+      // Check if successful - API might return {status: "200 OK"} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -793,7 +799,7 @@ export default function PositionsPage() {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                    <span className="text-white text-4xl font-bold relative z-10">
+                    <span className="text-white text-4xl font-bold relative z-10" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
                       {selectedPosition.positionName.charAt(0).toUpperCase()}
                     </span>
                   </>
@@ -803,13 +809,20 @@ export default function PositionsPage() {
                   </span>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedPosition.positionName}</h3>
+                  <Label className="text-sm font-medium text-muted-foreground">Tên vị trí</Label>
+                  <h3 className="text-lg font-semibold mt-1">{selectedPosition.positionName}</h3>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Mô tả</Label>
-                  <p className="mt-1">{selectedPosition.positionDescription}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Khoa</Label>
+                  <p className="mt-1 text-base">
+                    {selectedPosition.department?.departmentName || 'Chưa gán khoa'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Mô tả</Label>
+                  <p className="mt-1 text-base leading-relaxed">{selectedPosition.positionDescription}</p>
                 </div>
               </div>
             </div>
