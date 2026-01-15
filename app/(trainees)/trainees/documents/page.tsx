@@ -63,6 +63,7 @@ interface SubmissionDetail {
   fileDownloadUrl: string | string[];
   uploadTime: string;
   report?: string;
+  reporter?: string;
   documentRuleValueCellResponseList?: DocumentRuleValue[];
   extractDataResponseList?: ExtractedData[];
 }
@@ -869,28 +870,29 @@ export default function StudentDocumentsPage() {
 
       {/* File Preview Modal */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
               Xem file
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
-            <img 
-              src={previewImageUrl} 
-              alt="Preview" 
-              className="max-w-full max-h-[70vh] object-contain rounded"
-            />
+          <div className="flex items-center justify-center p-4 bg-slate-900 rounded-lg overflow-auto max-h-[75vh]">
+            {previewImageUrl.toLowerCase().endsWith('.pdf') ? (
+              <iframe
+                src={`${previewImageUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                className="w-full h-[75vh] rounded"
+                title="PDF Preview"
+              />
+            ) : (
+              <img 
+                src={previewImageUrl} 
+                alt="Preview" 
+                className="max-w-full max-h-[70vh] object-contain rounded"
+              />
+            )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1"
-              onClick={() => window.open(previewImageUrl, '_blank')}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Tải xuống
-            </Button>
+          <div className="flex justify-end">
             <Button
               variant="outline"
               onClick={() => setIsImagePreviewOpen(false)}
@@ -1090,59 +1092,96 @@ export default function StudentDocumentsPage() {
                 </div>
               )}
 
-              {/* Report / Lý do - Chỉ hiển thị khi bị từ chối */}
-              {selectedSubmission.report && (selectedSubmission.submissionStatus === "Reject" || selectedSubmission.submissionStatus === "Rejected") && (
-                <div className="space-y-2">
+              {/* Report / Báo cáo kiểm tra - Hiển thị cho cả Approved và Rejected */}
+              {selectedSubmission.report && (
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Lý do từ chối
+                    <CheckCircle2 className="w-4 h-4" />
+                    Báo cáo kiểm tra
                   </label>
-                  <div className="text-base p-3 bg-red-50 border border-red-200 rounded-lg whitespace-pre-wrap text-red-800">
-                    {selectedSubmission.report}
+                  <div className={`p-4 rounded-lg border-2 ${
+                    selectedSubmission.submissionStatus === "Approve" || selectedSubmission.submissionStatus === "Approved"
+                      ? 'bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border-emerald-500/50'
+                      : 'bg-gradient-to-br from-rose-900/40 to-red-900/40 border-rose-500/50'
+                  }`}>
+                    <div className="space-y-3">
+                      {selectedSubmission.report.split('\n').filter(line => line.trim()).map((line, index) => {
+                        const isMainItem = !line.startsWith('  ');
+                        const cleanLine = line.trim();
+                        
+                        if (isMainItem) {
+                          return (
+                            <div key={index} className="flex items-start gap-3 p-3 bg-slate-800/60 rounded-lg border border-slate-700">
+                              <div className="p-1.5 bg-emerald-500/20 rounded-full shrink-0 mt-0.5">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              </div>
+                              <span className="text-white font-bold text-sm">{cleanLine}</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={index} className="flex items-start gap-3 pl-6 py-2">
+                              <span className="text-slate-300 text-sm leading-relaxed">{cleanLine}</span>
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
+                  {selectedSubmission.reporter && (
+                    <div className="flex items-center gap-2 text-sm text-slate-400 mt-2">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Người đánh giá:</span>
+                      <span className="text-white font-semibold">{selectedSubmission.reporter}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* File Download */}
               {selectedSubmission.fileDownloadUrl && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    File đã nộp
+                    <FileText className="w-4 h-4" />
+                    File đã nộp ({Array.isArray(selectedSubmission.fileDownloadUrl) ? selectedSubmission.fileDownloadUrl.length : 1} file)
                   </label>
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => {
-                        const url = Array.isArray(selectedSubmission.fileDownloadUrl) 
-                          ? selectedSubmission.fileDownloadUrl[0] 
-                          : selectedSubmission.fileDownloadUrl;
-                        window.open(url, '_blank');
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Tải xuống file
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const fileUrl = Array.isArray(selectedSubmission.fileDownloadUrl) 
-                          ? selectedSubmission.fileDownloadUrl[0] 
-                          : selectedSubmission.fileDownloadUrl;
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
-                        const isPdf = /\.pdf$/i.test(fileUrl);
-                        
-                        if (isImage || isPdf) {
-                          setPreviewImageUrl(fileUrl);
-                          setIsImagePreviewOpen(true);
-                        } else {
-                          window.open(fileUrl, '_blank');
-                        }
-                      }}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Xem file
-                    </Button>
+                  <div className="space-y-2">
+                    {(Array.isArray(selectedSubmission.fileDownloadUrl) 
+                      ? selectedSubmission.fileDownloadUrl 
+                      : [selectedSubmission.fileDownloadUrl]
+                    ).map((fileUrl, index) => {
+                      // Extract filename from URL
+                      const urlParts = fileUrl.split('/');
+                      const fullFileName = urlParts[urlParts.length - 1];
+                      // Remove timestamp prefix (e.g., "1768310288219_")
+                      const fileName = fullFileName.replace(/^\d+_/, '');
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
+                      const isPdf = /\.pdf$/i.test(fileUrl);
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-2 p-3 bg-slate-800/60 border border-slate-700 rounded-lg">
+                          <div className="p-2 bg-blue-500/20 rounded">
+                            <FileText className="w-4 h-4 text-blue-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{fileName}</p>
+                            <p className="text-xs text-slate-400">File {index + 1}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-3 bg-blue-900/30 border-blue-500/50 text-blue-300 hover:bg-blue-500/20 shrink-0"
+                            onClick={() => {
+                              setPreviewImageUrl(fileUrl);
+                              setIsImagePreviewOpen(true);
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            Xem
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

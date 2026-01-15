@@ -40,6 +40,7 @@ import {
   completeTraineeApplication,
   getTraineeApplicationDetailByStaff,
   getNearestBatch,
+  getTraineeSubmissionDetail,
 } from "@/lib/actions/trainee-submission";
 
 interface TraineeApplication {
@@ -284,11 +285,63 @@ export default function AcademicStaffApprovalsPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const result: any = await getTraineeApplicationDetailByStaff(app.id, token);
+      
+      // Gọi API lấy application detail
+      const resultPromise = getTraineeApplicationDetailByStaff(app.id, token);
+      
+      const result: any = await resultPromise;
       console.log("📄 Application detail result:", result);
 
       if (result && result.data) {
-        setApplicationDetail(result.data);
+        console.log("📄 Submitted Documents:", result.data.submittedDocuments);
+        
+        // Gọi tất cả API getTraineeSubmissionDetail cùng lúc (parallel)
+        const submissionIds = (result.data.submittedDocuments || [])
+          .filter((doc: any) => doc.submissionId)
+          .map((doc: any) => doc.submissionId);
+        
+        console.log("📄 Fetching reports for submissions:", submissionIds);
+        
+        // Fetch tất cả reports cùng lúc
+        const reportPromises = submissionIds.map((submissionId: number) => 
+          getTraineeSubmissionDetail(submissionId)
+            .then((res: any) => ({ submissionId, data: res }))
+            .catch((error: any) => {
+              console.error(`Error fetching report for submission ${submissionId}:`, error);
+              return { submissionId, data: null };
+            })
+        );
+        
+        const reports = await Promise.all(reportPromises);
+        console.log("📄 All reports fetched:", reports);
+        
+        // Map reports back to documents
+        const reportsMap = new Map(
+          reports
+            .filter(r => r.data?.status === "200 OK" && r.data?.data)
+            .map(r => [r.submissionId, r.data.data])
+        );
+        
+        const documentsWithReport = (result.data.submittedDocuments || []).map((doc: any) => {
+          if (doc.submissionId && reportsMap.has(doc.submissionId)) {
+            const reportData = reportsMap.get(doc.submissionId);
+            console.log(`📄 Adding report to ${doc.requiredDocumentName}:`, {
+              hasReport: !!reportData.report,
+              reporter: reportData.reporter
+            });
+            return {
+              ...doc,
+              report: reportData.report,
+              reporter: reportData.reporter,
+            };
+          }
+          return doc;
+        });
+        
+        setApplicationDetail({
+          ...result.data,
+          submittedDocuments: documentsWithReport,
+        });
       } else {
         toast({
           title: "Lỗi",
@@ -730,14 +783,35 @@ export default function AcademicStaffApprovalsPage() {
                             </div>
                           </div>
                           {doc.url && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openImagePreview(doc.url!.split(';;')[0], doc.requiredDocumentName)}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Xem file
-                            </Button>
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                File đã nộp ({doc.url.split(';;').length} file)
+                              </p>
+                              <div className="space-y-2">
+                                {doc.url.split(';;').map((fileUrl, fileIndex) => {
+                                  // Extract filename from URL
+                                  const urlParts = fileUrl.split('/');
+                                  const fullFileName = urlParts[urlParts.length - 1];
+                                  // Remove timestamp prefix
+                                  const fileName = fullFileName.replace(/^\d+_/, '');
+                                  
+                                  return (
+                                    <div key={fileIndex} className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                      <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                      <span className="text-sm flex-1 truncate">{fileName}</span>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => openImagePreview(fileUrl, doc.requiredDocumentName)}
+                                      >
+                                        <Eye className="w-3.5 h-3.5 mr-1" />
+                                        Xem
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           )}
                         </div>
 
@@ -779,12 +853,36 @@ export default function AcademicStaffApprovalsPage() {
                           </div>
                         )}
 
-                        {/* Report / Lý do - Chỉ hiển thị khi bị từ chối */}
-                        {doc.report && (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") && (
+                        {/* Report / Báo cáo kiểm tra - Hiển thị cho cả Approved và Rejected */}
+                        {doc.report && (
                           <div className="mt-3 pt-3 border-t">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Lý do từ chối</p>
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg whitespace-pre-wrap text-sm text-red-800 dark:text-red-200">
-                              {doc.report}
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Báo cáo kiểm tra</p>
+                            <div className={`p-3 rounded-lg border whitespace-pre-wrap text-sm ${
+                              doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                            }`}>
+                              <div className="space-y-2">
+                                {doc.report.split('\n').filter(line => line.trim()).map((line, index) => {
+                                  const isMainItem = !line.startsWith('  ');
+                                  const cleanLine = line.trim();
+                                  
+                                  if (isMainItem) {
+                                    return (
+                                      <div key={index} className="flex items-start gap-2 font-semibold">
+                                        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                                        <span>{cleanLine}</span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div key={index} className="pl-6 text-xs opacity-90">
+                                        {cleanLine}
+                                      </div>
+                                    );
+                                  }
+                                })}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -804,34 +902,39 @@ export default function AcademicStaffApprovalsPage() {
 
       {/* File Preview Dialog */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] p-0">
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle>{previewDocumentName}</DialogTitle>
             <DialogDescription>Xem trước tài liệu</DialogDescription>
           </DialogHeader>
           <div className="relative w-full h-[75vh] bg-muted/20 flex items-center justify-center p-6">
             {previewImageUrl ? (
-              <Image
-                src={previewImageUrl}
-                alt={previewDocumentName}
-                fill
-                className="object-contain rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `
-                      <div class="text-center">
-                        <p class="text-muted-foreground mb-4">Không thể hiển thị hình ảnh</p>
-                        <a href="${previewImageUrl}" target="_blank" class="text-blue-600 hover:underline">
-                          Mở trong tab mới
-                        </a>
-                      </div>
-                    `;
-                  }
-                }}
-              />
+              previewImageUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={`${previewImageUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                  className="w-full h-full rounded-lg"
+                  title="PDF Preview"
+                />
+              ) : (
+                <Image
+                  src={previewImageUrl}
+                  alt={previewDocumentName}
+                  fill
+                  className="object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="text-center">
+                          <p class="text-muted-foreground mb-4">Không thể hiển thị hình ảnh</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              )
             ) : (
               <p className="text-muted-foreground">Không có hình ảnh</p>
             )}
