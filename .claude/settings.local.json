@@ -12,7 +12,11 @@
       "Bash(git add:*)",
       "Bash(del typesapi.ts)",
       "Bash(del \"c:\\\\Users\\\\vinh\\\\Desktop\\\\support_fall2025\\\\features\\\\trainees\\\\components\\\\layout\\\\mobile-sidebar.tsx\")",
-      "Bash(npx shadcn@latest add sidebar -y)"
+      "Bash(npx shadcn@latest add sidebar -y)",
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMerge remote changes and resolve conflicts\n\n- Resolved conflicts in documents/page.tsx \\(kept clean light/dark theme styles\\)\n- Resolved conflicts in navbar.tsx \\(kept shadcn sidebar integration\\)\n- Removed old sidebar.tsx \\(replaced by app-sidebar.tsx with shadcn components\\)\n- Added batch info functionality to documents page\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

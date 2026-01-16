@@ -1047,7 +1047,7 @@ export default function StudentDocumentsPage() {
                     const result: any = await updateTraineeSubmission(
                       selectedSubmission.submissionId,
                       {
-                        newSubmissionName: selectedSubmission.requiredDocumentName,
+                        requiredDocumentName: selectedSubmission.requiredDocumentName,
                         newTakeNote: resubmitNote || "Nộp lại tài liệu",
                         newSubmissionDocumentFile: resubmitFile,
                         token,
