@@ -14,6 +14,7 @@ import {
   Loader2,
   LayoutGrid,
   Table,
+  Calendar,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -38,6 +39,8 @@ import {
   getTraineeApplicationsByStatus,
   completeTraineeApplication,
   getTraineeApplicationDetailByStaff,
+  getNearestBatch,
+  getTraineeSubmissionDetail,
 } from "@/lib/actions/trainee-submission";
 
 interface TraineeApplication {
@@ -49,6 +52,19 @@ interface TraineeApplication {
   active: boolean;
 }
 
+interface DocumentRuleValue {
+  document_rule_value_id: number;
+  value: string;
+  document_rule_id: number;
+  document_rule_name: string;
+}
+
+interface ExtractedData {
+  extract_data_id: number;
+  extract_data_name: string;
+  extract_Data_value: string;
+}
+
 interface SubmittedDocument {
   submissionId: number | null;
   documentId: number;
@@ -56,6 +72,9 @@ interface SubmittedDocument {
   apply_or_not: string;
   submissionStatus: string;
   url?: string;
+  report?: string;
+  documentRuleValueCellResponseList?: DocumentRuleValue[];
+  extractDataResponseList?: ExtractedData[];
 }
 
 interface ApplicationDetail {
@@ -72,6 +91,12 @@ interface ApplicationDetail {
   submittedDocuments: SubmittedDocument[];
 }
 
+interface BatchInfo {
+  startDate: string;
+  endDate: string;
+  status: boolean;
+}
+
 export default function AcademicStaffApprovalsPage() {
   const [applications, setApplications] = useState<TraineeApplication[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -82,6 +107,7 @@ export default function AcademicStaffApprovalsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [batchInfo, setBatchInfo] = useState<BatchInfo | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [applicationDetail, setApplicationDetail] = useState<ApplicationDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -95,7 +121,19 @@ export default function AcademicStaffApprovalsPage() {
     if (hasLoadedData.current) return;
     hasLoadedData.current = true;
     loadApplications(true);
+    loadBatchInfo();
   }, []);
+
+  const loadBatchInfo = async () => {
+    try {
+      const result: any = await getNearestBatch();
+      if (result.status === "200 OK" && result.data) {
+        setBatchInfo(result.data);
+      }
+    } catch (err) {
+      console.error("Error loading batch info:", err);
+    }
+  };
 
   const loadApplications = async (isInitial = false) => {
     if (isInitial) {
@@ -247,11 +285,63 @@ export default function AcademicStaffApprovalsPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const result: any = await getTraineeApplicationDetailByStaff(app.id, token);
+      
+      // Gọi API lấy application detail
+      const resultPromise = getTraineeApplicationDetailByStaff(app.id, token);
+      
+      const result: any = await resultPromise;
       console.log("📄 Application detail result:", result);
 
       if (result && result.data) {
-        setApplicationDetail(result.data);
+        console.log("📄 Submitted Documents:", result.data.submittedDocuments);
+        
+        // Gọi tất cả API getTraineeSubmissionDetail cùng lúc (parallel)
+        const submissionIds = (result.data.submittedDocuments || [])
+          .filter((doc: any) => doc.submissionId)
+          .map((doc: any) => doc.submissionId);
+        
+        console.log("📄 Fetching reports for submissions:", submissionIds);
+        
+        // Fetch tất cả reports cùng lúc
+        const reportPromises = submissionIds.map((submissionId: number) => 
+          getTraineeSubmissionDetail(submissionId)
+            .then((res: any) => ({ submissionId, data: res }))
+            .catch((error: any) => {
+              console.error(`Error fetching report for submission ${submissionId}:`, error);
+              return { submissionId, data: null };
+            })
+        );
+        
+        const reports = await Promise.all(reportPromises);
+        console.log("📄 All reports fetched:", reports);
+        
+        // Map reports back to documents
+        const reportsMap = new Map(
+          reports
+            .filter(r => r.data?.status === "200 OK" && r.data?.data)
+            .map(r => [r.submissionId, r.data.data])
+        );
+        
+        const documentsWithReport = (result.data.submittedDocuments || []).map((doc: any) => {
+          if (doc.submissionId && reportsMap.has(doc.submissionId)) {
+            const reportData = reportsMap.get(doc.submissionId);
+            console.log(`📄 Adding report to ${doc.requiredDocumentName}:`, {
+              hasReport: !!reportData.report,
+              reporter: reportData.reporter
+            });
+            return {
+              ...doc,
+              report: reportData.report,
+              reporter: reportData.reporter,
+            };
+          }
+          return doc;
+        });
+        
+        setApplicationDetail({
+          ...result.data,
+          submittedDocuments: documentsWithReport,
+        });
       } else {
         toast({
           title: "Lỗi",
@@ -403,6 +493,35 @@ export default function AcademicStaffApprovalsPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800">{error}</p>
         </div>
+      )}
+
+      {/* Thông tin đợt nộp */}
+      {batchInfo && (
+        <Card className="border-0 shadow-md bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-lg">Thông tin đợt nộp hồ sơ</h3>
+              <Badge className={batchInfo.status ? "bg-green-500" : "bg-red-500"}>
+                {batchInfo.status ? "Đang mở" : "Đã đóng"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Ngày bắt đầu</p>
+                <p className="font-medium">{new Date(batchInfo.startDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Ngày kết thúc</p>
+                <p className="font-medium">{new Date(batchInfo.endDate).toLocaleDateString('vi-VN', { 
+                  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -588,7 +707,7 @@ export default function AcademicStaffApprovalsPage() {
                       <p className="font-medium">{applicationDetail.positionName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phòng ban</p>
+                      <p className="text-sm text-muted-foreground">Khoa</p>
                       <p className="font-medium">{applicationDetail.departmentName}</p>
                     </div>
                     <div>
@@ -621,13 +740,13 @@ export default function AcademicStaffApprovalsPage() {
                   <h3 className="font-semibold text-lg mb-4">
                     Tài liệu đã nộp ({applicationDetail.submittedDocuments.length})
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {applicationDetail.submittedDocuments.map((doc) => (
                       <div
                         key={doc.documentId}
                         className="border rounded-lg p-4 hover:bg-muted/30 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <FileText className="w-4 h-4 text-muted-foreground" />
@@ -646,6 +765,8 @@ export default function AcademicStaffApprovalsPage() {
                                     ? "bg-green-500"
                                     : doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected"
                                     ? "bg-red-500"
+                                    : doc.submissionStatus === "InProgress"
+                                    ? "bg-blue-500"
                                     : "bg-yellow-500"
                                 }
                               >
@@ -655,21 +776,116 @@ export default function AcademicStaffApprovalsPage() {
                                   ? "Từ chối"
                                   : doc.submissionStatus === "Pending"
                                   ? "Chờ duyệt"
+                                  : doc.submissionStatus === "InProgress"
+                                  ? "Đang xử lý"
                                   : doc.submissionStatus}
                               </Badge>
                             </div>
                           </div>
                           {doc.url && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openImagePreview(doc.url!, doc.requiredDocumentName)}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Xem file
-                            </Button>
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                File đã nộp ({doc.url.split(';;').length} file)
+                              </p>
+                              <div className="space-y-2">
+                                {doc.url.split(';;').map((fileUrl, fileIndex) => {
+                                  // Extract filename from URL
+                                  const urlParts = fileUrl.split('/');
+                                  const fullFileName = urlParts[urlParts.length - 1];
+                                  // Remove timestamp prefix
+                                  const fileName = fullFileName.replace(/^\d+_/, '');
+                                  
+                                  return (
+                                    <div key={fileIndex} className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                      <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                      <span className="text-sm flex-1 truncate">{fileName}</span>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => openImagePreview(fileUrl, doc.requiredDocumentName)}
+                                      >
+                                        <Eye className="w-3.5 h-3.5 mr-1" />
+                                        Xem
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           )}
                         </div>
+
+                        {/* Document Rule Values - Quy tắc kiểm tra */}
+                        {doc.documentRuleValueCellResponseList && doc.documentRuleValueCellResponseList.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Quy tắc kiểm tra</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {doc.documentRuleValueCellResponseList.map((rule) => (
+                                <div key={rule.document_rule_value_id} className="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                                    {rule.document_rule_name}:
+                                  </span>
+                                  <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-0.5 rounded">
+                                    {rule.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Extracted Data - Dữ liệu trích xuất */}
+                        {doc.extractDataResponseList && doc.extractDataResponseList.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Dữ liệu trích xuất</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {doc.extractDataResponseList.map((data) => (
+                                <div key={data.extract_data_id} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/30 p-2 rounded">
+                                  <span className="font-medium text-blue-700 dark:text-blue-300">
+                                    {data.extract_data_name}:
+                                  </span>
+                                  <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-800 px-2 py-0.5 rounded font-mono">
+                                    {data.extract_Data_value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Report / Báo cáo kiểm tra - Hiển thị cho cả Approved và Rejected */}
+                        {doc.report && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Báo cáo kiểm tra</p>
+                            <div className={`p-3 rounded-lg border whitespace-pre-wrap text-sm ${
+                              doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved"
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                            }`}>
+                              <div className="space-y-2">
+                                {doc.report.split('\n').filter(line => line.trim()).map((line, index) => {
+                                  const isMainItem = !line.startsWith('  ');
+                                  const cleanLine = line.trim();
+                                  
+                                  if (isMainItem) {
+                                    return (
+                                      <div key={index} className="flex items-start gap-2 font-semibold">
+                                        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                                        <span>{cleanLine}</span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div key={index} className="pl-6 text-xs opacity-90">
+                                        {cleanLine}
+                                      </div>
+                                    );
+                                  }
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -686,34 +902,39 @@ export default function AcademicStaffApprovalsPage() {
 
       {/* File Preview Dialog */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] p-0">
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle>{previewDocumentName}</DialogTitle>
             <DialogDescription>Xem trước tài liệu</DialogDescription>
           </DialogHeader>
           <div className="relative w-full h-[75vh] bg-muted/20 flex items-center justify-center p-6">
             {previewImageUrl ? (
-              <Image
-                src={previewImageUrl}
-                alt={previewDocumentName}
-                fill
-                className="object-contain rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `
-                      <div class="text-center">
-                        <p class="text-muted-foreground mb-4">Không thể hiển thị hình ảnh</p>
-                        <a href="${previewImageUrl}" target="_blank" class="text-blue-600 hover:underline">
-                          Mở trong tab mới
-                        </a>
-                      </div>
-                    `;
-                  }
-                }}
-              />
+              previewImageUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={`${previewImageUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                  className="w-full h-full rounded-lg"
+                  title="PDF Preview"
+                />
+              ) : (
+                <Image
+                  src={previewImageUrl}
+                  alt={previewDocumentName}
+                  fill
+                  className="object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="text-center">
+                          <p class="text-muted-foreground mb-4">Không thể hiển thị hình ảnh</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              )
             ) : (
               <p className="text-muted-foreground">Không có hình ảnh</p>
             )}

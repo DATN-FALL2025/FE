@@ -4,8 +4,6 @@ import { useStudentData } from "@/features/trainees/hooks/use-student-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import Link from "next/link";
 import {
   FileText,
   CheckCircle2,
@@ -15,10 +13,12 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
+  XCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function StudentDashboardPage() {
-  const { student, documents, progress, loading } = useStudentData();
+  const { student, documents, progress, loading, applicationDetail, refreshData } = useStudentData();
 
   if (loading) {
     return (
@@ -56,14 +56,35 @@ export default function StudentDashboardPage() {
     );
   }
 
-  // Calculate stats
+  // Calculate stats from real data
   const totalDocs = progress.totalDocuments;
   const approvedDocs = progress.approvedDocuments;
   const pendingDocs = progress.pendingDocuments;
   const completionPercent = totalDocs > 0 ? Math.round((approvedDocs / totalDocs) * 100) : 0;
 
-  // Get document list with statuses
-  const documentList = documents.slice(0, 4);
+  // Get document list (show first 6)
+  const documentList = documents.slice(0, 6);
+
+  // Get application status
+  const getApplicationStatusBadge = (status: string) => {
+    const statusMap: { [key: string]: { label: string; className: string } } = {
+      "Pending": { label: "Đang chờ xử lý", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+      "InProgress": { label: "Đang xử lý", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      "Submitted": { label: "Đã nộp", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      "Approve": { label: "Đã duyệt", className: "bg-green-50 text-green-700 border-green-200" },
+      "Approved": { label: "Đã duyệt", className: "bg-green-50 text-green-700 border-green-200" },
+      "Reject": { label: "Từ chối", className: "bg-red-50 text-red-700 border-red-200" },
+      "Rejected": { label: "Từ chối", className: "bg-red-50 text-red-700 border-red-200" },
+      "Complete": { label: "Hoàn thành", className: "bg-green-50 text-green-700 border-green-200" },
+      "Completed": { label: "Hoàn thành", className: "bg-green-50 text-green-700 border-green-200" },
+    };
+    const statusInfo = statusMap[status] || { label: status || "Chưa có thông tin", className: "bg-gray-50 text-gray-600 border-gray-200" };
+    return (
+      <Badge variant="outline" className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    );
+  };
 
   // Stats data
   const statsData = [
@@ -225,6 +246,37 @@ export default function StudentDashboardPage() {
                   {progress.deadline.toLocaleDateString("vi-VN")}
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Ngày tạo đơn</span>
+                <span className="text-sm font-semibold">
+                  {applicationDetail?.traineeApplicationCreateAt 
+                    ? new Date(applicationDetail.traineeApplicationCreateAt).toLocaleDateString("vi-VN")
+                    : "Chưa có thông tin"}
+                </span>
+              </div>
+              
+              {/* Document Status Summary */}
+              <div className="pt-3 border-t space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Chi tiết trạng thái</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>Đã duyệt: {approvedDocs}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <span>Chờ duyệt: {pendingDocs}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    <span>Từ chối: {progress.rejectedDocuments}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span>Chưa nộp: {totalDocs - (approvedDocs + pendingDocs + progress.rejectedDocuments)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -326,4 +378,3 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
-

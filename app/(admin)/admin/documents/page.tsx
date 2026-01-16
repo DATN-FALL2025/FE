@@ -126,7 +126,8 @@ export default function DocumentsManagementPage() {
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
-        (result.status && typeof result.status === 'string' && result.status.includes('200'))
+        (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
+        (result.status && typeof result.status === 'string' && result.status.includes('201'))
       );
 
       if (isSuccess) {

@@ -174,7 +174,7 @@ export default function PositionsPage() {
     if (!formData.positionName || !formData.positionDescription || !formData.departmentID) {
       toast({
         title: "Thông tin thiếu",
-        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        description: "Vui lòng điền đầy đủ thông tin và chọn khoa!",
         variant: "destructive",
       });
       return;
@@ -208,12 +208,14 @@ export default function PositionsPage() {
 
       const result: any = await createPosition(positionFormData, token || undefined);
 
-      // Check if successful - API might return {status: "200 OK", data: {...}}
+      // Check if successful - API might return {status: "200 OK", data: {...}} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -246,7 +248,7 @@ export default function PositionsPage() {
     if (!selectedPosition || !formData.positionName || !formData.positionDescription || !formData.departmentID) {
       toast({
         title: "Thông tin thiếu",
-        description: "Vui lòng điền đầy đủ thông tin và chọn phòng ban!",
+        description: "Vui lòng điền đầy đủ thông tin và chọn khoa!",
         variant: "destructive",
       });
       return;
@@ -266,12 +268,14 @@ export default function PositionsPage() {
 
       const result: any = await updatePositionById(Number(selectedPosition.id), updateFormData, token || undefined);
 
-      // Check if successful
+      // Check if successful - API might return {status: "200 OK"} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -310,12 +314,14 @@ export default function PositionsPage() {
       const token = getToken();
       const result: any = await deletePositionById(Number(selectedPosition.id), token || undefined);
 
-      // Check if successful
+      // Check if successful - API might return {status: "200 OK"} or {status: "201 CREATED"}
       const isSuccess = result && (
         result.status === 'success' ||
         (result.status && typeof result.status === 'string' && result.status.includes('OK')) ||
         (result.status && typeof result.status === 'string' && result.status.includes('200')) ||
-        (result.status && typeof result.status === 'string' && result.status === '200 OK')
+        (result.status && typeof result.status === 'string' && result.status.includes('201')) ||
+        (result.status && typeof result.status === 'string' && result.status === '200 OK') ||
+        (result.status && typeof result.status === 'string' && result.status === '201 CREATED')
       );
 
       if (isSuccess) {
@@ -413,7 +419,7 @@ export default function PositionsPage() {
                 <tr>
                   <th className="text-left py-4 px-6 font-medium text-sm">Hình ảnh</th>
                   <th className="text-left py-4 px-6 font-medium text-sm">Tên vị trí</th>
-                  <th className="text-left py-4 px-6 font-medium text-sm">Phòng ban</th>
+                  <th className="text-left py-4 px-6 font-medium text-sm">Khoa</th>
                   <th className="text-right py-4 px-6 font-medium text-sm">Hành động</th>
                 </tr>
               </thead>
@@ -457,7 +463,7 @@ export default function PositionsPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="text-sm text-muted-foreground">
-                          {position.department?.departmentName || 'Chưa gán phòng ban'}
+                          {position.department?.departmentName || 'Chưa gán khoa'}
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -530,18 +536,18 @@ export default function PositionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="department">Khoa <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
                 onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
@@ -664,18 +670,18 @@ export default function PositionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-department">Phòng ban <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-department">Khoa <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.departmentID}
                 onValueChange={(value) => setFormData({ ...formData, departmentID: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="edit-department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;
@@ -793,7 +799,7 @@ export default function PositionsPage() {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                    <span className="text-white text-4xl font-bold relative z-10">
+                    <span className="text-white text-4xl font-bold relative z-10" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
                       {selectedPosition.positionName.charAt(0).toUpperCase()}
                     </span>
                   </>
@@ -803,13 +809,20 @@ export default function PositionsPage() {
                   </span>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedPosition.positionName}</h3>
+                  <Label className="text-sm font-medium text-muted-foreground">Tên vị trí</Label>
+                  <h3 className="text-lg font-semibold mt-1">{selectedPosition.positionName}</h3>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Mô tả</Label>
-                  <p className="mt-1">{selectedPosition.positionDescription}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Khoa</Label>
+                  <p className="mt-1 text-base">
+                    {selectedPosition.department?.departmentName || 'Chưa gán khoa'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Mô tả</Label>
+                  <p className="mt-1 text-base leading-relaxed">{selectedPosition.positionDescription}</p>
                 </div>
               </div>
             </div>

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, User, Settings, LogOut, BookOpen, Menu } from "lucide-react";
+import { Bell, User, LogOut, BookOpen, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AcademicStaffMobileSidebar } from "./academic-staff-mobile-sidebar";
 import { useAuthInfo } from "@/hooks/use-auth-info";
@@ -98,12 +98,6 @@ export const AcademicStaffNavbar = () => {
                   <Link href="/academic-staff/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/academic-staff/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

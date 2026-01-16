@@ -357,7 +357,7 @@ const result = await deleteDocumentRuleById(1);
 
 File: `lib/actions/department.js`
 
-### 1. Lấy Tất Cả Phòng Ban
+### 1. Lấy Tất Cả Khoa
 
 ```javascript
 import { getAllDepartments } from '@/lib/actions/department';
@@ -376,7 +376,7 @@ export default async function DepartmentsPage() {
 }
 ```
 
-### 2. Lấy Phòng Ban Theo ID
+### 2. Lấy Khoa Theo ID
 
 ```javascript
 import { getDepartmentById } from '@/lib/actions/department';
@@ -384,7 +384,7 @@ import { getDepartmentById } from '@/lib/actions/department';
 const result = await getDepartmentById(1);
 ```
 
-### 3. Tạo Phòng Ban Mới
+### 3. Tạo Khoa Mới
 
 ```javascript
 import { createDepartment } from '@/lib/actions/department';
@@ -395,7 +395,7 @@ const result = await createDepartment({
 });
 ```
 
-### 4. Cập Nhật Phòng Ban
+### 4. Cập Nhật Khoa
 
 ```javascript
 import { updateDepartmentById } from '@/lib/actions/department';
@@ -406,7 +406,7 @@ const result = await updateDepartmentById(1, {
 });
 ```
 
-### 5. Xóa Phòng Ban
+### 5. Xóa Khoa
 
 ```javascript
 import { deleteDepartmentById } from '@/lib/actions/department';
@@ -575,7 +575,7 @@ export async function createDocumentAction(formData) {
 
 ## 🔗 API Endpoint Reference
 
-Base URL: `https://manage-and-automate-aviation-academy.onrender.com/api`
+Base URL: `https://manage-and-automate-aviation-academy-application-production.up.railway.app/api`
 
 ### Authentication
 - POST `/account/v1/authenticateAccount` - Đăng nhập
@@ -583,13 +583,26 @@ Base URL: `https://manage-and-automate-aviation-academy.onrender.com/api`
 - GET `/account/v1/getAllUser` - Lấy tất cả users
 - POST `/account/v1/createRole` - Tạo role
 - GET `/account/v1/getAllRole` - Lấy tất cả roles
+- GET `/account/profile` - Lấy thông tin profile
+- POST `/account/v1/verify-otp` - Xác thực OTP
+- POST `/account/v1/send-otp-again` - Gửi lại OTP
+- POST `/account/multipleAccounts` - Import nhiều accounts
+- POST `/account/add_position_to_account` - Gán position cho account
+
+### Batch Management
+- GET `/batch` - Lấy tất cả batches
+- GET `/batch/active-batch` - Lấy batch đang active
+- GET `/batch/nearest_batch` - Lấy batch gần nhất
+- POST `/batch/create-batch` - Tạo batch
+- PUT `/batch/update-batch/{id}` - Update batch
+- DELETE `/batch/delete-batch/{id}` - Xóa batch
 
 ### Position
 - GET `/position/getAllPossition` - Lấy tất cả positions
 - GET `/position/getPositionById/{id}` - Lấy position theo ID
 - POST `/position/createPosition` - Tạo position
-- PUT `/position/updatePositionById{id}` - Update position
-- DELETE `/position/deletePositionById{id}` - Xóa position
+- PUT `/position/updatePositionById/{id}` - Update position
+- DELETE `/position/deletePositionById/{id}` - Xóa position
 
 ### Upload
 - POST `/admin/uploads/file` - Upload file
@@ -598,7 +611,11 @@ Base URL: `https://manage-and-automate-aviation-academy.onrender.com/api`
 ### Document
 - GET `/admin/documents` - Lấy tất cả documents
 - GET `/admin/documents/{id}` - Lấy document theo ID
+- GET `/admin/documents/{id}/with-rules` - Lấy document với rules
+- GET `/admin/documents/all-with-rules` - Lấy tất cả documents với rules
+- GET `/admin/documents/get-document-rule-list-by-document/{documentId}` - Lấy rules theo document
 - POST `/admin/documents/create` - Tạo document
+- POST `/admin/documents/create-with-rules` - Tạo document với rules
 - PUT `/admin/documents/{id}` - Update document
 - DELETE `/admin/documents/{id}` - Xóa document
 
@@ -609,12 +626,52 @@ Base URL: `https://manage-and-automate-aviation-academy.onrender.com/api`
 - PUT `/admin/document-rules/{id}` - Update rule
 - DELETE `/admin/document-rules/{id}` - Xóa rule
 
+### Document Rule Value
+- POST `/document_rule_value/create_document_rule_value` - Tạo giá trị rule
+- PUT `/document_rule_value/update_document_rule_value` - Update giá trị rule
+
 ### Department
 - GET `/admin/departments` - Lấy tất cả departments
 - GET `/admin/departments/{id}` - Lấy department theo ID
 - POST `/admin/departments/create` - Tạo department
 - PUT `/admin/departments/{id}` - Update department
 - DELETE `/admin/departments/{id}` - Xóa department
+
+### Trainee Submission
+- POST `/trainee_submission/create_trainee_submission_by_trainee` - Tạo submission
+- PUT `/trainee_submission/update` - Update submission
+- GET `/trainee_submission/get_trainee_submission_detail/{id}` - Lấy chi tiết submission
+
+### Trainee Application
+- GET `/trainee_application/get_all_application_by_trainee` - Lấy tất cả applications của trainee
+- GET `/trainee_application/get_trainee_application_detail_by_trainee/{id}` - Chi tiết application (trainee)
+- GET `/trainee_application/get_trainee_application_detail_by_staff/{id}` - Chi tiết application (staff)
+- GET `/trainee_application/get_all_trainee_application_by_staff_academic_affair` - Tất cả applications (staff)
+- GET `/trainee_application/get_trainee_application_list_by_status_by_staff_academic_staff_affair` - Lọc theo status
+- GET `/trainee_application/overall-stats_trainee_application_for_staff_academic_affair` - Thống kê cho staff
+- GET `/trainee_application/TraineeApplicationDashboardByTrainee` - Dashboard cho trainee
+- PUT `/trainee_application/{traineeApplicationId}/complete` - Hoàn thành application
+
+### Matrix
+- GET `/matrix/getAllMatrix` - Lấy tất cả matrix
+- GET `/matrix/department/{departmentID}` - Lấy matrix theo department
+- GET `/matrix/matrix_details` - Chi tiết matrix
+- GET `/matrix/input_matrix_document_dashboard` - Dashboard matrix
+- GET `/matrix/get_matrix_filter_by_position_department` - Lọc matrix
+- POST `/matrix/addRow_for_training_director` - Thêm row
+- POST `/matrix/addMultipleRow_for_training_director` - Thêm nhiều rows
+- POST `/matrix/addColum_for_training_director` - Thêm column
+- POST `/matrix/addMultipleColum_for_training_director` - Thêm nhiều columns
+- POST `/matrix/clickToCellMatrix_for_head_of_department` - Toggle cell
+- POST `/matrix/setPendintStatusMatrix_for_training_director` - Set pending status
+- PUT `/matrix/set-drafted/{departmentID}_for_head_department` - Set drafted
+- PUT `/matrix/set-status/department/{departmentId}_for_training_director_approve_or_reject` - Approve/Reject
+- PUT `/matrix/setCompleteStatusToActive_for_training_director` - Set active
+- DELETE `/matrix/deleteRow_for_training_director/{positionId}` - Xóa row
+- DELETE `/matrix/deleteColumn_for_training_director/{documentId}` - Xóa column
+- DELETE `/matrix/deleteAllRow_for_training_director` - Xóa tất cả rows
+- DELETE `/matrix/deleteAllColumns_for_training_director` - Xóa tất cả columns
+- DELETE `/matrix/clearMatrix_for_training_director` - Clear matrix
 
 ---
 
@@ -747,6 +804,6 @@ export default function DocumentsList({ initialDocuments }) {
 ---
 
 **Tác giả:** Generated for Support Fall 2025 Project  
-**Ngày cập nhật:** November 2025  
-**Version:** 1.0.0
+**Ngày cập nhật:** January 2026  
+**Version:** 2.0.0
 

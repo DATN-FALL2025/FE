@@ -30,7 +30,7 @@ const adminNavigation = [
     icon: Users,
   },
   {
-    name: "Quản lý phòng ban",
+    name: "Quản lý khoa",
     href: "/admin/departments",
     icon: Building2,
   },

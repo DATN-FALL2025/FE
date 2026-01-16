@@ -289,11 +289,12 @@ export default function UsersPage() {
       const accountsSheet = workbook.Sheets["Accounts"];
       const accountsData = XLSX.utils.sheet_to_json(accountsSheet);
 
-      // Map accounts data (no role field)
+      // Map accounts data with default role as TRAINEE
       const accounts = accountsData.map((row: any) => ({
         userName: row.userName || row.username || "",
         password: row.password || "",
         gmail: row.gmail || row.email || "",
+        role: row.role || "TRAINEE",
         positionName: row.positionName || row.position || "",
         departmentName: row.departmentName || row.department || ""
       }));
@@ -359,7 +360,7 @@ export default function UsersPage() {
             <Button variant="outline" className="gap-2" disabled={isSubmitting} asChild>
               <span>
                 <Upload className="w-4 h-4" />
-                Import Excel
+                Nộp mẫu Excel
               </span>
             </Button>
           </label>
@@ -535,18 +536,18 @@ export default function UsersPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Phòng ban</Label>
+              <Label htmlFor="department">Khoa</Label>
               <Select
                 value={formData.departmentId}
                 onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="department">
-                  <SelectValue placeholder="Chọn phòng ban" />
+                  <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   {departments.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">Không có phòng ban</div>
+                    <div className="p-2 text-sm text-muted-foreground">Không có khoa</div>
                   ) : (
                     departments.map((dept, index) => {
                       const deptId = (dept as any).departmentId || (dept as any).id || (dept as any).departmentID;

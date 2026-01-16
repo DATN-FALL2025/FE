@@ -25,6 +25,8 @@ import {
 } from "@/lib/actions/matrix";
 import { getDecodedToken } from "@/lib/auth-utils";
 import { toast } from "@/lib/toast-compat";
+import MatrixTimeDisplay from "@/components/shared/matrix-time-display";
+import MatrixCellHoverPopup from "@/components/shared/matrix-cell-hover-popup";
 
 function getStatusBadge(status: string | null) {
   if (!status) return { label: "Chưa gửi", variant: "secondary" as const, className: "bg-gray-500" };
@@ -36,6 +38,7 @@ function getStatusBadge(status: string | null) {
     'Rejected': { label: "Đã từ chối", variant: "destructive" },
     'Reject': { label: "Đã từ chối", variant: "destructive" },
     'InProgress': { label: "Đang xử lý", variant: "default", className: "bg-yellow-500" },
+    'Complete': { label: "Hoàn thành", variant: "default", className: "bg-green-600" },
   };
   return map[status] || { label: status, variant: "secondary" as const };
 }
@@ -158,6 +161,9 @@ export default function HeadMatrixPage() {
 
   return (
     <div className="space-y-6 w-full">
+      {/* Matrix Time Display */}
+      <MatrixTimeDisplay />
+
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-4xl font-bold tracking-tight">Ma trận tài liệu khoa</h1>
@@ -235,9 +241,13 @@ export default function HeadMatrixPage() {
                             const d = posDoc.get(id);
                             return (
                               <td key={id} className="p-4 text-center border-l">
-                                {d ? <Checkbox checked={d.required} className={`h-5 w-5 ${isMatrixEditable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
-                                  onCheckedChange={() => handleCellClick(d.matrixId, d.required, pos.positionName, name, d.document_rule_id, id)}
-                                  disabled={isSubmitting || !isMatrixEditable} /> : <span className="text-muted-foreground">—</span>}
+                                {d ? (
+                                  <MatrixCellHoverPopup matrixId={d.matrixId} disabled={!d.required}>
+                                    <Checkbox checked={d.required} className={`h-5 w-5 ${isMatrixEditable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                                      onCheckedChange={() => handleCellClick(d.matrixId, d.required, pos.positionName, name, d.document_rule_id, id)}
+                                      disabled={isSubmitting || !isMatrixEditable} />
+                                  </MatrixCellHoverPopup>
+                                ) : <span className="text-muted-foreground">—</span>}
                               </td>
                             );
                           })}

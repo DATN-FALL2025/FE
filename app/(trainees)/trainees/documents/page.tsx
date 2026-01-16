@@ -22,6 +22,7 @@ import {
   getTraineeApplicationDetailByTrainee,
   uploadTraineeApplication,
   getTraineeSubmissionDetail,
+  getNearestBatch,
 } from "@/lib/actions";
 import {
   createTraineeSubmission,
@@ -79,6 +80,12 @@ interface ApplicationDetail {
   submittedDocuments: SubmittedDocument[];
 }
 
+interface BatchInfo {
+  startDate: string;
+  endDate: string;
+  status: boolean;
+}
+
 export default function StudentDocumentsPage() {
   const { displayName, user } = useAuthInfo();
   const [loading, setLoading] = useState(true);
@@ -103,7 +110,11 @@ export default function StudentDocumentsPage() {
   const [resubmitFile, setResubmitFile] = useState<File | null>(null);
   const [resubmitNote, setResubmitNote] = useState("");
   const [isResubmitting, setIsResubmitting] = useState(false);
-  
+
+  // Batch info
+  const [batchInfo, setBatchInfo] = useState<BatchInfo | null>(null);
+  const isBatchOpen = batchInfo?.status ?? false;
+
   // Get user info from decoded token
   const [userInfo, setUserInfo] = useState<{
     fullName: string;
@@ -198,7 +209,19 @@ export default function StudentDocumentsPage() {
       }
     };
 
+    const fetchBatchInfo = async () => {
+      try {
+        const batchRes: any = await getNearestBatch();
+        if (batchRes.status === "200 OK" && batchRes.data) {
+          setBatchInfo(batchRes.data);
+        }
+      } catch (error) {
+        console.error("Error fetching batch info:", error);
+      }
+    };
+
     fetchApplicationDetail();
+    fetchBatchInfo();
   }, []);
 
   const handleFileSelect = (docId: number, event: React.ChangeEvent<HTMLInputElement>) => {

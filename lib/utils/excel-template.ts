@@ -121,7 +121,7 @@ export async function createAccountImportTemplate(
       showErrorMessage: true,
       errorStyle: 'error',
       errorTitle: 'Lỗi',
-      error: 'Vui lòng chọn phòng ban từ danh sách'
+      error: 'Vui lòng chọn khoa từ danh sách'
     };
   }
   
@@ -141,7 +141,7 @@ export async function createAccountImportTemplate(
       showErrorMessage: true,
       errorStyle: 'warning',
       errorTitle: 'Lưu ý',
-      error: 'Vui lòng chọn phòng ban trước, sau đó chọn vị trí'
+      error: 'Vui lòng chọn khoa trước, sau đó chọn vị trí'
     };
   }
   
@@ -159,14 +159,14 @@ export async function createAccountImportTemplate(
   accountsSheet.getCell('D1').note = {
     texts: [{
       font: { size: 10, name: 'Arial' },
-      text: 'Bước 1: Chọn phòng ban từ dropdown'
+      text: 'Bước 1: Chọn khoa từ dropdown'
     }]
   };
   
   accountsSheet.getCell('E1').note = {
     texts: [{
       font: { size: 10, name: 'Arial' },
-      text: 'Bước 2: Chọn vị trí (chỉ hiển thị vị trí của phòng ban đã chọn)'
+      text: 'Bước 2: Chọn vị trí (chỉ hiển thị vị trí của khoa đã chọn)'
     }]
   };
   

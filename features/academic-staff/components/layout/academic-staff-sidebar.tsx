@@ -8,20 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  LayoutDashboard,
   FileCheck,
   Calendar,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
 
 const academicStaffNavigation = [
-  {
-    name: "Trang chủ",
-    href: "/academic-staff/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     name: "Duyệt tài liệu",
     href: "/academic-staff/approvals",
@@ -31,6 +26,11 @@ const academicStaffNavigation = [
     name: "Quản lý đợt duyệt",
     href: "/academic-staff/batch-management",
     icon: Calendar,
+  },
+  {
+    name: "Xem yêu cầu hồ sơ",
+    href: "/academic-staff/document-requirements",
+    icon: ClipboardList,
   },
 ];
 

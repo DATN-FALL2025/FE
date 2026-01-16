@@ -1,5 +1,4 @@
-"use client";
-
+import { AppLayout } from "@/components/shared/app-layout";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/features/trainees/components/layout/app-sidebar";

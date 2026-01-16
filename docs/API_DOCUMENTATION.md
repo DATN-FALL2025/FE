@@ -1,9 +1,10 @@
 # 📚 API Documentation - Aviation Academy System
 
-**Version:** 2.0  
-**Last Updated:** December 31, 2025  
+**Version:** 3.0  
+**Last Updated:** January 12, 2026  
 **Base URL:** `https://manage-and-automate-aviation-academy-application-production.up.railway.app`  
-**API Docs:** `/v3/api-docs`
+**API Docs:** `/v3/api-docs`  
+**OpenAPI Version:** OAS 3.1
 
 ---
 
@@ -40,7 +41,7 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 
 ---
 
-## � API Impleamentation Status
+## 📈 API Implementation Status
 
 ### ✅ APIs Đã Có UI (Implemented)
 
@@ -51,6 +52,7 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 - ✅ `GET /api/account/v1/getAllUser` - Get All Users
 - ✅ `GET /api/account/v1/getAllRole` - Get All Roles
 - ✅ `POST /api/account/multipleAccounts` - Import Multiple Accounts
+- ✅ `GET /api/account/profile` - Get User Profile
 
 #### Trainee Submission
 - ✅ `POST /api/trainee_submission/create_trainee_submission_by_trainee` - Create Submission
@@ -64,6 +66,8 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 - ✅ `GET /api/trainee_application/get_all_trainee_application_by_staff_academic_affair` - Get All by Staff
 - ✅ `GET /api/trainee_application/get_trainee_application_list_by_status_by_staff_academic_staff_affair` - Get by Status
 - ✅ `PUT /api/trainee_application/{traineeApplicationId}/complete` - Complete Application
+- ✅ `GET /api/trainee_application/overall-stats_trainee_application_for_staff_academic_affair` - Overall Stats
+- ✅ `GET /api/trainee_application/TraineeApplicationDashboardByTrainee` - Trainee Dashboard
 
 #### Position Management
 - ✅ `GET /api/position/getAllPossition` - Get All Positions
@@ -72,9 +76,20 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 - ✅ `PUT /api/position/updatePositionById/{id}` - Update Position
 - ✅ `DELETE /api/position/deletePositionById/{id}` - Delete Position
 
+#### Batch Management
+- ✅ `GET /api/batch` - Get All Batches
+- ✅ `GET /api/batch/active-batch` - Get Active Batch
+- ✅ `GET /api/batch/nearest_batch` - Get Nearest Batch
+- ✅ `POST /api/batch/create-batch` - Create Batch
+- ✅ `PUT /api/batch/update-batch/{id}` - Update Batch
+- ✅ `DELETE /api/batch/delete-batch/{id}` - Delete Batch
+
 #### Matrix Management
 - ✅ `GET /api/matrix/getAllMatrix` - Get All Matrix
 - ✅ `GET /api/matrix/department/{departmentID}` - Get by Department
+- ✅ `GET /api/matrix/matrix_details` - Get Matrix Details
+- ✅ `GET /api/matrix/input_matrix_document_dashboard` - Matrix Dashboard
+- ✅ `GET /api/matrix/get_matrix_filter_by_position_department` - Filter by Position & Department
 - ✅ `POST /api/matrix/addRow_for_training_director` - Add Row
 - ✅ `POST /api/matrix/addMultipleRow_for_training_director` - Add Multiple Rows
 - ✅ `POST /api/matrix/addColum_for_training_director` - Add Column
@@ -90,11 +105,16 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 - ✅ `DELETE /api/matrix/deleteAllColumns_for_training_director` - Delete All Columns
 - ✅ `DELETE /api/matrix/clearMatrix_for_training_director` - Clear Matrix
 
+#### Document Rule Value
+- ✅ `POST /api/document_rule_value/create_document_rule_value` - Create Rule Value
+- ✅ `PUT /api/document_rule_value/update_document_rule_value` - Update Rule Value
+
 #### Document Management
 - ✅ `GET /api/admin/documents` - Get All Documents
 - ✅ `GET /api/admin/documents/{id}` - Get Document by ID
 - ✅ `GET /api/admin/documents/{id}/with-rules` - Get with Rules
 - ✅ `GET /api/admin/documents/all-with-rules` - Get All with Rules
+- ✅ `GET /api/admin/documents/get-document-rule-list-by-document/{documentId}` - Get Rules by Document
 - ✅ `POST /api/admin/documents/create` - Create Document
 - ✅ `POST /api/admin/documents/create-with-rules` - Create with Rules
 - ✅ `PUT /api/admin/documents/{id}` - Update Document
@@ -116,6 +136,7 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 
 #### Upload Management
 - ✅ `POST /api/admin/uploads/file` - Upload File
+- ✅ `PUT /api/admin/uploads/file` - Update File
 
 ---
 
@@ -123,18 +144,7 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 
 #### 🔥 Mức Độ Ưu Tiên Cao (High Priority)
 
-##### 1. Batch Management (Quản lý Khóa Học)
-**Vai trò:** Admin, Training Director
-
-- ❌ `GET /api/batch` - Lấy danh sách batch
-- ❌ `GET /api/batch/active-batch` - Lấy batch đang active
-- ❌ `POST /api/batch/create-batch` - Tạo batch mới
-- ❌ `PUT /api/batch/update-batch/{id}` - Cập nhật batch
-- ❌ `DELETE /api/batch/delete-batch/{id}` - Xóa batch
-
-**Mô tả:** Quản lý các khóa học/batch tuyển sinh. Cần thiết để phân loại và tổ chức học viên theo từng đợt tuyển sinh.
-
-##### 2. OTP Verification (Xác Thực OTP)
+##### 1. OTP Verification (Xác Thực OTP)
 **Vai trò:** Tất cả users
 
 - ❌ `POST /api/account/v1/verify-otp` - Xác thực OTP
@@ -142,55 +152,14 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 
 **Mô tả:** Tăng cường bảo mật cho hệ thống với xác thực 2 lớp qua email.
 
-##### 3. Profile Management (Quản Lý Profile)
-**Vai trò:** Tất cả users
-
-- ❌ `GET /api/account/profile` - Lấy thông tin profile
-
-**Mô tả:** Cho phép người dùng xem và quản lý thông tin cá nhân.
-
 #### ⚠️ Mức Độ Ưu Tiên Trung Bình (Medium Priority)
 
-##### 4. Document Rule Value (Giá Trị Quy Tắc Tài Liệu)
-**Vai trò:** Admin, Training Director
-
-- ❌ `POST /api/document_rule_value/create_document_rule_value` - Tạo giá trị rule
-- ❌ `PUT /api/document_rule_value/update_document_rule_value` - Cập nhật giá trị rule
-
-**Mô tả:** Quản lý các giá trị cụ thể cho quy tắc tài liệu (ví dụ: kích thước file, định dạng cho phép).
-
-##### 5. Matrix Dashboard & Statistics
-**Vai trò:** Training Director, Head of Department
-
-- ❌ `GET /api/matrix/matrix_details` - Chi tiết matrix
-- ❌ `GET /api/matrix/input_matrix_document_dashboard` - Dashboard matrix
-- ❌ `GET /api/matrix/get_matrix_filter_by_position_department` - Lọc matrix theo position & department
-
-**Mô tả:** Dashboard và thống kê chi tiết về ma trận tài liệu, giúp theo dõi và phân tích dữ liệu.
-
-##### 6. Account Position Assignment
+##### 2. Account Position Assignment
 **Vai trò:** Admin
 
 - ❌ `POST /api/account/add_position_to_account` - Gán position cho account
 
 **Mô tả:** Gán vị trí công việc cho tài khoản người dùng.
-
-#### 📝 Mức Độ Ưu Tiên Thấp (Low Priority)
-
-##### 7. Upload File Update
-**Vai trò:** Admin
-
-- ❌ `PUT /api/admin/uploads/file` - Cập nhật file đã upload
-
-**Mô tả:** Thay thế file đã upload bằng file mới.
-
-##### 8. Overall Statistics & Dashboard
-**Vai trò:** Academic Staff, Trainee
-
-- ❌ `GET /api/trainee_application/overall-stats_trainee_application_for_staff_academic_affair` - Thống kê tổng quan cho staff
-- ❌ `GET /api/trainee_application/TraineeApplicationDashboardByTrainee` - Dashboard cho trainee
-
-**Mô tả:** Các dashboard và thống kê tổng quan cho từng vai trò.
 
 ---
 
@@ -198,18 +167,18 @@ https://manage-and-automate-aviation-academy-application-production.up.railway.a
 
 | Category | Total APIs | Implemented | Not Implemented | Progress |
 |----------|-----------|-------------|-----------------|----------|
-| **Authentication** | 9 | 6 | 3 | 67% |
+| **Authentication** | 9 | 7 | 2 | 78% |
 | **Trainee Submission** | 3 | 3 | 0 | 100% |
-| **Trainee Application** | 8 | 6 | 2 | 75% |
+| **Trainee Application** | 8 | 8 | 0 | 100% |
 | **Position** | 5 | 5 | 0 | 100% |
-| **Batch** | 5 | 0 | 5 | 0% |
-| **Matrix** | 19 | 16 | 3 | 84% |
-| **Document Rule Value** | 2 | 0 | 2 | 0% |
-| **Upload** | 2 | 1 | 1 | 50% |
-| **Document** | 8 | 8 | 0 | 100% |
+| **Batch** | 6 | 6 | 0 | 100% |
+| **Matrix** | 19 | 19 | 0 | 100% |
+| **Document Rule Value** | 2 | 2 | 0 | 100% |
+| **Upload** | 2 | 2 | 0 | 100% |
+| **Document** | 9 | 9 | 0 | 100% |
 | **Document Rules** | 5 | 5 | 0 | 100% |
 | **Department** | 5 | 5 | 0 | 100% |
-| **TOTAL** | **71** | **55** | **16** | **77%** |
+| **TOTAL** | **73** | **71** | **2** | **97%** |
 
 ---
 
@@ -479,9 +448,7 @@ Authorization: Bearer {token}
 ### Get Overall Statistics (Academic Staff)
 **Endpoint:** `GET /api/trainee_application/overall-stats_trainee_application_for_staff_academic_affair`
 
-**Status:** ❌ Not Implemented
-
-**Response:**
+**Response (StaffDashboardResponse):**
 ```json
 {
   "status": "string",
@@ -499,9 +466,7 @@ Authorization: Bearer {token}
 ### Get Trainee Application Dashboard
 **Endpoint:** `GET /api/trainee_application/TraineeApplicationDashboardByTrainee`
 
-**Status:** ❌ Not Implemented
-
-**Response:**
+**Response (TraineeDashboardStatResponse):**
 ```json
 {
   "status": "string",
@@ -607,9 +572,7 @@ Authorization: Bearer {token}
 ### Get Matrix Details
 **Endpoint:** `GET /api/matrix/matrix_details`
 
-**Status:** ❌ Not Implemented
-
-**Response:**
+**Response (MatrixDashBoardResponse):**
 ```json
 {
   "status": "string",
@@ -626,9 +589,7 @@ Authorization: Bearer {token}
 ### Get Matrix Dashboard
 **Endpoint:** `GET /api/matrix/input_matrix_document_dashboard`
 
-**Status:** ❌ Not Implemented
-
-**Response:**
+**Response (MatrixDashBoardResponse):**
 ```json
 {
   "status": "string",
@@ -643,8 +604,6 @@ Authorization: Bearer {token}
 
 ### Get Matrix Filter by Position & Department
 **Endpoint:** `GET /api/matrix/get_matrix_filter_by_position_department`
-
-**Status:** ❌ Not Implemented
 
 **Query Parameters:**
 - `positionId` (integer)
@@ -776,12 +735,10 @@ Authorization: Bearer {token}
 
 ---
 
-## � Batch nManagement
+## 📅 Batch Management
 
 ### Get All Batches
 **Endpoint:** `GET /api/batch`
-
-**Status:** ❌ Not Implemented
 
 **Response:**
 ```json
@@ -804,8 +761,6 @@ Authorization: Bearer {token}
 ### Get Active Batch
 **Endpoint:** `GET /api/batch/active-batch`
 
-**Status:** ❌ Not Implemented
-
 **Response:**
 ```json
 {
@@ -822,12 +777,29 @@ Authorization: Bearer {token}
 }
 ```
 
+### Get Nearest Batch
+**Endpoint:** `GET /api/batch/nearest_batch`
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": {
+    "batchId": "number",
+    "batchName": "string",
+    "batchDescription": "string",
+    "startDate": "string",
+    "endDate": "string",
+    "isActive": "boolean"
+  }
+}
+```
+
 ### Create Batch
 **Endpoint:** `POST /api/batch/create-batch`
 
-**Status:** ❌ Not Implemented
-
-**Request Body:**
+**Request Body (BatchDTO):**
 ```json
 {
   "batchName": "string",
@@ -856,12 +828,10 @@ Authorization: Bearer {token}
 ### Update Batch
 **Endpoint:** `PUT /api/batch/update-batch/{id}`
 
-**Status:** ❌ Not Implemented
-
 **Path Parameters:**
 - `id` (integer) - Batch ID
 
-**Request Body:**
+**Request Body (BatchDTO):**
 ```json
 {
   "batchName": "string",
@@ -874,8 +844,6 @@ Authorization: Bearer {token}
 
 ### Delete Batch
 **Endpoint:** `DELETE /api/batch/delete-batch/{id}`
-
-**Status:** ❌ Not Implemented
 
 **Path Parameters:**
 - `id` (integer) - Batch ID
@@ -895,9 +863,7 @@ Authorization: Bearer {token}
 ### Create Document Rule Value
 **Endpoint:** `POST /api/document_rule_value/create_document_rule_value`
 
-**Status:** ❌ Not Implemented
-
-**Request Body:**
+**Request Body (DocumentRuleValueDTO):**
 ```json
 {
   "documentId": "number",
@@ -923,9 +889,7 @@ Authorization: Bearer {token}
 ### Update Document Rule Value
 **Endpoint:** `PUT /api/document_rule_value/update_document_rule_value`
 
-**Status:** ❌ Not Implemented
-
-**Request Body:**
+**Request Body (DocumentRuleValueUpdateDTO):**
 ```json
 {
   "documentRuleValueId": "number",
@@ -972,7 +936,7 @@ Authorization: Bearer {token}
 ### Update File
 **Endpoint:** `PUT /api/admin/uploads/file`
 
-**Status:** ❌ Not Implemented
+**Description:** Update a file
 
 **Query Parameters:**
 - `oldPublicId` (string) - Public ID of the file to replace
@@ -1030,6 +994,28 @@ Authorization: Bearer {token}
 
 ### Get All Documents with Rules
 **Endpoint:** `GET /api/admin/documents/all-with-rules`
+
+### Get Document Rule List by Document
+**Endpoint:** `GET /api/admin/documents/get-document-rule-list-by-document/{documentId}`
+
+**Path Parameters:**
+- `documentId` (integer)
+
+**Response:**
+```json
+{
+  "status": "string",
+  "message": "string",
+  "data": [
+    {
+      "ruleId": "number",
+      "ruleName": "string",
+      "ruleDescription": "string",
+      "value": "string"
+    }
+  ]
+}
+```
 
 ### Create Document
 **Endpoint:** `POST /api/admin/documents/create`

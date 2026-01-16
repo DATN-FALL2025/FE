@@ -13,6 +13,7 @@ import {
   Settings,
   BookOpen,
   Building2,
+  ClipboardList,
 } from "lucide-react";
 
 const headNavigation = [
@@ -25,6 +26,11 @@ const headNavigation = [
     name: "Ma trận tài liệu",
     href: "/head/matrix",
     icon: FileCheck,
+  },
+  {
+    name: "Xem quy tắc",
+    href: "/head/view-rules",
+    icon: ClipboardList,
   },
 ];
 
@@ -50,7 +56,7 @@ export const HeadMobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Quản lý phòng ban
+              Quản lý khoa
             </p>
             <ul role="list" className="space-y-1">
               {headNavigation.map((item) => {

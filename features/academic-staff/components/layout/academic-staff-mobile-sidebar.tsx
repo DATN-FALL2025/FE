@@ -5,14 +5,16 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard,
   FileCheck,
   BookOpen,
+  Calendar,
+  ClipboardList,
 } from "lucide-react";
 
 const academicStaffNavigation = [
-  { name: "Dashboard", href: "/academic-staff/dashboard", icon: LayoutDashboard },
-  { name: "Document Approvals", href: "/academic-staff/approvals", icon: FileCheck },
+  { name: "Duyệt tài liệu", href: "/academic-staff/approvals", icon: FileCheck },
+  { name: "Quản lý đợt duyệt", href: "/academic-staff/batch-management", icon: Calendar },
+  { name: "Xem yêu cầu hồ sơ", href: "/academic-staff/document-requirements", icon: ClipboardList },
 ];
 
 export const AcademicStaffMobileSidebar = () => {

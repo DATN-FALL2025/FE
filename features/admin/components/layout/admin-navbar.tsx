@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, User, Settings, LogOut, Shield, Menu } from "lucide-react";
+import { Bell, User, LogOut, Shield, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminMobileSidebar } from "./admin-mobile-sidebar";
 import { useAuthInfo } from "@/hooks/use-auth-info";
@@ -101,12 +101,6 @@ export const AdminNavbar = () => {
                   <Link href="/admin/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Hồ sơ</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Cài đặt</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

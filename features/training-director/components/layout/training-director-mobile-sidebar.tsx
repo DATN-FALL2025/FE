@@ -10,11 +10,15 @@ import {
   Target,
   FileText,
   BarChart3,
+  Shield,
+  ClipboardList,
 } from "lucide-react";
 
 const trainingDirectorNavigation = [
-  { name: "Dashboard", href: "/training-director/dashboard", icon: LayoutDashboard },
-  { name: "Document Matrix", href: "/training-director/matrix", icon: FileText },
+  { name: "Trang chủ", href: "/training-director/dashboard", icon: LayoutDashboard },
+  { name: "Ma trận tài liệu", href: "/training-director/matrix", icon: FileText },
+  { name: "Duyệt Ma trận", href: "/training-director/approvals", icon: Shield },
+  { name: "Xem quy tắc", href: "/training-director/view-rules", icon: ClipboardList },
 ];
 
 export const TrainingDirectorMobileSidebar = () => {
@@ -39,7 +43,7 @@ export const TrainingDirectorMobileSidebar = () => {
           {/* Main Navigation */}
           <div>
             <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Training Management
+              Quản lý đào tạo
             </p>
             <ul role="list" className="space-y-1">
               {trainingDirectorNavigation.map((item) => {

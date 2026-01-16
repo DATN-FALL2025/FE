@@ -1,12 +1,10 @@
-import ComingSoon from "@/components/shared/coming-soon";
+"use client";
+
+import ProfilePage from "@/components/shared/profile-page";
+import { useAuthInfo } from "@/hooks/use-auth-info";
 
 export default function TrainingDirectorProfilePage() {
-  return (
-    <ComingSoon
-      title="Profile"
-      description="The profile management feature is under development. You will be able to view and edit your personal information here."
-      backLink="/training-director/dashboard"
-      backLabel="Go to Dashboard"
-    />
-  );
+  const { role } = useAuthInfo();
+  
+  return <ProfilePage role={role || "TRAINING_DIRECTOR"} />;
 }

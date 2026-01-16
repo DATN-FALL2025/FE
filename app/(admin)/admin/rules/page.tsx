@@ -137,7 +137,7 @@ export default function RulesPage() {
       if (result.status === 'error') {
         toast({
           title: "Lỗi",
-          description: result.message || "Tạo rule template thất bại!",
+          description: result.message || "Tạo quy tắc thất bại!",
           variant: "destructive",
         });
       } else {
@@ -146,7 +146,7 @@ export default function RulesPage() {
         await reloadRules();
         toast({
           title: "Thành công",
-          description: "Tạo rule template thành công!",
+          description: "Tạo quy tắc thành công!",
         });
       }
     } catch (err) {
@@ -183,7 +183,7 @@ export default function RulesPage() {
       if (result.status === 'error') {
         toast({
           title: "Lỗi",
-          description: result.message || "Cập nhật rule template thất bại!",
+          description: result.message || "Cập nhật quy tắc thất bại!",
           variant: "destructive",
         });
       } else {
@@ -193,7 +193,7 @@ export default function RulesPage() {
         await reloadRules();
         toast({
           title: "Thành công",
-          description: "Cập nhật rule template thành công!",
+          description: "Cập nhật quy tắc thành công!",
         });
       }
     } catch (err) {
@@ -219,7 +219,7 @@ export default function RulesPage() {
       if (result.status === 'error') {
         toast({
           title: "Lỗi",
-          description: result.message || "Xóa rule template thất bại!",
+          description: result.message || "Xóa quy tắc thất bại!",
           variant: "destructive",
         });
       } else {
@@ -228,7 +228,7 @@ export default function RulesPage() {
         await reloadRules();
         toast({
           title: "Thành công",
-          description: "Xóa rule template thành công!",
+          description: "Xóa quy tắc thành công!",
         });
       }
     } catch (err) {
@@ -279,7 +279,7 @@ export default function RulesPage() {
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center py-16">
               <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-              <h3 className="text-xl font-semibold mb-2 text-red-600">Error Loading Rules</h3>
+              <h3 className="text-xl font-semibold mb-2 text-red-600">Lỗi tải dữ liệu</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md">
                 {error}
               </p>
@@ -288,7 +288,7 @@ export default function RulesPage() {
                 className="mt-4"
                 onClick={() => loadData()}
               >
-                Retry
+                Thử lại
               </Button>
             </div>
           </CardContent>
@@ -301,12 +301,12 @@ export default function RulesPage() {
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Rules Management</h1>
-          <p className="text-muted-foreground mt-1">Quản lý các template quy tắc hệ thống</p>
+          <h1 className="text-3xl font-bold">Quản Lý Quy Tắc</h1>
+          <p className="text-muted-foreground mt-1">Quản lý các mẫu quy tắc tài liệu trong hệ thống</p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Tạo Rule Template
+          Tạo Quy Tắc
         </Button>
       </div>
 
@@ -315,7 +315,7 @@ export default function RulesPage() {
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left p-4 font-medium">Tên Rule</th>
+                <th className="text-left p-4 font-medium">Tên Quy Tắc</th>
                 <th className="text-left p-4 font-medium">Tài liệu</th>
                 <th className="text-left p-4 font-medium">Mô tả</th>
                 <th className="text-right p-4 font-medium">Thao tác</th>
@@ -325,7 +325,7 @@ export default function RulesPage() {
               {rules.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center py-8 text-muted-foreground">
-                    Chưa có rule template nào. Nhấn &quot;Tạo Rule Template&quot; để thêm mới.
+                    Chưa có quy tắc nào. Nhấn &quot;Tạo Quy Tắc&quot; để thêm mới.
                   </td>
                 </tr>
               ) : (
@@ -385,9 +385,9 @@ export default function RulesPage() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Tạo Rule Template Mới</DialogTitle>
+            <DialogTitle>Tạo Quy Tắc Mới</DialogTitle>
             <DialogDescription>
-              Nhập thông tin cho rule template mới
+              Nhập thông tin cho quy tắc mới
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -423,12 +423,12 @@ export default function RulesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="documentRuleName">Tên Rule <span className="text-red-500">*</span></Label>
+              <Label htmlFor="documentRuleName">Tên Quy Tắc <span className="text-red-500">*</span></Label>
               <Input
                 id="documentRuleName"
                 value={formData.documentRuleName}
                 onChange={(e) => setFormData({ ...formData, documentRuleName: e.target.value })}
-                placeholder="Nhập tên rule"
+                placeholder="Nhập tên quy tắc"
               />
             </div>
             <div className="space-y-2">
@@ -437,7 +437,7 @@ export default function RulesPage() {
                 id="documentRuleDescription"
                 value={formData.documentRuleDescription}
                 onChange={(e) => setFormData({ ...formData, documentRuleDescription: e.target.value })}
-                placeholder="Nhập mô tả rule"
+                placeholder="Nhập mô tả quy tắc"
                 rows={4}
               />
             </div>
@@ -453,7 +453,7 @@ export default function RulesPage() {
                   Đang tạo...
                 </>
               ) : (
-                "Tạo Rule"
+                "Tạo"
               )}
             </Button>
           </DialogFooter>
@@ -464,9 +464,9 @@ export default function RulesPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh Sửa Rule Template</DialogTitle>
+            <DialogTitle>Chỉnh Sửa Quy Tắc</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin rule template
+              Cập nhật thông tin quy tắc
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -502,12 +502,12 @@ export default function RulesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-documentRuleName">Tên Rule <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-documentRuleName">Tên Quy Tắc <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-documentRuleName"
                 value={formData.documentRuleName}
                 onChange={(e) => setFormData({ ...formData, documentRuleName: e.target.value })}
-                placeholder="Nhập tên rule"
+                placeholder="Nhập tên quy tắc"
               />
             </div>
             <div className="space-y-2">
@@ -516,7 +516,7 @@ export default function RulesPage() {
                 id="edit-documentRuleDescription"
                 value={formData.documentRuleDescription}
                 onChange={(e) => setFormData({ ...formData, documentRuleDescription: e.target.value })}
-                placeholder="Nhập mô tả rule"
+                placeholder="Nhập mô tả quy tắc"
                 rows={4}
               />
             </div>
@@ -543,7 +543,7 @@ export default function RulesPage() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chi Tiết Rule Template</DialogTitle>
+            <DialogTitle>Chi Tiết Quy Tắc</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -553,7 +553,7 @@ export default function RulesPage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground">Tên Rule</Label>
+              <Label className="text-muted-foreground">Tên Quy Tắc</Label>
               <p className="font-medium">{selectedRule?.documentRuleName}</p>
             </div>
             <div className="space-y-2">
@@ -573,7 +573,7 @@ export default function RulesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa rule template &quot;{selectedRule?.documentRuleName}&quot;?
+              Bạn có chắc chắn muốn xóa quy tắc &quot;{selectedRule?.documentRuleName}&quot;?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
