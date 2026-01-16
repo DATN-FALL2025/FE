@@ -10,7 +10,9 @@
       "Bash(dir:*)",
       "Bash(npm run dev:*)",
       "Bash(git add:*)",
-      "Bash(del typesapi.ts)"
+      "Bash(del typesapi.ts)",
+      "Bash(del \"c:\\\\Users\\\\vinh\\\\Desktop\\\\support_fall2025\\\\features\\\\trainees\\\\components\\\\layout\\\\mobile-sidebar.tsx\")",
+      "Bash(npx shadcn@latest add sidebar -y)"
     ],
     "deny": [],
     "ask": []

@@ -469,49 +469,59 @@ export default function StudentDocumentsPage() {
   const getStatusBadge = (doc: SubmittedDocument) => {
     // If has submissionId, show "Đã nộp" regardless of status
     if (doc.submissionId !== null) {
-      return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3" />Đã nộp</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="w-3 h-3" />
+          Đã nộp
+        </span>
+      );
     }
-    
+
     // If no submissionId, show "Chờ nộp"
-    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" />Chờ nộp</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+        <Clock className="w-3 h-3" />
+        Chờ nộp
+      </span>
+    );
   };
 
   const getSubmissionStatusBadge = (status: string) => {
-    const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
-      "Pending": { label: "Chờ duyệt", className: "bg-yellow-100 text-yellow-800", icon: Clock },
-      "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
-      "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
-      "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
-      "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+    const statusMap: { [key: string]: { label: string; className: string; icon: React.ElementType } } = {
+      "Pending": { label: "Chờ duyệt", className: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400", icon: Clock },
+      "Approve": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
+      "Approved": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
+      "Reject": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
+      "Rejected": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
     };
 
-    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
+    const statusInfo = statusMap[status] || { label: status, className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400", icon: AlertCircle };
     const Icon = statusInfo.icon;
 
     return (
-      <Badge className={statusInfo.className}>
-        <Icon className="w-3 h-3 mr-1" />
+      <Badge className={`${statusInfo.className} border-0 font-medium px-2.5 py-1 rounded-lg`}>
+        <Icon className="w-3 h-3 mr-1.5" />
         {statusInfo.label}
       </Badge>
     );
   };
 
   const getApplicationStatusBadge = (status: string) => {
-    const statusMap: { [key: string]: { label: string; className: string; icon: any } } = {
-      "Pending": { label: "Đang chờ xử lý", className: "bg-yellow-100 text-yellow-800", icon: Clock },
-      "Submitted": { label: "Đã nộp", className: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
-      "Approve": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
-      "Approved": { label: "Đã duyệt", className: "bg-green-100 text-green-800", icon: CheckCircle2 },
-      "Reject": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
-      "Rejected": { label: "Từ chối", className: "bg-red-100 text-red-800", icon: XCircle },
+    const statusMap: { [key: string]: { label: string; className: string; icon: React.ElementType } } = {
+      "Pending": { label: "Đang chờ xử lý", className: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400", icon: Clock },
+      "Submitted": { label: "Đã nộp", className: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400", icon: CheckCircle2 },
+      "Approve": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
+      "Approved": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
+      "Reject": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
+      "Rejected": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
     };
 
-    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800", icon: AlertCircle };
+    const statusInfo = statusMap[status] || { label: status, className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400", icon: AlertCircle };
     const Icon = statusInfo.icon;
 
     return (
-      <Badge className={statusInfo.className}>
-        <Icon className="w-3 h-3 mr-1" />
+      <Badge className={`${statusInfo.className} border-0 font-medium px-2.5 py-1 rounded-lg`}>
+        <Icon className="w-3 h-3 mr-1.5" />
         {statusInfo.label}
       </Badge>
     );
@@ -519,11 +529,14 @@ export default function StudentDocumentsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-72 rounded-lg" />
+          <Skeleton className="h-5 w-96 rounded-lg" />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
+          <Skeleton className="h-[500px] rounded-2xl" />
+          <Skeleton className="h-[500px] rounded-2xl" />
         </div>
       </div>
     );
@@ -532,11 +545,15 @@ export default function StudentDocumentsPage() {
   if (!applicationDetail) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold mb-2">Chưa có đơn đăng ký</h2>
-          <p className="text-muted-foreground">Vui lòng tạo đơn đăng ký trước khi nộp tài liệu</p>
-        </div>
+        <Card className="border-0 shadow-lg rounded-2xl bg-white dark:bg-slate-900 max-w-md w-full">
+          <CardContent className="p-12 text-center">
+            <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-amber-500" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Chưa có đơn đăng ký</h2>
+            <p className="text-slate-500 dark:text-slate-400">Vui lòng tạo đơn đăng ký trước khi nộp tài liệu</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -562,11 +579,13 @@ export default function StudentDocumentsPage() {
   };
 
   return (
-    <div className="space-y-6 w-full pb-8">
+    <div className="space-y-8 pb-8">
       {/* Page Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Hồ Sơ Học Viên</h1>
-        <p className="text-sm text-muted-foreground">
+      <div className="space-y-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Hồ Sơ Học Viên
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400">
           Nộp và quản lý hồ sơ đăng ký của bạn
         </p>
       </div>
@@ -574,159 +593,167 @@ export default function StudentDocumentsPage() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Application Info */}
-        <Card className="shadow-sm">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
           <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Thông Tin Đơn Đăng Ký</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Chi tiết về đơn đăng ký của bạn
-            </p>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
+                <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Thông Tin Đơn Đăng Ký</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Chi tiết về đơn đăng ký của bạn</p>
+              </div>
+            </div>
 
             {/* Application Details */}
-            <div className="space-y-4 mb-8">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Họ tên</label>
-                <p className="text-base font-semibold">{applicationDetail.fullName}</p>
+            <div className="space-y-4 mb-6">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Họ tên</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{applicationDetail.fullName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Vị trí ứng tuyển</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{applicationDetail.positionName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Phòng ban</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{applicationDetail.departmentName}</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Vị trí ứng tuyển</label>
-                <p className="text-base font-semibold">{applicationDetail.positionName}</p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Phòng ban</label>
-                <p className="text-base font-semibold">{applicationDetail.departmentName}</p>
-              </div>
+
               {applicationDetail.positionDescription && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Mô tả vị trí</label>
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">{applicationDetail.positionDescription}</p>
+                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">Mô tả vị trí</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{applicationDetail.positionDescription}</p>
                 </div>
               )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Trạng thái đơn</label>
+
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Trạng thái đơn</span>
                 <div>{getApplicationStatusBadge(applicationDetail.traineeApplicationStatus)}</div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Ngày tạo đơn
-                </label>
-                <p className="text-sm">
-                  {new Date(applicationDetail.traineeApplicationCreateAt).toLocaleString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-              {applicationDetail.traineeApplicationUpdateAt && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    Cập nhật lần cuối
-                  </label>
-                  <p className="text-sm">
-                    {new Date(applicationDetail.traineeApplicationUpdateAt).toLocaleString('vi-VN', {
+                    Ngày tạo đơn
+                  </span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                    {new Date(applicationDetail.traineeApplicationCreateAt).toLocaleString('vi-VN', {
                       year: 'numeric',
-                      month: 'long',
+                      month: 'short',
                       day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
                     })}
-                  </p>
+                  </span>
                 </div>
-              )}
+                {applicationDetail.traineeApplicationUpdateAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Cập nhật lần cuối
+                    </span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      {new Date(applicationDetail.traineeApplicationUpdateAt).toLocaleString('vi-VN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Document Statistics */}
-            <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tổng số tài liệu</span>
-                <span className="font-bold">{totalCount}</span>
-              </div>
-              
-              {/* Submission Status */}
-              <div className="space-y-2 pt-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái nộp</p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-green-600" />
-                    Đã nộp
-                  </span>
-                  <span className="font-bold text-green-600">{submittedCount}</span>
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-center">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalCount}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Tổng tài liệu</p>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-yellow-600" />
-                    Chưa nộp
-                  </span>
-                  <span className="font-bold text-yellow-600">{totalCount - submittedCount}</span>
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{submittedCount}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Đã nộp</p>
                 </div>
               </div>
-              
-              {/* Approval Status */}
+
+              {/* Approval Status - Only show if has submitted */}
               {submittedCount > 0 && (
-                <div className="space-y-2 pt-2 border-t">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Trạng thái duyệt</p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
-                      Đã duyệt
-                    </span>
-                    <span className="font-bold text-green-600">{approvedCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-blue-600" />
-                      Chờ duyệt
-                    </span>
-                    <span className="font-bold text-blue-600">{pendingCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <XCircle className="w-3 h-3 text-red-600" />
-                      Từ chối
-                    </span>
-                    <span className="font-bold text-red-600">{rejectedCount}</span>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Trạng thái duyệt</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/50">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
+                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{approvedCount}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Đã duyệt</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-amber-100 dark:bg-amber-950/50">
+                      <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
+                      <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{pendingCount}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Chờ duyệt</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-red-100 dark:bg-red-950/50">
+                      <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 mx-auto mb-1" />
+                      <p className="text-lg font-bold text-red-600 dark:text-red-400">{rejectedCount}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Từ chối</p>
+                    </div>
                   </div>
                 </div>
               )}
-              
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <span className="text-muted-foreground">Tiến độ hoàn tất</span>
-                <span className="font-bold">
-                  {totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%
-                </span>
+
+              {/* Progress */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 dark:from-blue-950/30 dark:to-violet-950/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Tiến độ hoàn tất</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    {totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="h-2.5 bg-white dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-500"
+                    style={{ width: `${totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%` }}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Right Column - Document Upload */}
-        <Card className="shadow-sm">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
           <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Tải Lên Tài Liệu</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Tải lên tất cả tài liệu cần thiết cho vị trí đã chọn
-            </p>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Tải Lên Tài Liệu</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Tải lên tất cả tài liệu cần thiết</p>
+              </div>
+            </div>
 
             {/* Document List */}
-            <div className="space-y-3 mb-6 overflow-y-auto">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
               {documents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Chưa có tài liệu nào được yêu cầu</p>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400">Chưa có tài liệu nào được yêu cầu</p>
                 </div>
               ) : (
                 documents.map((doc) => (
                   <div
                     key={doc.documentId}
-                    className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors duration-200"
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex-1 min-w-0 mr-3">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {doc.requiredDocumentName}
                           <span className="text-red-500 ml-1">*</span>
                         </p>
@@ -739,11 +766,17 @@ export default function StudentDocumentsPage() {
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       />
                       {/* Only show upload button if not submitted OR if rejected */}
-                      {(doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") || 
+                      {(doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") ||
                        (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
                         <Button
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                          className={`shrink-0 rounded-lg cursor-pointer transition-all duration-200 ${
+                            selectedFiles[doc.documentId]
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              : (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
                           onClick={() => {
                             if (selectedFiles[doc.documentId]) {
                               handleFileUpload(doc.documentId);
@@ -754,7 +787,10 @@ export default function StudentDocumentsPage() {
                           disabled={uploadingDocs.has(doc.documentId)}
                         >
                           {uploadingDocs.has(doc.documentId) ? (
-                            <>Đang tải...</>
+                            <span className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Đang tải...
+                            </span>
                           ) : selectedFiles[doc.documentId] ? (
                             <>
                               <Upload className="w-4 h-4 mr-2" />
@@ -772,9 +808,9 @@ export default function StudentDocumentsPage() {
                     
                     {/* Show selected file name */}
                     {selectedFiles[doc.documentId] && (
-                      <div className="mb-2 p-2 bg-blue-50 rounded text-xs text-blue-800 flex items-center gap-2">
-                        <span className="font-medium">File đã chọn:</span>
-                        <span className="truncate flex-1">{selectedFiles[doc.documentId].name}</span>
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate flex-1">{selectedFiles[doc.documentId].name}</span>
                       </div>
                     )}
                     
@@ -782,63 +818,64 @@ export default function StudentDocumentsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         {/* Submission Status Badge */}
                         {getStatusBadge(doc)}
-                        
+
                         {/* Approval Status Badge - Only show if submitted */}
                         {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && doc.submissionStatus && (
                           <>
                             {doc.submissionStatus === "Pending" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400">
                                 <Clock className="w-3 h-3" />
                                 Chờ duyệt
                               </span>
                             )}
                             {(doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved") && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Đã duyệt
                               </span>
                             )}
                             {(doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400">
                                 <XCircle className="w-3 h-3" />
                                 Từ chối
                               </span>
                             )}
                           </>
                         )}
-                        
+
                         {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && doc.submissionId && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-7 px-2.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer transition-colors duration-200"
                             onClick={() => handleViewSubmissionDetail(doc.submissionId!)}
                           >
-                            <Eye className="w-3 h-3 mr-1" />
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
                             Xem chi tiết
                           </Button>
                         )}
                       </div>
                       {(doc.submissionId && uploadedFiles[doc.documentId]) && (
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={uploadedFiles[doc.documentId]}>
-                          📎 {uploadedFiles[doc.documentId]}
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[180px] flex items-center gap-1" title={uploadedFiles[doc.documentId]}>
+                          <FileText className="w-3 h-3" />
+                          {uploadedFiles[doc.documentId]}
                         </p>
                       )}
                     </div>
                     
                     {/* Document Rule Values - Only show if submitted and has rules */}
-                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
-                     doc.documentRuleValueCellResponseList && 
+                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") &&
+                     doc.documentRuleValueCellResponseList &&
                      doc.documentRuleValueCellResponseList.length > 0 && (
-                      <div className="mt-3 pt-3 border-t space-y-2">
-                        <p className="text-xs font-semibold text-foreground uppercase">Quy tắc kiểm tra</p>
-                        <div className="grid grid-cols-1 gap-2">
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quy tắc kiểm tra</p>
+                        <div className="space-y-2">
                           {doc.documentRuleValueCellResponseList.map((rule) => (
-                            <div key={rule.document_rule_value_id} className="flex items-start gap-2 text-xs bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                              <span className="font-medium text-slate-700 dark:text-slate-300 min-w-[100px]">
-                                {rule.document_rule_name}:
+                            <div key={rule.document_rule_value_id} className="flex items-center justify-between text-xs p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                              <span className="font-medium text-slate-600 dark:text-slate-400">
+                                {rule.document_rule_name}
                               </span>
-                              <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-0.5 rounded font-medium">
+                              <span className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2.5 py-1 rounded-md font-semibold">
                                 {rule.value}
                               </span>
                             </div>
@@ -846,20 +883,20 @@ export default function StudentDocumentsPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Extracted Data - Only show if submitted and has extracted data */}
-                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") && 
-                     doc.extractDataResponseList && 
+                    {(doc.apply_or_not === "Applied" || doc.apply_or_not === "Đã nộp") &&
+                     doc.extractDataResponseList &&
                      doc.extractDataResponseList.length > 0 && (
-                      <div className="mt-3 pt-3 border-t space-y-2">
-                        <p className="text-xs font-semibold text-foreground uppercase">Dữ liệu trích xuất</p>
-                        <div className="grid grid-cols-1 gap-2">
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dữ liệu trích xuất</p>
+                        <div className="space-y-2">
                           {doc.extractDataResponseList.map((data) => (
-                            <div key={data.extract_data_id} className="flex items-start gap-2 text-xs bg-blue-100 dark:bg-blue-900/30 p-2 rounded">
-                              <span className="font-medium text-blue-700 dark:text-blue-300 min-w-[100px]">
-                                {data.extract_data_name}:
+                            <div key={data.extract_data_id} className="flex items-center justify-between text-xs p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                              <span className="font-medium text-blue-700 dark:text-blue-400">
+                                {data.extract_data_name}
                               </span>
-                              <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-800 px-2 py-0.5 rounded font-medium">
+                              <span className="text-blue-900 dark:text-blue-100 bg-white dark:bg-blue-900/50 px-2.5 py-1 rounded-md font-semibold">
                                 {data.extract_Data_value}
                               </span>
                             </div>
@@ -877,23 +914,25 @@ export default function StudentDocumentsPage() {
 
       {/* File Preview Modal */}
       <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-2xl border-0">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
               Xem file
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
-            <img 
-              src={previewImageUrl} 
-              alt="Preview" 
-              className="max-w-full max-h-[70vh] object-contain rounded"
+          <div className="flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
+            <img
+              src={previewImageUrl}
+              alt="Preview"
+              className="max-w-full max-h-[60vh] object-contain rounded-xl shadow-lg"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3 p-6 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
-              className="flex-1"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 cursor-pointer transition-colors duration-200"
               onClick={() => window.open(previewImageUrl, '_blank')}
             >
               <Download className="w-4 h-4 mr-2" />
@@ -901,6 +940,7 @@ export default function StudentDocumentsPage() {
             </Button>
             <Button
               variant="outline"
+              className="rounded-xl h-11 cursor-pointer transition-colors duration-200"
               onClick={() => setIsImagePreviewOpen(false)}
             >
               Đóng
@@ -911,67 +951,74 @@ export default function StudentDocumentsPage() {
 
       {/* Resubmit Modal */}
       <Dialog open={isResubmitModalOpen} onOpenChange={setIsResubmitModalOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5" />
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl border-0">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
               Nộp lại tài liệu
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 mt-1">
               Tải lên file mới và thêm ghi chú (nếu cần)
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
+
+          <div className="p-6 space-y-5">
             {/* File Upload */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">File mới *</label>
-              <input
-                type="file"
-                className="w-full p-2 border rounded"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setResubmitFile(file);
-                    toast.info(`Đã chọn file: ${file.name}`);
-                  }
-                }}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-slate-900 dark:text-white">File mới <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input
+                  type="file"
+                  className="w-full p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setResubmitFile(file);
+                      toast.info(`Đã chọn file: ${file.name}`);
+                    }
+                  }}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
+              </div>
               {resubmitFile && (
-                <p className="text-xs text-green-600">✓ {resubmitFile.name}</p>
+                <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">{resubmitFile.name}</span>
+                </div>
               )}
             </div>
-            
+
             {/* Note */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-slate-900 dark:text-white">Ghi chú (tùy chọn)</label>
               <textarea
-                className="w-full p-2 border rounded min-h-[100px]"
+                className="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm resize-none min-h-[100px] focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
                 placeholder="Thêm ghi chú về tài liệu mới..."
                 value={resubmitNote}
                 onChange={(e) => setResubmitNote(e.target.value)}
               />
             </div>
-            
+
             {/* Actions */}
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-3 pt-2">
               <Button
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 cursor-pointer transition-colors duration-200"
                 onClick={async () => {
                   if (!resubmitFile) {
                     toast.error("Vui lòng chọn file");
                     return;
                   }
-                  
+
                   if (!selectedSubmission) {
                     toast.error("Không tìm thấy thông tin submission");
                     return;
                   }
-                  
+
                   setIsResubmitting(true);
                   const loadingToast = toast.loading("Đang nộp lại tài liệu...");
-                  
+
                   try {
                     const token = getClientToken();
                     const result: any = await updateTraineeSubmission(
@@ -983,14 +1030,14 @@ export default function StudentDocumentsPage() {
                         token,
                       }
                     );
-                    
+
                     toast.dismiss(loadingToast);
-                    
+
                     if (result.status === "200 OK" || result.status === "success") {
-                      toast.success("✅ Nộp lại tài liệu thành công!");
+                      toast.success("Nộp lại tài liệu thành công!");
                       setIsResubmitModalOpen(false);
                       setIsDetailModalOpen(false);
-                      
+
                       // Refresh documents list
                       if (applicationDetail) {
                         const detailRes: any = await getTraineeApplicationDetailByTrainee(
@@ -1014,10 +1061,16 @@ export default function StudentDocumentsPage() {
                 }}
                 disabled={isResubmitting || !resubmitFile}
               >
-                {isResubmitting ? "Đang nộp..." : "Nộp lại"}
+                {isResubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Đang nộp...
+                  </span>
+                ) : "Nộp lại"}
               </Button>
               <Button
                 variant="outline"
+                className="rounded-xl h-11 cursor-pointer transition-colors duration-200"
                 onClick={() => setIsResubmitModalOpen(false)}
                 disabled={isResubmitting}
               >
@@ -1030,162 +1083,166 @@ export default function StudentDocumentsPage() {
 
       {/* Submission Detail Modal */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden p-0 rounded-2xl border-0">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
               Chi Tiết Tài Liệu
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 mt-1">
               Thông tin chi tiết về tài liệu đã nộp
             </DialogDescription>
           </DialogHeader>
 
-          {loadingDetail ? (
-            <div className="space-y-4 py-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : selectedSubmission ? (
-            <div className="space-y-6 py-4">
-              {/* Document Name */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Tên tài liệu
-                </label>
-                <p className="text-base font-semibold">{selectedSubmission.requiredDocumentName}</p>
+          <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
+            {loadingDetail ? (
+              <div className="p-6 space-y-4">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
               </div>
-
-              {/* Submission Name */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Tên bài nộp</label>
-                <p className="text-base">{selectedSubmission.submission_name}</p>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
-                <div>{getSubmissionStatusBadge(selectedSubmission.submissionStatus)}</div>
-              </div>
-
-              {/* Upload Time */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Thời gian nộp
-                </label>
-                <p className="text-base">
-                  {new Date(selectedSubmission.uploadTime).toLocaleString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-
-              {/* Take Note */}
-              {selectedSubmission.takeNote && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Ghi chú
-                  </label>
-                  <p className="text-base p-3 bg-muted rounded-lg">{selectedSubmission.takeNote}</p>
-                </div>
-              )}
-
-              {/* File Download */}
-              {selectedSubmission.fileDownloadUrl && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    File đã nộp
-                  </label>
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => window.open(selectedSubmission.fileDownloadUrl, '_blank')}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Tải xuống file
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const fileUrl = selectedSubmission.fileDownloadUrl;
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
-                        const isPdf = /\.pdf$/i.test(fileUrl);
-                        
-                        if (isImage || isPdf) {
-                          setPreviewImageUrl(fileUrl);
-                          setIsImagePreviewOpen(true);
-                        } else {
-                          window.open(fileUrl, '_blank');
-                        }
-                      }}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Xem file
-                    </Button>
+            ) : selectedSubmission ? (
+              <div className="p-6 space-y-5">
+                {/* Document Info Card */}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Tên tài liệu</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white text-right max-w-[200px] truncate">
+                      {selectedSubmission.requiredDocumentName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Tên bài nộp</span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white text-right max-w-[200px] truncate">
+                      {selectedSubmission.submission_name}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Trạng thái</span>
+                    {getSubmissionStatusBadge(selectedSubmission.submissionStatus)}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Thời gian nộp
+                    </span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      {new Date(selectedSubmission.uploadTime).toLocaleString('vi-VN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 </div>
-              )}
-              
-              {/* Document Rule Values */}
-              {selectedSubmission.documentRuleValueCellResponseList && 
-               selectedSubmission.documentRuleValueCellResponseList.length > 0 && (
-                <div className="space-y-3 pt-4 border-t">
-                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Quy tắc kiểm tra
-                  </label>
-                  <div className="space-y-2">
-                    {selectedSubmission.documentRuleValueCellResponseList.map((rule) => (
-                      <div key={rule.document_rule_value_id} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                          {rule.document_rule_name}
-                        </p>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-2 rounded">
-                          {rule.value}
-                        </p>
-                      </div>
-                    ))}
+
+                {/* Take Note */}
+                {selectedSubmission.takeNote && (
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900">
+                    <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Ghi chú
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">{selectedSubmission.takeNote}</p>
                   </div>
-                </div>
-              )}
-              
-              {/* Extracted Data */}
-              {selectedSubmission.extractDataResponseList && 
-               selectedSubmission.extractDataResponseList.length > 0 && (
-                <div className="space-y-3 pt-4 border-t">
-                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Dữ liệu trích xuất từ tài liệu
-                  </label>
-                  <div className="space-y-2">
-                    {selectedSubmission.extractDataResponseList.map((data) => (
-                      <div key={data.extract_data_id} className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                          {data.extract_data_name}
-                        </p>
-                        <p className="text-sm text-blue-800 dark:text-blue-200 bg-white dark:bg-blue-950 px-3 py-2 rounded font-mono">
-                          {data.extract_Data_value}
-                        </p>
-                      </div>
-                    ))}
+                )}
+
+                {/* File Download */}
+                {selectedSubmission.fileDownloadUrl && (
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Download className="w-4 h-4" />
+                      File đã nộp
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-10 cursor-pointer transition-colors duration-200"
+                        onClick={() => window.open(selectedSubmission.fileDownloadUrl, '_blank')}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Tải xuống
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="rounded-lg h-10 cursor-pointer transition-colors duration-200"
+                        onClick={() => {
+                          const fileUrl = selectedSubmission.fileDownloadUrl;
+                          const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
+                          const isPdf = /\.pdf$/i.test(fileUrl);
+
+                          if (isImage || isPdf) {
+                            setPreviewImageUrl(fileUrl);
+                            setIsImagePreviewOpen(true);
+                          } else {
+                            window.open(fileUrl, '_blank');
+                          }
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Xem file
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Resubmit Button - Only show if status is Reject */}
-              {selectedSubmission.submissionStatus === "Reject" && (
-                <div className="pt-4 border-t">
+                )}
+
+                {/* Document Rule Values */}
+                {selectedSubmission.documentRuleValueCellResponseList &&
+                 selectedSubmission.documentRuleValueCellResponseList.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Quy tắc kiểm tra
+                    </p>
+                    <div className="space-y-2">
+                      {selectedSubmission.documentRuleValueCellResponseList.map((rule) => (
+                        <div key={rule.document_rule_value_id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                              {rule.document_rule_name}
+                            </span>
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-700 px-3 py-1 rounded-lg">
+                              {rule.value}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Extracted Data */}
+                {selectedSubmission.extractDataResponseList &&
+                 selectedSubmission.extractDataResponseList.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Dữ liệu trích xuất
+                    </p>
+                    <div className="space-y-2">
+                      {selectedSubmission.extractDataResponseList.map((data) => (
+                        <div key={data.extract_data_id} className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl border border-violet-100 dark:border-violet-900">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-violet-700 dark:text-violet-400">
+                              {data.extract_data_name}
+                            </span>
+                            <span className="text-sm font-semibold text-violet-900 dark:text-violet-100 bg-white dark:bg-violet-900/50 px-3 py-1 rounded-lg font-mono">
+                              {data.extract_Data_value}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resubmit Button - Only show if status is Reject */}
+                {selectedSubmission.submissionStatus === "Reject" && (
                   <Button
-                    className="w-full bg-orange-600 hover:bg-orange-700"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 cursor-pointer transition-colors duration-200"
                     onClick={() => {
                       setIsResubmitModalOpen(true);
                       setResubmitNote("");
@@ -1195,22 +1252,22 @@ export default function StudentDocumentsPage() {
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Nộp lại tài liệu
                   </Button>
-                </div>
-              )}
+                )}
 
-              {/* Submission ID */}
-              <div className="pt-4 border-t">
-                <p className="text-xs text-muted-foreground">
-                  ID Submission: #{selectedSubmission.submissionId}
+                {/* Submission ID */}
+                <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
+                  ID: #{selectedSubmission.submissionId}
                 </p>
               </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Không thể tải thông tin chi tiết</p>
-            </div>
-          )}
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400">Không thể tải thông tin chi tiết</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

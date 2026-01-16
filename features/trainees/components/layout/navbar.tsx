@@ -1,10 +1,26 @@
 "use client";
 
-import Link from "next/link";
-import { useStudentData } from "../../hooks/use-student-data";
-import { useAuthInfo } from "@/hooks/use-auth-info";
+import { useTheme } from "next-themes";
+import {
+  Bell,
+  Moon,
+  Sun,
+  Search,
+  GraduationCap,
+  Settings,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,108 +29,121 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MobileSidebar } from "./mobile-sidebar";
-import { Menu, User, Settings, LogOut, GraduationCap } from "lucide-react";
 
-export const Navbar = () => {
-  const { student } = useStudentData();
-  const { logout } = useAuthInfo();
-
-  const getInitials = (name: string) => {
-    if (!name) return "ST";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+export function Navbar() {
+  const { theme, setTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-4 lg:px-8">
-        {/* Left Side - Logo & Mobile Menu */}
-        <div className="flex items-center gap-4">
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <MobileSidebar />
-            </SheetContent>
-          </Sheet>
+    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      {/* Left Section */}
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="-ml-1 cursor-pointer" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-sm font-medium">
+                Trang Học Viên
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-          {/* Logo */}
-          <Link href="/students/dashboard" className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-2">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground">Trang học viên</p>
-            </div>
-          </Link>
+      {/* Center Section - Search Bar */}
+      <div className="hidden md:flex flex-1 justify-center max-w-xl mx-4">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Tìm kiếm..."
+            className="pl-10 h-9 bg-muted/50"
+          />
         </div>
+      </div>
 
-        {/* Right Side - Profile */}
-        <div className="flex items-center gap-3">
-          {/* User Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10 border-2 border-primary/10">
-                  <AvatarImage
-                    src={student?.avatar}
-                    alt={student?.fullName || "Student"}
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {getInitials(student?.fullName || "")}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {student?.fullName}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {student?.email}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground font-mono mt-1">
-                    {student?.studentCode}
-                  </p>
+      {/* Right Section */}
+      <div className="flex items-center gap-1">
+        {/* Search button - Mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden cursor-pointer h-8 w-8"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="cursor-pointer h-8 w-8"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Chuyển đổi theme</span>
+        </Button>
+
+        {/* Notifications */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="cursor-pointer h-8 w-8 relative"
+            >
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-destructive">
+                3
+              </Badge>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-[300px] overflow-y-auto">
+              <DropdownMenuItem className="cursor-pointer p-3">
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-medium">Tài liệu mới được cập nhật</p>
+                    <p className="text-xs text-muted-foreground">2 phút trước</p>
+                  </div>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/students/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+              <DropdownMenuItem className="cursor-pointer p-3">
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/10 shrink-0">
+                    <Bell className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-medium">Lịch học đã được cập nhật</p>
+                    <p className="text-xs text-muted-foreground">1 giờ trước</p>
+                  </div>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-red-600 focus:text-red-600 cursor-pointer"
-                onClick={logout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+              <DropdownMenuItem className="cursor-pointer p-3">
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/10 shrink-0">
+                    <Settings className="h-4 w-4 text-orange-500" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-medium">Cập nhật hệ thống</p>
+                    <p className="text-xs text-muted-foreground">Hôm qua</p>
+                  </div>
+                </div>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer justify-center text-primary font-medium">
+              Xem tất cả thông báo
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
-};
-
+}
