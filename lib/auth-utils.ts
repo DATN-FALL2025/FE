@@ -125,7 +125,7 @@ export function getRoleRedirectPath(role?: string | null): string {
   const roleRedirectMap: Record<string, string> = {
     'ADMIN': '/admin/dashboard',
     'ACADEMIC_STAFF_AFFAIR': '/academic-staff/dashboard',
-    'HEAD_OF_DEPARTMENT': '/head/dashboard',
+    'HEAD_OF_DEPARTMENT': '/head/matrix',
     'TRAINING_DIRECTOR': '/training-director/dashboard',
     'TRAINEE': '/trainees/dashboard',
   };

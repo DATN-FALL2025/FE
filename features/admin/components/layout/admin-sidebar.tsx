@@ -20,11 +20,6 @@ import { translateRole } from "@/lib/auth-utils";
 
 const adminNavigation = [
   {
-    name: "Trang chủ",
-    href: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     name: "Quản lý người dùng",
     href: "/admin/users",
     icon: Users,

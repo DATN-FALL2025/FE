@@ -43,11 +43,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   {
-    title: "Trang chủ",
-    href: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     title: "Quản lý người dùng",
     href: "/admin/users",
     icon: Users,
@@ -101,7 +96,7 @@ export function AppSidebar() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               asChild
             >
-              <Link href="/admin/dashboard">
+              <Link href="/admin/users">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Shield className="size-4" />
                 </div>
@@ -173,8 +168,8 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={avatar}
-                      alt={displayName}
+                      src={avatar ?? undefined}
+                      alt={displayName ?? undefined}
                     />
                     <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
                       {getInitials(displayName || "")}

@@ -56,7 +56,7 @@ export const HeadNavbar = () => {
           </Sheet>
 
           {/* Logo */}
-          <Link href="/head/dashboard" className="flex items-center gap-2">
+          <Link href="/head/matrix" className="flex items-center gap-2">
             <div className="bg-primary rounded-lg p-2">
               <Building2 className="w-6 h-6 text-primary-foreground" />
             </div>

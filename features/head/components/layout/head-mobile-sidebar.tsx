@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  LayoutDashboard,
   FileCheck,
   Users,
   BarChart3,
@@ -17,11 +16,6 @@ import {
 } from "lucide-react";
 
 const headNavigation = [
-  {
-    name: "Trang chủ",
-    href: "/head/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     name: "Ma trận tài liệu",
     href: "/head/matrix",

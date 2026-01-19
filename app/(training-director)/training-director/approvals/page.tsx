@@ -53,8 +53,8 @@ function getMatrixStatusBadge(matrixStatus: string | null, overallStatus: string
   }
 
   const statusMap: Record<string, { label: string; className: string }> = {
-    'Drafted': { label: "Đã gửi - Chờ duyệt", className: "bg-blue-500" },
-    'Undrafted': { label: "Phòng Khải Thác Bay", className: "bg-gray-500" },
+    'Drafted': { label: "Đã gửi", className: "bg-blue-500" },
+    'Undrafted': { label: "Chưa gửi", className: "bg-gray-500" },
     'Pending': { label: "Đang xử lý", className: "bg-yellow-500" },
     'InProgress': { label: "Đang xử lý", className: "bg-yellow-500" },
     'Complete': { label: "Hoàn thành", className: "bg-green-600" },
@@ -415,10 +415,51 @@ export default function TrainingDirectorApprovalsPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Status Badge - Based on matrixStatusEnum and overallStatus */}
-                  <Badge className={`${getMatrixStatusBadge(matrixStatus, overallStatus).className} text-white`}>
-                    {getMatrixStatusBadge(matrixStatus, overallStatus).label}
-                  </Badge>
+                  {/* Matrix Status Badge - matrixStatusEnum */}
+                  {matrixStatus && (
+                    <Badge className={`${(() => {
+                      const normalizedStatus = matrixStatus.toLowerCase();
+                      const statusMap: Record<string, { label: string; className: string }> = {
+                        'drafted': { label: "Đã gửi", className: "bg-blue-500" },
+                        'undrafted': { label: "Chưa gửi", className: "bg-gray-500" },
+                        'pending': { label: "Đang xử lý", className: "bg-yellow-500" },
+                        'inprogress': { label: "Đang xử lý", className: "bg-yellow-500" },
+                        'complete': { label: "Hoàn thành", className: "bg-green-600" },
+                      };
+                      return statusMap[normalizedStatus]?.className || "bg-gray-500";
+                    })()} text-white`}>
+                      {(() => {
+                        const normalizedStatus = matrixStatus.toLowerCase();
+                        const statusMap: Record<string, string> = {
+                          'drafted': "Đã gửi",
+                          'undrafted': "Chưa gửi",
+                          'pending': "Đang xử lý",
+                          'inprogress': "Đang xử lý",
+                          'complete': "Hoàn thành",
+                        };
+                        return statusMap[normalizedStatus] || matrixStatus;
+                      })()}
+                    </Badge>
+                  )}
+                  
+                  {/* Overall Status Badge - statusEnum */}
+                  {overallStatus && (
+                    <Badge className={`${(() => {
+                      if (overallStatus === 'Approve' || overallStatus === 'Approved') {
+                        return "bg-green-500";
+                      }
+                      if (overallStatus === 'Reject' || overallStatus === 'Rejected') {
+                        return "bg-red-500";
+                      }
+                      return "bg-yellow-500";
+                    })()} text-white`}>
+                      {overallStatus === 'Approve' || overallStatus === 'Approved' 
+                        ? "Đã phê duyệt"
+                        : overallStatus === 'Reject' || overallStatus === 'Rejected'
+                        ? "Đã từ chối"
+                        : "Chờ xử lý"}
+                    </Badge>
+                  )}
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2">

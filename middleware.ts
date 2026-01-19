@@ -63,7 +63,14 @@ export function middleware(request: NextRequest) {
     console.log("🚫 Access denied. Role:", userRole, "Path:", pathname);
     // User trying to access unauthorized route
     // Redirect to their appropriate dashboard
-    const redirectPath = allowedPaths[0] + "/dashboard";
+    let redirectPath;
+    if (userRole === "ADMIN") {
+      redirectPath = allowedPaths[0] + "/users";
+    } else if (userRole === "HEAD_OF_DEPARTMENT") {
+      redirectPath = allowedPaths[0] + "/matrix";
+    } else {
+      redirectPath = allowedPaths[0] + "/dashboard";
+    }
     console.log("↪️ Redirecting to:", redirectPath);
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }

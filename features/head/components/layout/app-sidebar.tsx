@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   FileCheck,
   ClipboardList,
   ChevronUp,
@@ -40,11 +39,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
-  {
-    title: "Trang chủ",
-    href: "/head/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     title: "Ma trận tài liệu",
     href: "/head/matrix",
@@ -85,7 +79,7 @@ export function AppSidebar() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               asChild
             >
-              <Link href="/head/dashboard">
+              <Link href="/head/matrix">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Building2 className="size-4" />
                 </div>
@@ -157,8 +151,8 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={avatar}
-                      alt={displayName}
+                      src={avatar ?? undefined}
+                      alt={displayName ?? undefined}
                     />
                     <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
                       {getInitials(displayName || "")}

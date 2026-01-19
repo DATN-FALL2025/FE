@@ -162,8 +162,8 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={avatar}
-                      alt={displayName}
+                      src={avatar ?? undefined}
+                      alt={displayName ?? undefined}
                     />
                     <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
                       {getInitials(displayName || "")}

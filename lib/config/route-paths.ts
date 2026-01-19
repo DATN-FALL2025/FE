@@ -27,7 +27,6 @@ export const TRAINING_DIRECTOR_ROUTES = {
  * Head of Department Routes
  */
 export const HEAD_OF_DEPARTMENT_ROUTES = {
-  DASHBOARD: '/head/dashboard',
   MATRIX: '/head/matrix',
 } as const;
 
@@ -199,13 +198,6 @@ export const ROUTE_METADATA: Record<string, RouteMetadata> = {
   },
 
   // Head of Department routes
-  [HEAD_OF_DEPARTMENT_ROUTES.DASHBOARD]: {
-    path: HEAD_OF_DEPARTMENT_ROUTES.DASHBOARD,
-    title: 'Head of Department Dashboard',
-    description: 'Department overview',
-    requiresAuth: true,
-    allowedRoles: ['HEAD_OF_DEPARTMENT'],
-  },
   [HEAD_OF_DEPARTMENT_ROUTES.MATRIX]: {
     path: HEAD_OF_DEPARTMENT_ROUTES.MATRIX,
     title: 'Document Matrix',

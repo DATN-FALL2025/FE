@@ -60,7 +60,8 @@ interface SubmissionDetail {
   submissionStatus: string;
   submission_name: string;
   takeNote: string;
-  fileDownloadUrl: string;
+  report?: string;
+  fileDownloadUrl: string | string[];
   uploadTime: string;
   documentRuleValueCellResponseList?: DocumentRuleValue[];
   extractDataResponseList?: ExtractedData[];
@@ -93,7 +94,7 @@ export default function StudentDocumentsPage() {
   const [documents, setDocuments] = useState<SubmittedDocument[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState<Set<number>>(new Set());
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: number]: string }>({});
-  const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: { name: string; file: File } }>({});
+  const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: { name: string; files: File[] } }>({});
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
   
   // Modal state for viewing submission detail
@@ -225,22 +226,42 @@ export default function StudentDocumentsPage() {
   }, []);
 
   const handleFileSelect = (docId: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log("📁 File selected:", { docId, fileName: file.name, fileSize: file.size });
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newFileArray = Array.from(files);
+      console.log("📁 New files selected:", { docId, fileCount: newFileArray.length, fileNames: newFileArray.map(f => f.name) });
       
-      // Save selected file object and name
-      setSelectedFiles(prev => ({
-        ...prev,
-        [docId]: { name: file.name, file: file }
-      }));
+      // Add to existing files instead of replacing
+      setSelectedFiles(prev => {
+        const existing = prev[docId];
+        const existingFiles = existing?.files || [];
+        const combinedFiles = [...existingFiles, ...newFileArray];
+        
+        console.log("📁 Combined files:", { 
+          existingCount: existingFiles.length, 
+          newCount: newFileArray.length, 
+          totalCount: combinedFiles.length 
+        });
+        
+        return {
+          ...prev,
+          [docId]: { 
+            name: combinedFiles.length === 1 ? combinedFiles[0].name : `${combinedFiles.length} files`, 
+            files: combinedFiles 
+          }
+        };
+      });
       
       // Show toast notification
       const document = documents.find(d => d.documentId === docId);
-      toast.info(`Đã chọn file: ${file.name}`, {
-        description: `Nhấn "Gửi file" để tải lên tài liệu ${document?.requiredDocumentName || ''}`,
+      const existingCount = selectedFiles[docId]?.files.length || 0;
+      toast.info(`Đã thêm ${newFileArray.length} file`, {
+        description: `Tổng cộng ${existingCount + newFileArray.length} file cho ${document?.requiredDocumentName || ''}`,
         duration: 3000,
       });
+      
+      // Clear the input so the same file can be selected again if needed
+      event.target.value = '';
     }
   };
 
@@ -248,16 +269,16 @@ export default function StudentDocumentsPage() {
     console.log("🚀 handleFileUpload called for docId:", docId);
     console.log("📁 Selected files state:", selectedFiles);
     
-    // Get file from selectedFiles state instead of fileInput
+    // Get files from selectedFiles state instead of fileInput
     const selectedFile = selectedFiles[docId];
-    if (!selectedFile) {
-      console.error("❌ No file selected for docId:", docId);
+    if (!selectedFile || !selectedFile.files || selectedFile.files.length === 0) {
+      console.error("❌ No files selected for docId:", docId);
       toast.error("Vui lòng chọn file");
       return;
     }
 
-    const file = selectedFile.file;
-    console.log("📄 File to upload:", { name: file.name, size: file.size, type: file.type });
+    const files = selectedFile.files;
+    console.log("📄 Files to upload:", files.map(f => ({ name: f.name, size: f.size, type: f.type })));
 
     if (!applicationDetail?.traineeApplicationId) {
       console.error("❌ No traineeApplicationId");
@@ -286,8 +307,8 @@ export default function StudentDocumentsPage() {
     // Show loading toast
     const loadingToast = toast.loading(
       isResubmit 
-        ? `Đang nộp lại "${document.requiredDocumentName}"...`
-        : `Đang tải lên "${document.requiredDocumentName}"...`
+        ? `Đang nộp lại "${document.requiredDocumentName}" (${files.length} file)...`
+        : `Đang tải lên "${document.requiredDocumentName}" (${files.length} file)...`
     );
 
     try {
@@ -299,7 +320,7 @@ export default function StudentDocumentsPage() {
         documentID: docId,
         traineeApplicationId: applicationDetail.traineeApplicationId,
         submissionName: document.requiredDocumentName,
-        fileName: file.name,
+        fileCount: files.length,
       });
 
       const result: any = await createTraineeSubmission({
@@ -307,7 +328,7 @@ export default function StudentDocumentsPage() {
         traineeApplicationId: applicationDetail.traineeApplicationId,
         submissionName: document.requiredDocumentName,
         takeNote: "Submitted via web portal",
-        submissionDocumentFile: file,
+        submissionDocumentFile: files, // Send array of files
         token,
       });
 
@@ -325,18 +346,18 @@ export default function StudentDocumentsPage() {
             : `✅ Nộp tài liệu "${document.requiredDocumentName}" thành công!`
           ), 
           {
-            description: `File "${file.name}" đã được tải lên`,
+            description: `${files.length} file đã được tải lên`,
             duration: 4000,
           }
         );
 
-        // Save uploaded file name
+        // Save uploaded file names
         setUploadedFiles(prev => ({
           ...prev,
-          [docId]: file.name
+          [docId]: files.length === 1 ? files[0].name : `${files.length} files`
         }));
 
-        // Clear selected file
+        // Clear selected files
         setSelectedFiles(prev => {
           const newFiles = { ...prev };
           delete newFiles[docId];
@@ -512,6 +533,7 @@ export default function StudentDocumentsPage() {
   const getSubmissionStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { label: string; className: string; icon: React.ElementType } } = {
       "Pending": { label: "Chờ duyệt", className: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400", icon: Clock },
+      "InProgress": { label: "Đang xử lý", className: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400", icon: Clock },
       "Approve": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
       "Approved": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
       "Reject": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
@@ -526,13 +548,14 @@ export default function StudentDocumentsPage() {
         <Icon className="w-3 h-3 mr-1.5" />
         {statusInfo.label}
       </Badge>
-    );
+    );  
   };
 
   const getApplicationStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { label: string; className: string; icon: React.ElementType } } = {
       "Pending": { label: "Đang chờ xử lý", className: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400", icon: Clock },
       "Submitted": { label: "Đã nộp", className: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400", icon: CheckCircle2 },
+      "InProgress": { label: "Đang xử lý", className: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400", icon: Clock },
       "Approve": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
       "Approved": { label: "Đã duyệt", className: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },
       "Reject": { label: "Từ chối", className: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400", icon: XCircle },
@@ -781,59 +804,99 @@ export default function StudentDocumentsPage() {
                           <span className="text-red-500 ml-1">*</span>
                         </p>
                       </div>
-                      <input
-                        ref={(el) => { fileInputRefs.current[doc.documentId] = el; }}
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => handleFileSelect(doc.documentId, e)}
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      />
-                      {/* Only show upload button if not submitted OR if rejected */}
-                      {(doc.apply_or_not !== "Applied" && doc.apply_or_not !== "Đã nộp") ||
-                       (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
-                        <Button
-                          size="sm"
-                          className={`shrink-0 rounded-lg cursor-pointer transition-all duration-200 ${
-                            selectedFiles[doc.documentId]
-                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                              : (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected")
-                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
-                          onClick={() => {
-                            if (selectedFiles[doc.documentId]) {
-                              handleFileUpload(doc.documentId);
-                            } else {
-                              fileInputRefs.current[doc.documentId]?.click();
-                            }
-                          }}
-                          disabled={uploadingDocs.has(doc.documentId)}
-                        >
-                          {uploadingDocs.has(doc.documentId) ? (
-                            <span className="flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              Đang tải...
-                            </span>
-                          ) : selectedFiles[doc.documentId] ? (
-                            <>
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={(el) => { fileInputRefs.current[doc.documentId] = el; }}
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => handleFileSelect(doc.documentId, e)}
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          multiple
+                        />
+                        {/* Always show upload button to allow resubmit */}
+                        {true ? (
+                          <>
+                            {/* Add File Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="shrink-0 rounded-lg cursor-pointer transition-all duration-200 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                              onClick={() => {
+                                fileInputRefs.current[doc.documentId]?.click();
+                              }}
+                              disabled={uploadingDocs.has(doc.documentId)}
+                            >
                               <Upload className="w-4 h-4 mr-2" />
-                              Gửi file
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 mr-2" />
-                              {(doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? "Nộp lại" : "Tải lên"}
-                            </>
-                          )}
-                        </Button>
-                      ) : null}
+                              Thêm file
+                            </Button>
+                            
+                            {/* Submit Button - Only show if files are selected */}
+                            {selectedFiles[doc.documentId] && (
+                              <Button
+                                size="sm"
+                                className="shrink-0 rounded-lg cursor-pointer transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => handleFileUpload(doc.documentId)}
+                                disabled={uploadingDocs.has(doc.documentId)}
+                              >
+                                {uploadingDocs.has(doc.documentId) ? (
+                                  <span className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Đang tải...
+                                  </span>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Gửi file
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                     
-                    {/* Show selected file name */}
+                    {/* Show selected file names */}
                     {selectedFiles[doc.documentId] && (
-                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate flex-1">{selectedFiles[doc.documentId].name}</span>
+                      <div className="mb-3 space-y-2">
+                        {selectedFiles[doc.documentId].files.map((file, index) => (
+                          <div key={index} className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate flex-1">{file.name}</span>
+                            <span className="text-xs text-blue-600 dark:text-blue-400 shrink-0">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </span>
+                            <button
+                              onClick={() => {
+                                // Remove file from list
+                                setSelectedFiles(prev => {
+                                  const current = prev[doc.documentId];
+                                  if (!current) return prev;
+                                  
+                                  const newFiles = current.files.filter((_, i) => i !== index);
+                                  if (newFiles.length === 0) {
+                                    // Remove entire entry if no files left
+                                    const newState = { ...prev };
+                                    delete newState[doc.documentId];
+                                    return newState;
+                                  }
+                                  
+                                  return {
+                                    ...prev,
+                                    [doc.documentId]: {
+                                      name: newFiles.length === 1 ? newFiles[0].name : `${newFiles.length} files`,
+                                      files: newFiles
+                                    }
+                                  };
+                                });
+                              }}
+                              className="shrink-0 p-1 hover:bg-red-100 dark:hover:bg-red-950/50 rounded transition-colors"
+                              title="Xóa file"
+                            >
+                              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                     
@@ -849,6 +912,12 @@ export default function StudentDocumentsPage() {
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400">
                                 <Clock className="w-3 h-3" />
                                 Chờ duyệt
+                              </span>
+                            )}
+                            {doc.submissionStatus === "InProgress" && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400">
+                                <Clock className="w-3 h-3" />
+                                Đang xử lý
                               </span>
                             )}
                             {(doc.submissionStatus === "Approve" || doc.submissionStatus === "Approved") && (
@@ -1163,8 +1232,37 @@ export default function StudentDocumentsPage() {
                   </div>
                 </div>
 
-                {/* Take Note */}
-                {selectedSubmission.takeNote && (
+                {/* Take Note or Report */}
+                {selectedSubmission.submissionStatus === "InProgress" && selectedSubmission.report ? (
+                  // Show report when InProgress
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Báo cáo
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      {selectedSubmission.report === "WAITING_FOR_AI_EXTRACTION" 
+                        ? "Đang chờ AI trích xuất dữ liệu..." 
+                        : selectedSubmission.report}
+                    </p>
+                  </div>
+                ) : selectedSubmission.report && selectedSubmission.submissionStatus !== "InProgress" ? (
+                  // Show report for other statuses if exists
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Báo cáo
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      {selectedSubmission.report === "WAITING_FOR_AI_EXTRACTION" 
+                        ? "Đang chờ AI trích xuất dữ liệu..." 
+                        : selectedSubmission.report}
+                    </p>
+                  </div>
+                ) : selectedSubmission.takeNote && 
+                    selectedSubmission.takeNote !== "Submitted via web portal" && 
+                    selectedSubmission.submissionStatus !== "InProgress" ? (
+                  // Show takeNote when not InProgress and not default message
                   <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900">
                     <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" />
@@ -1172,43 +1270,59 @@ export default function StudentDocumentsPage() {
                     </p>
                     <p className="text-sm text-slate-700 dark:text-slate-300">{selectedSubmission.takeNote}</p>
                   </div>
-                )}
+                ) : null}
 
                 {/* File Download */}
                 {selectedSubmission.fileDownloadUrl && (
-                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Download className="w-4 h-4" />
-                      File đã nộp
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-10 cursor-pointer transition-colors duration-200"
-                        onClick={() => window.open(selectedSubmission.fileDownloadUrl, '_blank')}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Tải xuống
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="rounded-lg h-10 cursor-pointer transition-colors duration-200"
-                        onClick={() => {
-                          const fileUrl = selectedSubmission.fileDownloadUrl;
-                          const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
-                          const isPdf = /\.pdf$/i.test(fileUrl);
-
-                          if (isImage || isPdf) {
-                            setPreviewImageUrl(fileUrl);
-                            setIsImagePreviewOpen(true);
-                          } else {
-                            window.open(fileUrl, '_blank');
-                          }
-                        }}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Xem file
-                      </Button>
-                    </div>
+                  <div className="space-y-3">
+                    {(Array.isArray(selectedSubmission.fileDownloadUrl) 
+                      ? selectedSubmission.fileDownloadUrl 
+                      : [selectedSubmission.fileDownloadUrl]
+                    ).map((fileUrl, index) => {
+                      const isPdf = /\.pdf$/i.test(fileUrl);
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileUrl);
+                      
+                      return (
+                        <div key={index} className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                              <Eye className="w-4 h-4" />
+                              File {(Array.isArray(selectedSubmission.fileDownloadUrl) && selectedSubmission.fileDownloadUrl.length > 1) ? `#${index + 1}` : 'đã nộp'}
+                            </p>
+                          </div>
+                          
+                          {isPdf ? (
+                            // Embed PDF viewer
+                            <div className="w-full h-[600px] rounded-lg overflow-hidden border border-blue-200 dark:border-blue-800">
+                              <iframe
+                                src={fileUrl + '#toolbar=0&navpanes=0&scrollbar=0'}
+                                className="w-full h-full"
+                                title={`PDF Viewer ${index + 1}`}
+                              />
+                            </div>
+                          ) : isImage ? (
+                            // Show image
+                            <div className="w-full rounded-lg overflow-hidden border border-blue-200 dark:border-blue-800">
+                              <img
+                                src={fileUrl}
+                                alt={`File ${index + 1}`}
+                                className="w-full h-auto object-contain max-h-[600px]"
+                              />
+                            </div>
+                          ) : (
+                            // Other file types - show link
+                            <Button
+                              variant="outline"
+                              className="w-full rounded-lg h-10 cursor-pointer transition-colors duration-200"
+                              onClick={() => window.open(fileUrl, '_blank')}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Xem file
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

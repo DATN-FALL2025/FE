@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  LayoutDashboard,
   FileCheck,
   Users,
   BarChart3,
@@ -21,11 +20,6 @@ import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
 
 const headNavigation = [
-  {
-    name: "Trang chủ",
-    href: "/head/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     name: "Ma trận tài liệu",
     href: "/head/matrix",

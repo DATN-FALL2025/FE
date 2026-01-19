@@ -46,11 +46,6 @@ const navItems = [
     icon: FileCheck,
   },
   {
-    title: "Quản lý đợt duyệt",
-    href: "/academic-staff/batch-management",
-    icon: Calendar,
-  },
-  {
     title: "Xem yêu cầu hồ sơ",
     href: "/academic-staff/document-requirements",
     icon: ClipboardList,
@@ -126,22 +121,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel>Hỗ trợ</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Trợ giúp">
-                  <Link href="#">
-                    <HelpCircle />
-                    <span>Trợ giúp</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       {/* Footer */}
@@ -156,8 +135,8 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={avatar}
-                      alt={displayName}
+                      src={avatar ?? undefined}
+                      alt={displayName ?? undefined}
                     />
                     <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
                       {getInitials(displayName || "")}
