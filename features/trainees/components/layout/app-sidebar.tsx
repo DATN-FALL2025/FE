@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   HelpCircle,
+  FileCheck,
 } from "lucide-react";
 
 import { useStudentData } from "../../hooks/use-student-data";
@@ -48,6 +49,11 @@ const navItems = [
     title: "Tài liệu",
     href: "/trainees/documents",
     icon: FileText,
+  },
+  {
+    title: "Yêu cầu tài liệu",
+    href: "/trainees/document-requirements",
+    icon: FileCheck,
   },
 ];
 

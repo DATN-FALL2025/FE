@@ -45,7 +45,7 @@ interface Batch {
   status: boolean;
 }
 
-export default function TrainingDirectorBatchManagementPage() {
+export default function BatchManagementPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -63,7 +63,7 @@ export default function TrainingDirectorBatchManagementPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/batch`);
       const result = await response.json();
-      
+
       if (response.ok) {
         setBatches(result.data || []);
       } else {
@@ -393,7 +393,10 @@ export default function TrainingDirectorBatchManagementPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>

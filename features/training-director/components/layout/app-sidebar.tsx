@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   FileText,
   Shield,
   ClipboardList,
@@ -13,6 +12,7 @@ import {
   Settings,
   HelpCircle,
   Target,
+  Calendar,
 } from "lucide-react";
 
 import { useAuthInfo } from "@/hooks/use-auth-info";
@@ -42,11 +42,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   {
-    title: "Trang chủ",
-    href: "/training-director/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     title: "Ma trận tài liệu",
     href: "/training-director/matrix",
     icon: FileText,
@@ -55,6 +50,11 @@ const navItems = [
     title: "Duyệt Ma trận",
     href: "/training-director/approvals",
     icon: Shield,
+  },
+  {
+    title: "Quản lý đợt",
+    href: "/training-director/batch-management",
+    icon: Calendar,
   },
   {
     title: "Xem quy tắc",
@@ -90,7 +90,7 @@ export function AppSidebar() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               asChild
             >
-              <Link href="/training-director/dashboard">
+              <Link href="/training-director/matrix">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Target className="size-4" />
                 </div>

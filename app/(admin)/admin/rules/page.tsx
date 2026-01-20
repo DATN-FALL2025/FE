@@ -7,6 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, FileCheck } from "lucide-react";
 import { toast } from "@/lib/toast-compat";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -62,6 +70,10 @@ export default function RulesPage() {
     documentRuleDescription: "",
     documentId: "",
   });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Load rules and documents on mount
   useEffect(() => {
@@ -297,6 +309,12 @@ export default function RulesPage() {
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(rules.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRules = rules.slice(startIndex, endIndex);
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
@@ -329,7 +347,7 @@ export default function RulesPage() {
                   </td>
                 </tr>
               ) : (
-                rules.map((rule) => (
+                currentRules.map((rule) => (
                   <tr key={rule.id || rule.documentRuleId} className="hover:bg-muted/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -380,6 +398,39 @@ export default function RulesPage() {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {rules.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

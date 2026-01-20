@@ -126,7 +126,7 @@ export function getRoleRedirectPath(role?: string | null): string {
     'ADMIN': '/admin/dashboard',
     'ACADEMIC_STAFF_AFFAIR': '/academic-staff/dashboard',
     'HEAD_OF_DEPARTMENT': '/head/matrix',
-    'TRAINING_DIRECTOR': '/training-director/dashboard',
+    'TRAINING_DIRECTOR': '/training-director/matrix',
     'TRAINEE': '/trainees/dashboard',
   };
 

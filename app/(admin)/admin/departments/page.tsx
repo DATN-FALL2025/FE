@@ -7,6 +7,14 @@ import { Plus, Eye, Edit, Trash2, Loader2, AlertCircle, Building2, Upload, X } f
 import { toast } from "sonner";
 import Image from "next/image";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -67,6 +75,10 @@ export default function DepartmentsPage() {
 
   // Prevent double-fetching in React StrictMode
   const hasLoadedData = useRef(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (hasLoadedData.current) {
@@ -295,6 +307,12 @@ export default function DepartmentsPage() {
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(departments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentDepartments = departments.slice(startIndex, endIndex);
+
   return (
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -337,7 +355,7 @@ export default function DepartmentsPage() {
                     </td>
                   </tr>
                 ) : (
-                  departments.map((dept) => (
+                  currentDepartments.map((dept) => (
                     <tr key={dept.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
@@ -401,6 +419,39 @@ export default function DepartmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {departments.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

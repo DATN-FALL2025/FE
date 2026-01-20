@@ -34,6 +34,7 @@ import { getAllDepartments } from "@/lib/actions/department";
 import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
 import MatrixTimeDisplay from "@/components/shared/matrix-time-display";
+import MatrixCellHoverPopup from "@/components/shared/matrix-cell-hover-popup";
 
 // Helper function to get status badge for matrixStatusEnum
 function getMatrixStatusBadge(matrixStatus: string | null, overallStatus: string | null) {
@@ -567,13 +568,15 @@ export default function TrainingDirectorApprovalsPage() {
                                 return (
                                   <td key={docId} className="p-4 text-center border-l">
                                     {doc ? (
-                                      <div className="flex items-center justify-center gap-2">
-                                        {doc.required ? (
-                                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                        ) : (
-                                          <div className="h-5 w-5 rounded border-2 border-muted-foreground/30" />
-                                        )}
-                                      </div>
+                                      <MatrixCellHoverPopup matrixId={doc.matrixId} disabled={!doc.required}>
+                                        <div className="flex items-center justify-center gap-2">
+                                          {doc.required ? (
+                                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                          ) : (
+                                            <div className="h-5 w-5 rounded border-2 border-muted-foreground/30" />
+                                          )}
+                                        </div>
+                                      </MatrixCellHoverPopup>
                                     ) : (
                                       <div className="text-muted-foreground">—</div>
                                     )}

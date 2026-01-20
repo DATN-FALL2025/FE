@@ -73,7 +73,7 @@ html body[data-scroll-locked] {
     --chart-5: 24.6 95% 53.1%;
 
     /* Sidebar colors */
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 10 10% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -85,7 +85,7 @@ html body[data-scroll-locked] {
 
   .dark {
     /* Dark blue-gray background */
-    --background: 222.2 47.4% 11.2%;
+    --background: 222 25% 10%;
     --foreground: 210 40% 98%;
 
     /* Slightly lighter cards for depth */
@@ -122,13 +122,13 @@ html body[data-scroll-locked] {
     --chart-5: 24.6 95% 53.1%;
 
     /* Sidebar colors - dark mode */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-background: 222 18% 13%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 220 20% 18%;
+    --sidebar-primary-foreground: 210 40% 96%;
+    --sidebar-accent: 220 16% 16%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 220 15% 20%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 

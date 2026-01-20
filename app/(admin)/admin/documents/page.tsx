@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Trash2, Calendar, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "@/lib/toast-compat";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -62,6 +70,10 @@ export default function DocumentsManagementPage() {
 
   // Prevent double-fetching in React StrictMode
   const hasLoadedData = useRef(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Load documents on mount
   useEffect(() => {
@@ -281,6 +293,12 @@ export default function DocumentsManagementPage() {
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(documents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentDocuments = documents.slice(startIndex, endIndex);
+
   return (
     <div className="space-y-6 w-full">
       {/* Page Header */}
@@ -324,7 +342,7 @@ export default function DocumentsManagementPage() {
                     </td>
                   </tr>
                 ) : (
-                  documents.map((doc) => (
+                  currentDocuments.map((doc) => (
                     <tr key={doc.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="font-medium">{doc.documentName}</div>
@@ -373,6 +391,39 @@ export default function DocumentsManagementPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {documents.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

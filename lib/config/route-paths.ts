@@ -19,7 +19,6 @@ export const ADMIN_ROUTES = {
  * Training Director Routes
  */
 export const TRAINING_DIRECTOR_ROUTES = {
-  DASHBOARD: '/training-director/dashboard',
   MATRIX: '/training-director/matrix',
 } as const;
 
@@ -182,13 +181,6 @@ export const ROUTE_METADATA: Record<string, RouteMetadata> = {
   },
 
   // Training Director routes
-  [TRAINING_DIRECTOR_ROUTES.DASHBOARD]: {
-    path: TRAINING_DIRECTOR_ROUTES.DASHBOARD,
-    title: 'Training Director Dashboard',
-    description: 'Overview of training programs',
-    requiresAuth: true,
-    allowedRoles: ['TRAINING_DIRECTOR'],
-  },
   [TRAINING_DIRECTOR_ROUTES.MATRIX]: {
     path: TRAINING_DIRECTOR_ROUTES.MATRIX,
     title: 'Document Matrix',

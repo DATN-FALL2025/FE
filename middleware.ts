@@ -68,6 +68,8 @@ export function middleware(request: NextRequest) {
       redirectPath = allowedPaths[0] + "/users";
     } else if (userRole === "HEAD_OF_DEPARTMENT") {
       redirectPath = allowedPaths[0] + "/matrix";
+    } else if (userRole === "TRAINING_DIRECTOR") {
+      redirectPath = allowedPaths[0] + "/matrix";
     } else {
       redirectPath = allowedPaths[0] + "/dashboard";
     }

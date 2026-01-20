@@ -5,19 +5,19 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard,
+  FileText,
   Users,
   Target,
-  FileText,
   BarChart3,
   Shield,
   ClipboardList,
+  Calendar,
 } from "lucide-react";
 
 const trainingDirectorNavigation = [
-  { name: "Trang chủ", href: "/training-director/dashboard", icon: LayoutDashboard },
   { name: "Ma trận tài liệu", href: "/training-director/matrix", icon: FileText },
   { name: "Duyệt Ma trận", href: "/training-director/approvals", icon: Shield },
+  { name: "Quản lý đợt", href: "/training-director/batch-management", icon: Calendar },
   { name: "Xem quy tắc", href: "/training-director/view-rules", icon: ClipboardList },
 ];
 

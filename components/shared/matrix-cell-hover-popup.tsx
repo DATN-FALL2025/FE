@@ -46,9 +46,10 @@ export default function MatrixCellHoverPopup({
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [details, setDetails] = useState<MatrixDetail | null>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState({ x: 0, y: 0, showAbove: false });
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const fetchDetails = useCallback(async () => {
     if (!matrixId || disabled) return;
@@ -70,15 +71,23 @@ export default function MatrixCellHoverPopup({
     if (disabled) return;
     
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    
+    // Nếu không đủ chỗ bên dưới (< 300px) và có nhiều chỗ hơn bên trên, hiển thị lên trên
+    const showAbove = spaceBelow < 300 && spaceAbove > spaceBelow;
+    
     setPosition({
       x: rect.left + rect.width / 2,
-      y: rect.bottom + 8,
+      y: showAbove ? rect.top - 8 : rect.bottom + 8,
+      showAbove,
     });
 
     hoverTimeoutRef.current = setTimeout(() => {
       setIsVisible(true);
       fetchDetails();
-    }, 300); // 1.5 giây
+    }, 300);
   }, [disabled, fetchDetails]);
 
   const handleMouseLeave = useCallback(() => {
@@ -114,11 +123,12 @@ export default function MatrixCellHoverPopup({
 
       {isVisible && (
         <div
+          ref={popupRef}
           className="fixed z-50 min-w-[280px] max-w-[400px] p-4 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
-            transform: "translateX(-50%)",
+            transform: position.showAbove ? "translate(-50%, -100%)" : "translateX(-50%)",
           }}
         >
           {isLoading ? (

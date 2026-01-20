@@ -84,8 +84,8 @@ export function DocumentRequirementsPage() {
           getAllDepartments(),
         ]) as [any, any];
 
-        console.log("📋 Positions:", posRes);
-        console.log("🏢 Departments:", deptRes);
+        console.log(" Positions:", posRes);
+        console.log(" Departments:", deptRes);
 
         if (posRes.status === "200 OK" || posRes.status === "success") {
           setPositions(posRes.data || []);
@@ -182,11 +182,10 @@ export function DocumentRequirementsPage() {
       if (result.status === "200 OK" || result.status === "success") {
         console.log("✅ Raw data:", result.data);
         
-        let filteredData = (result.data || []).filter(
-          (item: MatrixData) => item.statusEnum === "Approve"
-        );
+        // Bỏ filter Approve - cho phép xem tất cả
+        let filteredData = result.data || [];
 
-        console.log("✅ After Approve filter:", filteredData);
+        console.log("✅ All data (no Approve filter):", filteredData);
 
         // Filter to show only the exact searched item
         if (filterType === "position" && positionId) {
@@ -206,13 +205,13 @@ export function DocumentRequirementsPage() {
         setCurrentPage(1); // Reset to first page on new search
         
         if (filteredData.length === 0) {
-          toast.info("Không tìm thấy yêu cầu hồ sơ đã duyệt nào");
+          toast.info("Không tìm thấy yêu cầu hồ sơ nào");
         }
       } else {
         console.error("❌ API Error:", result.message);
         // Handle "No data found" message
         if (result.message === "No data found for the selected filter.") {
-          toast.info("Không tìm thấy yêu cầu hồ sơ đã duyệt nào");
+          toast.info("Không tìm thấy yêu cầu hồ sơ nào");
         } else {
           toast.error(result.message || "Không thể tải dữ liệu");
         }
@@ -463,7 +462,7 @@ export function DocumentRequirementsPage() {
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">Không tìm thấy kết quả</h3>
               <p className="text-sm text-muted-foreground">
-                Không có yêu cầu hồ sơ đã duyệt nào cho {getFilterTypeLabel(selectedFilter.type).toLowerCase()} này
+                Không có yêu cầu hồ sơ nào cho {getFilterTypeLabel(selectedFilter.type).toLowerCase()} này
               </p>
             </div>
           </CardContent>

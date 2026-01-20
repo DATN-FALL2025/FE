@@ -8,6 +8,14 @@ import { Plus, Eye, Edit, Trash2, Upload, X, Loader2, AlertCircle } from "lucide
 import { getToken } from "@/lib/auth-utils";
 import { toast } from "@/lib/toast-compat";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -87,6 +95,10 @@ export default function PositionsPage() {
     positionImage: "",
     departmentID: "",
   });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch positions and departments on mount
   useEffect(() => {
@@ -387,6 +399,12 @@ export default function PositionsPage() {
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(positions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPositions = positions.slice(startIndex, endIndex);
+
   return (
     <div className="space-y-6 w-full">
       {/* Page Header */}
@@ -431,7 +449,7 @@ export default function PositionsPage() {
                     </td>
                   </tr>
                 ) : (
-                  positions.map((position) => (
+                  currentPositions.map((position) => (
                     <tr key={position.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
@@ -505,6 +523,39 @@ export default function PositionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {positions.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

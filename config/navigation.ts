@@ -107,11 +107,6 @@ export const navigationConfig: Record<string, RoleNavigation> = {
     title: "Giám Đốc Đào Tạo",
     items: [
       {
-        name: "Trang chủ",
-        href: "/training-director/dashboard",
-        icon: LayoutDashboard,
-      },
-      {
         name: "Phê duyệt",
         href: "/training-director/approvals",
         icon: CheckSquare,

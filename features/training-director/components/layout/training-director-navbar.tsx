@@ -55,7 +55,7 @@ export const TrainingDirectorNavbar = () => {
           </Sheet>
 
           {/* Logo */}
-          <Link href="/training-director/dashboard" className="flex items-center gap-2">
+          <Link href="/training-director/matrix" className="flex items-center gap-2">
             <div className="bg-primary rounded-lg p-2">
               <Target className="w-6 h-6 text-primary-foreground" />
             </div>

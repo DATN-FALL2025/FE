@@ -108,7 +108,7 @@ export default function StudentDocumentsPage() {
   
   // Resubmit modal
   const [isResubmitModalOpen, setIsResubmitModalOpen] = useState(false);
-  const [resubmitFile, setResubmitFile] = useState<File | null>(null);
+  const [resubmitFile, setResubmitFile] = useState<File[] | null>(null);
   const [resubmitNote, setResubmitNote] = useState("");
   const [isResubmitting, setIsResubmitting] = useState(false);
 
@@ -316,23 +316,46 @@ export default function StudentDocumentsPage() {
 
       const token = getClientToken();
       console.log("🔑 Token available:", token ? "Yes" : "No");
-      console.log("📤 Calling createTraineeSubmission with:", {
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
-        fileCount: files.length,
-      });
 
-      const result: any = await createTraineeSubmission({
-        documentID: docId,
-        traineeApplicationId: applicationDetail.traineeApplicationId,
-        submissionName: document.requiredDocumentName,
-        takeNote: "Submitted via web portal",
-        submissionDocumentFile: files, // Send array of files
-        token,
-      });
+      let result: any;
 
-      console.log("📥 createTraineeSubmission result:", result);
+      if (isResubmit && document.submissionId) {
+        // Use updateTraineeSubmission for resubmit
+        console.log("📤 Calling updateTraineeSubmission with:", {
+          submissionId: document.submissionId,
+          requiredDocumentName: document.requiredDocumentName,
+          fileCount: files.length,
+        });
+
+        result = await updateTraineeSubmission(
+          document.submissionId,
+          {
+            requiredDocumentName: document.requiredDocumentName,
+            newTakeNote: "Nộp lại tài liệu qua web portal",
+            newSubmissionDocumentFile: files, // Send array of files
+            token,
+          }
+        );
+      } else {
+        // Use createTraineeSubmission for first time submission
+        console.log("📤 Calling createTraineeSubmission with:", {
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          submissionName: document.requiredDocumentName,
+          fileCount: files.length,
+        });
+
+        result = await createTraineeSubmission({
+          documentID: docId,
+          traineeApplicationId: applicationDetail.traineeApplicationId,
+          submissionName: document.requiredDocumentName,
+          takeNote: "Submitted via web portal",
+          submissionDocumentFile: files, // Send array of files
+          token,
+        });
+      }
+
+      console.log("📥 Upload/Update result:", result);
 
       // Dismiss loading toast
       toast.dismiss(loadingToast);
@@ -813,8 +836,47 @@ export default function StudentDocumentsPage() {
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           multiple
                         />
-                        {/* Always show upload button to allow resubmit */}
-                        {true ? (
+                        
+                        {/* Show "Nộp lại" button if document is rejected */}
+                        {doc.submissionId !== null && (doc.submissionStatus === "Reject" || doc.submissionStatus === "Rejected") ? (
+                          <>
+                            {/* Resubmit Button */}
+                            <Button
+                              size="sm"
+                              className="shrink-0 rounded-lg cursor-pointer transition-all duration-200 bg-amber-600 hover:bg-amber-700 text-white"
+                              onClick={() => {
+                                fileInputRefs.current[doc.documentId]?.click();
+                              }}
+                              disabled={uploadingDocs.has(doc.documentId)}
+                            >
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Thêm file
+                            </Button>
+                            
+                            {/* Submit Button - Only show if files are selected */}
+                            {selectedFiles[doc.documentId] && (
+                              <Button
+                                size="sm"
+                                className="shrink-0 rounded-lg cursor-pointer transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => handleFileUpload(doc.documentId)}
+                                disabled={uploadingDocs.has(doc.documentId)}
+                              >
+                                {uploadingDocs.has(doc.documentId) ? (
+                                  <span className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Đang tải...
+                                  </span>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Gửi file
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </>
+                        ) : doc.submissionId === null ? (
+                          /* Show normal upload buttons if not submitted yet */
                           <>
                             {/* Add File Button */}
                             <Button
@@ -1065,19 +1127,28 @@ export default function StudentDocumentsPage() {
                   type="file"
                   className="w-full p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setResubmitFile(file);
-                      toast.info(`Đã chọn file: ${file.name}`);
+                    const files = e.target.files;
+                    if (files && files.length > 0) {
+                      const fileArray = Array.from(files);
+                      setResubmitFile(fileArray);
+                      toast.info(`Đã chọn ${fileArray.length} file`);
                     }
                   }}
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  multiple
                 />
               </div>
-              {resubmitFile && (
-                <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-100 dark:border-emerald-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">{resubmitFile.name}</span>
+              {resubmitFile && resubmitFile.length > 0 && (
+                <div className="space-y-2">
+                  {resubmitFile.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate flex-1">{file.name}</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1240,7 +1311,7 @@ export default function StudentDocumentsPage() {
                       <MessageSquare className="w-4 h-4" />
                       Báo cáo
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line">
                       {selectedSubmission.report === "WAITING_FOR_AI_EXTRACTION" 
                         ? "Đang chờ AI trích xuất dữ liệu..." 
                         : selectedSubmission.report}
@@ -1253,7 +1324,7 @@ export default function StudentDocumentsPage() {
                       <MessageSquare className="w-4 h-4" />
                       Báo cáo
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line">
                       {selectedSubmission.report === "WAITING_FOR_AI_EXTRACTION" 
                         ? "Đang chờ AI trích xuất dữ liệu..." 
                         : selectedSubmission.report}
@@ -1268,7 +1339,7 @@ export default function StudentDocumentsPage() {
                       <MessageSquare className="w-4 h-4" />
                       Ghi chú
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{selectedSubmission.takeNote}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line">{selectedSubmission.takeNote}</p>
                   </div>
                 ) : null}
 

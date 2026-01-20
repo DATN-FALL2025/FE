@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  LayoutDashboard,
+  FileText,
   Users,
   Target,
-  FileText,
   BarChart3,
   Settings,
   LogOut,
@@ -19,16 +18,12 @@ import {
   User,
   Shield,
   ClipboardList,
+  Calendar,
 } from "lucide-react";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { translateRole } from "@/lib/auth-utils";
 
 const trainingDirectorNavigation = [
-  {
-    name: "Trang chủ",
-    href: "/training-director/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     name: "Ma trận tài liệu",
     href: "/training-director/matrix",
@@ -38,6 +33,11 @@ const trainingDirectorNavigation = [
     name: "Duyệt Ma trận",
     href: "/training-director/approvals",
     icon: Shield,
+  },
+  {
+    name: "Quản lý đợt",
+    href: "/training-director/batch-management",
+    icon: Calendar,
   },
   {
     name: "Xem quy tắc",

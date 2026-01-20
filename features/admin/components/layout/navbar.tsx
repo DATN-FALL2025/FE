@@ -85,64 +85,14 @@ export function Navbar() {
           <span className="sr-only">Chuyển đổi theme</span>
         </Button>
 
-        {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cursor-pointer h-8 w-8 relative"
-            >
-              <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-destructive">
-                5
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="max-h-[300px] overflow-y-auto">
-              <DropdownMenuItem className="cursor-pointer p-3">
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                    <Shield className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-medium">Người dùng mới đăng ký</p>
-                    <p className="text-xs text-muted-foreground">5 phút trước</p>
-                  </div>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer p-3">
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/10 shrink-0">
-                    <Bell className="h-4 w-4 text-green-500" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-medium">Tài liệu cần phê duyệt</p>
-                    <p className="text-xs text-muted-foreground">1 giờ trước</p>
-                  </div>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer p-3">
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/10 shrink-0">
-                    <Settings className="h-4 w-4 text-orange-500" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-medium">Cập nhật hệ thống</p>
-                    <p className="text-xs text-muted-foreground">Hôm qua</p>
-                  </div>
-                </div>
-              </DropdownMenuItem>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer justify-center text-primary font-medium">
-              Xem tất cả thông báo
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Notifications Icon Only */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="cursor-pointer h-8 w-8"
+        >
+          <Bell className="h-4 w-4" />
+        </Button>
       </div>
     </header>
   );
