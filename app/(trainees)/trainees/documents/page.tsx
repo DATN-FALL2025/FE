@@ -1078,7 +1078,7 @@ export default function StudentDocumentsPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
-            <img
+            <Image
               src={previewImageUrl}
               alt="Preview"
               className="max-w-full max-h-[60vh] object-contain rounded-xl shadow-lg"
@@ -1374,7 +1374,7 @@ export default function StudentDocumentsPage() {
                           ) : isImage ? (
                             // Show image
                             <div className="w-full rounded-lg overflow-hidden border border-blue-200 dark:border-blue-800">
-                              <img
+                              <Image
                                 src={fileUrl}
                                 alt={`File ${index + 1}`}
                                 className="w-full h-auto object-contain max-h-[600px]"

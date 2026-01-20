@@ -73,18 +73,11 @@ export default function DepartmentsPage() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Prevent double-fetching in React StrictMode
-  const hasLoadedData = useRef(false);
-  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    if (hasLoadedData.current) {
-      return;
-    }
-    hasLoadedData.current = true;
     loadDepartments();
   }, []);
 

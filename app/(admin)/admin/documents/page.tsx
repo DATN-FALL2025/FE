@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Trash2, Calendar, Loader2, AlertCircle } from "lucide-react";
@@ -68,19 +68,12 @@ export default function DocumentsManagementPage() {
     documentDescription: "",
   });
 
-  // Prevent double-fetching in React StrictMode
-  const hasLoadedData = useRef(false);
-  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // Load documents on mount
   useEffect(() => {
-    if (hasLoadedData.current) {
-      return;
-    }
-    hasLoadedData.current = true;
     loadDocuments();
   }, []);
 

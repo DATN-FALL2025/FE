@@ -102,38 +102,47 @@ export default function PositionsPage() {
 
   // Fetch positions and departments on mount
   useEffect(() => {
-    loadPositions();
-    loadDepartments();
+    loadData();
   }, []);
 
-  const loadPositions = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     setError("");
+    
     try {
       const token = getToken();
-      const result: any = await getAllPositions(token || undefined);
+      
+      // Load both in parallel
+      const [positionsResult, departmentsResult] = await Promise.all([
+        getAllPositions(token || undefined),
+        getAllDepartments()
+      ]);
 
-      // Check if result has data - API might return {status: "200 OK", data: [...]}
-      if (result && result.data) {
-        // Map department.id to departmentID for easier access
-        const positionsWithDeptId = Array.isArray(result.data)
-          ? result.data.map((pos: any) => ({
+      // Process positions
+      if (positionsResult && positionsResult.data) {
+        const positionsWithDeptId = Array.isArray(positionsResult.data)
+          ? positionsResult.data.map((pos: any) => ({
               ...pos,
               departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
             }))
           : [];
         setPositions(positionsWithDeptId);
-      } else if (result && Array.isArray(result)) {
-        // In case API returns array directly
-        const positionsWithDeptId = result.map((pos: any) => ({
+      } else if (positionsResult && Array.isArray(positionsResult)) {
+        const positionsWithDeptId = positionsResult.map((pos: any) => ({
           ...pos,
           departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
         }));
         setPositions(positionsWithDeptId);
-      } else if (result.status && result.status.includes('error')) {
-        setError(result.message || 'Không thể tải danh sách vị trí');
-      } else {
-        setError('Không thể tải danh sách vị trí');
+      } else if (positionsResult.status && positionsResult.status.includes('error')) {
+        setError(positionsResult.message || 'Không thể tải danh sách vị trí');
+      }
+
+      // Process departments
+      if (departmentsResult && departmentsResult.data) {
+        const deptArray = Array.isArray(departmentsResult.data) ? departmentsResult.data : [];
+        setDepartments(deptArray);
+      } else if (departmentsResult && Array.isArray(departmentsResult)) {
+        setDepartments(departmentsResult);
       }
     } catch (err) {
       setError('Có lỗi xảy ra khi tải dữ liệu');
@@ -142,20 +151,28 @@ export default function PositionsPage() {
     }
   };
 
-  const loadDepartments = async () => {
+  const loadPositions = async () => {
     try {
-      const result: any = await getAllDepartments();
+      const token = getToken();
+      const result: any = await getAllPositions(token || undefined);
 
-      if (result && (result as any).data) {
-        const deptArray = Array.isArray((result as any).data) ? (result as any).data : [];
-        setDepartments(deptArray);
+      if (result && result.data) {
+        const positionsWithDeptId = Array.isArray(result.data)
+          ? result.data.map((pos: any) => ({
+              ...pos,
+              departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+            }))
+          : [];
+        setPositions(positionsWithDeptId);
       } else if (result && Array.isArray(result)) {
-        setDepartments(result);
-      } else {
-        setDepartments([]);
+        const positionsWithDeptId = result.map((pos: any) => ({
+          ...pos,
+          departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
+        }));
+        setPositions(positionsWithDeptId);
       }
     } catch (err) {
-      setDepartments([]);
+      console.error('Error loading positions:', err);
     }
   };
 
@@ -235,9 +252,18 @@ export default function PositionsPage() {
           title: "Thành công",
           description: "Tạo vị trí thành công!",
         });
+        
+        // Add new position to state instead of reloading
+        if (result.data) {
+          const newPosition = {
+            ...result.data,
+            departmentID: result.data.department?.id ? String(result.data.department.id) : formData.departmentID
+          };
+          setPositions(prev => [...prev, newPosition]);
+        }
+        
         setIsCreateOpen(false);
         resetForm();
-        await loadPositions(); // Reload list
       } else {
         toast({
           title: "Lỗi",
@@ -295,10 +321,26 @@ export default function PositionsPage() {
           title: "Thành công",
           description: "Cập nhật vị trí thành công!",
         });
+        
+        // Update position in state instead of reloading
+        setPositions(prev => prev.map(pos => 
+          pos.id === selectedPosition.id 
+            ? {
+                ...pos,
+                positionName: formData.positionName,
+                positionDescription: formData.positionDescription,
+                positionImage: imageFile ? imagePreview : pos.positionImage,
+                departmentID: formData.departmentID,
+                department: departments.find(d => 
+                  String((d as any).departmentId || (d as any).id) === formData.departmentID
+                ) as any
+              }
+            : pos
+        ));
+        
         setIsEditOpen(false);
         resetForm();
         setSelectedPosition(null);
-        await loadPositions();
       } else {
         toast({
           title: "Lỗi",
@@ -341,9 +383,12 @@ export default function PositionsPage() {
           title: "Thành công",
           description: "Xóa vị trí thành công!",
         });
+        
+        // Remove position from state instead of reloading
+        setPositions(prev => prev.filter(pos => pos.id !== selectedPosition.id));
+        
         setIsDeleteOpen(false);
         setSelectedPosition(null);
-        await loadPositions();
       } else {
         toast({
           title: "Lỗi",
