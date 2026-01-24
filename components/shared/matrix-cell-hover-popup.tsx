@@ -47,7 +47,6 @@ export default function MatrixCellHoverPopup({
   const [isLoading, setIsLoading] = useState(false);
   const [details, setDetails] = useState<MatrixDetail | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0, showAbove: false });
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -67,8 +66,10 @@ export default function MatrixCellHoverPopup({
     }
   }, [matrixId, disabled]);
 
-  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (disabled) return;
+    
+    e.stopPropagation();
     
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const viewportHeight = window.innerHeight;
@@ -84,28 +85,37 @@ export default function MatrixCellHoverPopup({
       showAbove,
     });
 
-    hoverTimeoutRef.current = setTimeout(() => {
+    if (!isVisible) {
       setIsVisible(true);
       fetchDetails();
-    }, 300);
-  }, [disabled, fetchDetails]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
+    } else {
+      setIsVisible(false);
+      setDetails(null);
     }
-    setIsVisible(false);
-    setDetails(null);
-  }, []);
+  }, [disabled, fetchDetails, isVisible]);
 
+  // Close popup when clicking outside
   useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node) &&
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsVisible(false);
+        setDetails(null);
       }
     };
-  }, []);
+
+    if (isVisible) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isVisible]);
 
   // Find the document info from details
   const documentInfo = details?.documentCollumResponseList?.find(
@@ -115,9 +125,8 @@ export default function MatrixCellHoverPopup({
   return (
     <div
       ref={containerRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative inline-flex"
+      onClick={handleClick}
+      className="relative inline-flex cursor-pointer"
     >
       {children}
 
@@ -145,28 +154,9 @@ export default function MatrixCellHoverPopup({
                 <h4 className="font-semibold text-sm text-gray-900">
                   {details.positionName}
                 </h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge status={details.statusEnum} />
-                </div>
               </div>
 
-              {/* Date Range */}
-              {details.startDate && details.endDate && (
-                <div className="text-xs text-gray-600">
-                  <span className="font-medium">Thời gian:</span>{" "}
-                  {formatDate(details.startDate)} - {formatDate(details.endDate)}
-                </div>
-              )}
-
-              {/* Reject Reason */}
-              {details.reject_reason && (
-                <div className="p-2 bg-red-50 rounded text-xs text-red-700">
-                  <span className="font-medium">Lý do từ chối:</span>{" "}
-                  {details.reject_reason}
-                </div>
-              )}
-
-              {/* Document Rules */}
+              {/* Document Rules - Only show values */}
               {documentInfo && documentInfo.documentRuleValueList?.length > 0 && (
                 <div className="border-t pt-3">
                   <h5 className="font-medium text-xs text-gray-700 mb-2">

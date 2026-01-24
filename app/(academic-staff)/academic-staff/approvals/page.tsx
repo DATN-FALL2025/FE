@@ -37,11 +37,22 @@ import {
 import {
   getAllTraineeApplicationsByStaffAcademic,
   getTraineeApplicationsByStatus,
-  completeTraineeApplication,
   getTraineeApplicationDetailByStaff,
   getNearestBatch,
   getTraineeSubmissionDetail,
+  approveRejectTraineeApplication,
+  approveRejectSubmission,
+  filterTraineeApplicationsByPosition,
 } from "@/lib/actions/trainee-submission";
+import { getAllPositions } from "@/lib/actions/position";
+import { getAllDepartments } from "@/lib/actions/department";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TraineeApplication {
   id: number;
@@ -103,8 +114,6 @@ export default function AcademicStaffApprovalsPage() {
   const [isListLoading, setIsListLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedApp, setSelectedApp] = useState<TraineeApplication | null>(null);
-  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [batchInfo, setBatchInfo] = useState<BatchInfo | null>(null);
@@ -114,6 +123,16 @@ export default function AcademicStaffApprovalsPage() {
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string>("");
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
+  const [isApproveRejectOpen, setIsApproveRejectOpen] = useState(false);
+  const [approveRejectAction, setApproveRejectAction] = useState<'approve' | 'reject'>('approve');
+  const [rejectReason, setRejectReason] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
+  const [selectedDocumentName, setSelectedDocumentName] = useState<string>("");
+  const [positions, setPositions] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [selectedPosition, setSelectedPosition] = useState<string>("all");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
 
   const hasLoadedData = useRef(false);
 
@@ -122,6 +141,8 @@ export default function AcademicStaffApprovalsPage() {
     hasLoadedData.current = true;
     loadApplications(true);
     loadBatchInfo();
+    loadPositions();
+    loadDepartments();
   }, []);
 
   const loadBatchInfo = async () => {
@@ -132,6 +153,37 @@ export default function AcademicStaffApprovalsPage() {
       }
     } catch (err) {
       console.error("Error loading batch info:", err);
+    }
+  };
+
+  const loadPositions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const result: any = await getAllPositions(token || undefined);
+      console.log("📋 Load positions result:", result);
+      
+      if (result && result.data) {
+        setPositions(Array.isArray(result.data) ? result.data : []);
+      } else if (result && Array.isArray(result)) {
+        setPositions(result);
+      }
+    } catch (err) {
+      console.error("Error loading positions:", err);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const result: any = await getAllDepartments();
+      console.log("📋 Load departments result:", result);
+      
+      if (result && result.data) {
+        setDepartments(Array.isArray(result.data) ? result.data : []);
+      } else if (result && Array.isArray(result)) {
+        setDepartments(result);
+      }
+    } catch (err) {
+      console.error("Error loading departments:", err);
     }
   };
 
@@ -193,6 +245,10 @@ export default function AcademicStaffApprovalsPage() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    // Reset filters when changing tabs
+    setSelectedPosition("all");
+    setSelectedDepartment("all");
+    
     if (value === "all") {
       loadApplications();
     } else {
@@ -207,26 +263,188 @@ export default function AcademicStaffApprovalsPage() {
     }
   };
 
-  const handleComplete = async () => {
-    if (!selectedApp) return;
+  const handlePositionChange = async (value: string) => {
+    setSelectedPosition(value);
+    setSelectedDepartment("all"); // Reset department filter
+    
+    if (value === "all") {
+      // Reload based on current tab
+      if (activeTab === "all") {
+        await loadApplications();
+      } else {
+        const statusMap: { [key: string]: string } = {
+          pending: "Pending",
+          approve: "Approve",
+          reject: "Reject",
+          complete: "Complete",
+          inprogress: "InProgress",
+        };
+        await loadApplicationsByStatus(statusMap[activeTab]);
+      }
+    } else {
+      // Filter by position
+      setIsListLoading(true);
+      setError("");
+      try {
+        const result: any = await filterTraineeApplicationsByPosition(parseInt(value));
+        console.log("🔍 Filter by position result:", result);
 
-    // Kiểm tra status phải là Approve
-    if (selectedApp.statusEnum !== "Approve") {
+        if (result && result.data) {
+          let filteredApps = Array.isArray(result.data) ? result.data : [];
+          
+          // Apply status filter if not on "all" tab
+          if (activeTab !== "all") {
+            const statusMap: { [key: string]: string } = {
+              pending: "Pending",
+              approve: "Approve",
+              reject: "Reject",
+              complete: "Complete",
+              inprogress: "InProgress",
+            };
+            const targetStatus = statusMap[activeTab];
+            filteredApps = filteredApps.filter((app: any) => app.statusEnum === targetStatus);
+          }
+          
+          setApplications(filteredApps);
+        } else if (result && Array.isArray(result)) {
+          setApplications(result);
+        } else {
+          setApplications([]);
+        }
+      } catch (err) {
+        console.error("❌ Error filtering by position:", err);
+        setError("Có lỗi xảy ra khi lọc theo vị trí");
+      } finally {
+        setIsListLoading(false);
+      }
+    }
+  };
+
+  const handleDepartmentChange = async (value: string) => {
+    setSelectedDepartment(value);
+    setSelectedPosition("all"); // Reset position filter
+    
+    if (value === "all") {
+      // Reload based on current tab
+      if (activeTab === "all") {
+        await loadApplications();
+      } else {
+        const statusMap: { [key: string]: string } = {
+          pending: "Pending",
+          approve: "Approve",
+          reject: "Reject",
+          complete: "Complete",
+          inprogress: "InProgress",
+        };
+        await loadApplicationsByStatus(statusMap[activeTab]);
+      }
+    } else {
+      // Filter by department (client-side filtering based on position's department)
+      setIsListLoading(true);
+      setError("");
+      try {
+        const token = localStorage.getItem("token");
+        const result: any = await getAllTraineeApplicationsByStaffAcademic(token);
+        
+        if (result && result.data) {
+          let allApps = Array.isArray(result.data) ? result.data : [];
+          
+          // Get all application details to filter by department
+          const detailPromises = allApps.map((app: any) => 
+            getTraineeApplicationDetailByStaff(app.id, token)
+          );
+          const details = await Promise.all(detailPromises);
+          
+          // Filter by department
+          const filteredApps = allApps.filter((app: any, index: number) => {
+            const detail = details[index];
+            if (detail && detail.data) {
+              return detail.data.departmentName === departments.find(d => d.id === parseInt(value))?.departmentName;
+            }
+            return false;
+          });
+          
+          // Apply status filter if not on "all" tab
+          if (activeTab !== "all") {
+            const statusMap: { [key: string]: string } = {
+              pending: "Pending",
+              approve: "Approve",
+              reject: "Reject",
+              complete: "Complete",
+              inprogress: "InProgress",
+            };
+            const targetStatus = statusMap[activeTab];
+            setApplications(filteredApps.filter((app: any) => app.statusEnum === targetStatus));
+          } else {
+            setApplications(filteredApps);
+          }
+        } else {
+          setApplications([]);
+        }
+      } catch (err) {
+        console.error("❌ Error filtering by department:", err);
+        setError("Có lỗi xảy ra khi lọc theo khoa");
+      } finally {
+        setIsListLoading(false);
+      }
+    }
+  };
+
+  const openApproveRejectDialog = (action: 'approve' | 'reject', submissionId?: number, documentName?: string) => {
+    setApproveRejectAction(action);
+    setRejectReason("");
+    setSelectedSubmissionId(submissionId || null);
+    setSelectedDocumentName(documentName || "");
+    setIsApproveRejectOpen(true);
+  };
+
+  const handleApproveReject = async () => {
+    // Validate reject reason
+    if (approveRejectAction === 'reject' && !rejectReason.trim()) {
       toast({
-        title: "Không thể hoàn thành",
-        description: "Chỉ có thể hoàn thành đơn đăng ký đã được duyệt (Approve)!",
+        title: "Lỗi",
+        description: "Vui lòng nhập lý do từ chối",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
+    setIsProcessing(true);
 
     try {
       const token = localStorage.getItem("token");
-      const result: any = await completeTraineeApplication(selectedApp.id, token);
-
-      console.log("✅ Complete application result:", result);
+      const statusEnum = approveRejectAction === 'approve' ? 'Approve' : 'Reject';
+      
+      let result: any;
+      
+      // Nếu có selectedSubmissionId thì duyệt/từ chối từng tài liệu
+      if (selectedSubmissionId) {
+        result = await approveRejectSubmission(
+          selectedSubmissionId,
+          statusEnum,
+          rejectReason,
+          token
+        );
+        console.log(`${approveRejectAction} submission result:`, result);
+      } 
+      // Nếu không thì duyệt/từ chối cả đơn đăng ký
+      else if (selectedApp) {
+        result = await approveRejectTraineeApplication(
+          selectedApp.id,
+          statusEnum,
+          rejectReason,
+          token
+        );
+        console.log(`${approveRejectAction} application result:`, result);
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Không tìm thấy đơn đăng ký hoặc tài liệu",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
 
       const isSuccess =
         result &&
@@ -235,8 +453,17 @@ export default function AcademicStaffApprovalsPage() {
           (result.status && typeof result.status === "string" && result.status.includes("200")));
 
       if (isSuccess) {
-        setIsCompleteOpen(false);
+        setIsApproveRejectOpen(false);
         setSelectedApp(null);
+        setSelectedSubmissionId(null);
+        setSelectedDocumentName("");
+        setRejectReason("");
+        
+        // Nếu đang xem chi tiết, reload lại chi tiết
+        if (isViewOpen && selectedApp) {
+          await openViewDialog(selectedApp);
+        }
+        
         // Reload lại danh sách theo tab hiện tại
         if (activeTab === "all") {
           await loadApplications();
@@ -250,14 +477,17 @@ export default function AcademicStaffApprovalsPage() {
           };
           await loadApplicationsByStatus(statusMap[activeTab]);
         }
+        
         toast({
           title: "Thành công",
-          description: "Hoàn thành đơn đăng ký thành công!",
+          description: selectedSubmissionId 
+            ? `${approveRejectAction === 'approve' ? 'Duyệt' : 'Từ chối'} tài liệu thành công!`
+            : `${approveRejectAction === 'approve' ? 'Duyệt' : 'Từ chối'} đơn đăng ký thành công!`,
         });
       } else {
         toast({
           title: "Lỗi",
-          description: result?.message || "Hoàn thành đơn đăng ký thất bại!",
+          description: result?.message || `${approveRejectAction === 'approve' ? 'Duyệt' : 'Từ chối'} thất bại!`,
           variant: "destructive",
         });
       }
@@ -268,13 +498,8 @@ export default function AcademicStaffApprovalsPage() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsProcessing(false);
     }
-  };
-
-  const openCompleteDialog = (app: TraineeApplication) => {
-    setSelectedApp(app);
-    setIsCompleteOpen(true);
   };
 
   const openViewDialog = async (app: TraineeApplication) => {
@@ -453,16 +678,29 @@ export default function AcademicStaffApprovalsPage() {
               <Eye className="w-4 h-4 mr-2" />
               Xem
             </Button>
-            {app.statusEnum === "Approve" && (
-              <Button
-                size="sm"
-                className="bg-green-500 hover:bg-green-600 flex-1"
-                onClick={() => openCompleteDialog(app)}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Hoàn thành
-              </Button>
-            )}
+            <Button 
+              size="sm" 
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                setSelectedApp(app);
+                openApproveRejectDialog('approve');
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Duyệt
+            </Button>
+            <Button 
+              size="sm" 
+              variant="destructive"
+              className="flex-1"
+              onClick={() => {
+                setSelectedApp(app);
+                openApproveRejectDialog('reject');
+              }}
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Từ chối
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -538,6 +776,51 @@ export default function AcademicStaffApprovalsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Filter Section */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Lọc theo vị trí
+              </label>
+              <Select value={selectedPosition} onValueChange={handlePositionChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn vị trí" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả vị trí</SelectItem>
+                  {positions.map((position) => (
+                    <SelectItem key={position.id} value={position.id.toString()}>
+                      {position.positionName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1">
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Lọc theo khoa
+              </label>
+              <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khoa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả khoa</SelectItem>
+                  {departments.map((department) => (
+                    <SelectItem key={department.id} value={department.id.toString()}>
+                      {department.departmentName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center justify-between">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
@@ -646,17 +929,28 @@ export default function AcademicStaffApprovalsPage() {
                                 <Eye className="w-4 h-4 mr-1" />
                                 Xem
                               </Button>
-                              {app.statusEnum === "Approve" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openCompleteDialog(app)}
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                >
-                                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                                  Hoàn thành
-                                </Button>
-                              )}
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => {
+                                  setSelectedApp(app);
+                                  openApproveRejectDialog('approve');
+                                }}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                Duyệt
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => {
+                                  setSelectedApp(app);
+                                  openApproveRejectDialog('reject');
+                                }}
+                              >
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                Từ chối
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -782,38 +1076,59 @@ export default function AcademicStaffApprovalsPage() {
                               </Badge>
                             </div>
                           </div>
-                          {doc.url && (
-                            <div className="space-y-2">
-                              <p className="text-xs font-semibold text-muted-foreground">
-                                File đã nộp ({doc.url.split(';;').length} file)
-                              </p>
-                              <div className="space-y-2">
-                                {doc.url.split(';;').map((fileUrl, fileIndex) => {
-                                  // Extract filename from URL
-                                  const urlParts = fileUrl.split('/');
-                                  const fullFileName = urlParts[urlParts.length - 1];
-                                  // Remove timestamp prefix
-                                  const fileName = fullFileName.replace(/^\d+_/, '');
-                                  
-                                  return (
-                                    <div key={fileIndex} className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                      <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                                      <span className="text-sm flex-1 truncate">{fileName}</span>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => openImagePreview(fileUrl, doc.requiredDocumentName)}
-                                      >
-                                        <Eye className="w-3.5 h-3.5 mr-1" />
-                                        Xem
-                                      </Button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                          {/* Nút Duyệt/Từ chối cho từng tài liệu */}
+                          {doc.submissionId && doc.apply_or_not === "Applied" && (
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => openApproveRejectDialog('approve', doc.submissionId || undefined, doc.requiredDocumentName)}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                                Duyệt
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openApproveRejectDialog('reject', doc.submissionId || undefined, doc.requiredDocumentName)}
+                              >
+                                <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                                Từ chối
+                              </Button>
                             </div>
                           )}
                         </div>
+                        {doc.url && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground">
+                              File đã nộp ({doc.url.split(';;').length} file)
+                            </p>
+                            <div className="space-y-2">
+                              {doc.url.split(';;').map((fileUrl, fileIndex) => {
+                                // Extract filename from URL
+                                const urlParts = fileUrl.split('/');
+                                const fullFileName = urlParts[urlParts.length - 1];
+                                // Remove timestamp prefix
+                                const fileName = fullFileName.replace(/^\d+_/, '');
+                                
+                                return (
+                                  <div key={fileIndex} className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                    <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                    <span className="text-sm flex-1 truncate">{fileName}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openImagePreview(fileUrl, fileName)}
+                                    >
+                                      <Eye className="w-3.5 h-3.5 mr-1" />
+                                      Xem
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Document Rule Values - Quy tắc kiểm tra */}
                         {doc.documentRuleValueCellResponseList && doc.documentRuleValueCellResponseList.length > 0 && (
@@ -889,6 +1204,8 @@ export default function AcademicStaffApprovalsPage() {
                       </div>
                     ))}
                   </div>
+                  
+
                 </CardContent>
               </Card>
             </div>
@@ -940,44 +1257,84 @@ export default function AcademicStaffApprovalsPage() {
             )}
           </div>
           <div className="p-6 pt-0 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => window.open(previewImageUrl, "_blank")}
-            >
-              Mở trong tab mới
-            </Button>
             <Button onClick={() => setIsImagePreviewOpen(false)}>Đóng</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Complete Alert Dialog */}
-      <AlertDialog open={isCompleteOpen} onOpenChange={setIsCompleteOpen}>
+      {/* Approve/Reject Application Dialog */}
+      <AlertDialog open={isApproveRejectOpen} onOpenChange={setIsApproveRejectOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận hoàn thành</AlertDialogTitle>
+            <AlertDialogTitle>
+              {approveRejectAction === 'approve' 
+                ? (selectedSubmissionId ? 'Duyệt tài liệu' : 'Duyệt đơn đăng ký')
+                : (selectedSubmissionId ? 'Từ chối tài liệu' : 'Từ chối đơn đăng ký')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn đánh dấu đơn đăng ký{" "}
-              <span className="font-semibold">#{selectedApp?.id}</span> là hoàn thành? Hành động
-              này chỉ được phép khi đơn đã được duyệt (Approve).
+              <div className="space-y-3">
+                {selectedSubmissionId ? (
+                  <p>
+                    Tài liệu: <span className="font-semibold">{selectedDocumentName}</span>
+                  </p>
+                ) : (
+                  <p>
+                    Đơn đăng ký: <span className="font-semibold">#{selectedApp?.id}</span>
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {approveRejectAction === 'approve' 
+                    ? `Bạn có chắc chắn muốn duyệt ${selectedSubmissionId ? 'tài liệu' : 'đơn đăng ký'} này?`
+                    : `Vui lòng nhập lý do từ chối ${selectedSubmissionId ? 'tài liệu' : 'đơn đăng ký'}:`}
+                </p>
+                
+                {/* Reject Reason Input - Only show when rejecting */}
+                {approveRejectAction === 'reject' && (
+                  <div className="space-y-2">
+                    <label htmlFor="rejectReason" className="text-sm font-medium">
+                      Lý do từ chối <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="rejectReason"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="Nhập lý do từ chối đơn đăng ký..."
+                      className="w-full min-h-[120px] p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleComplete}
-              className="bg-green-600 hover:bg-green-700"
-              disabled={isSubmitting}
+            <AlertDialogCancel disabled={isProcessing}>Hủy</AlertDialogCancel>
+            <Button
+              onClick={handleApproveReject}
+              className={approveRejectAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+              variant={approveRejectAction === 'reject' ? 'destructive' : 'default'}
+              disabled={isProcessing}
             >
-              {isSubmitting ? (
+              {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Đang xử lý...
                 </>
               ) : (
-                "Hoàn thành"
+                <>
+                  {approveRejectAction === 'approve' ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Duyệt
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Từ chối
+                    </>
+                  )}
+                </>
               )}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -125,7 +125,7 @@ export default function HeadMatrixPage() {
         let rules: any[] = result.documentRules || result.data?.documentRules || result.data?.documentRuleList || [];
         setDocumentRules(rules);
       }
-    } catch (e) { toast({ title: "Lỗi", description: "Không thể tải rules", variant: "destructive" }); }
+    } catch (e) { toast({ title: "Lỗi", description: "Không thể tải quy tắc", variant: "destructive" }); }
     finally { setIsLoadingRules(false); }
   };
 
@@ -140,7 +140,7 @@ export default function HeadMatrixPage() {
     try {
       await createDocumentRuleValue({ matrixID: temp.matrixId, documentRuleValueDTOList: list });
       await clickToCellMatrix({ matrixId: temp.matrixId, required: true });
-      toast({ title: "Thành công", description: `Đã lưu ${list.length} rule(s)` });
+      toast({ title: "Thành công", description: `Đã lưu ${list.length} quy tắc` });
       await reloadMatrix();
     } catch (e: any) { toast({ title: "Lỗi", description: e.message, variant: "destructive" }); }
     finally { setIsSubmitting(false); }
@@ -271,7 +271,7 @@ export default function HeadMatrixPage() {
       <Dialog open={isRuleFormOpen} onOpenChange={setIsRuleFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Nhập Rule Values</DialogTitle>
+            <DialogTitle>Nhập giá trị quy tắc</DialogTitle>
             <DialogDescription>{selectedCell?.positionName} - {selectedCell?.documentName}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -285,12 +285,12 @@ export default function HeadMatrixPage() {
                   </div>
                 ))}
               </div>
-            ) : <p className="text-center text-muted-foreground py-8">Tài liệu chưa có rules</p>}
+            ) : <p className="text-center text-muted-foreground py-8">Tài liệu chưa có quy tắc</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsRuleFormOpen(false); setSelectedCell(null); }}>Hủy</Button>
             <Button onClick={handleSubmitRuleForm} disabled={isSubmitting || !Object.values(ruleValues).some(v => v.trim())}>
-              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Lưu...</> : "Lưu"}
+              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Đang lưu...</> : "Lưu"}
             </Button>
           </DialogFooter>
         </DialogContent>

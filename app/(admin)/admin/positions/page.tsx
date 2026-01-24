@@ -119,30 +119,30 @@ export default function PositionsPage() {
       ]);
 
       // Process positions
-      if (positionsResult && positionsResult.data) {
-        const positionsWithDeptId = Array.isArray(positionsResult.data)
-          ? positionsResult.data.map((pos: any) => ({
+      if (positionsResult && (positionsResult as any).data) {
+        const positionsWithDeptId = Array.isArray((positionsResult as any).data)
+          ? (positionsResult as any).data.map((pos: any) => ({
               ...pos,
               departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
             }))
           : [];
         setPositions(positionsWithDeptId);
       } else if (positionsResult && Array.isArray(positionsResult)) {
-        const positionsWithDeptId = positionsResult.map((pos: any) => ({
+        const positionsWithDeptId = (positionsResult as any[]).map((pos: any) => ({
           ...pos,
           departmentID: pos.department?.id ? String(pos.department.id) : (pos.departmentID || "")
         }));
         setPositions(positionsWithDeptId);
-      } else if (positionsResult.status && positionsResult.status.includes('error')) {
-        setError(positionsResult.message || 'Không thể tải danh sách vị trí');
+      } else if ((positionsResult as any).status && (positionsResult as any).status.includes('error')) {
+        setError((positionsResult as any).message || 'Không thể tải danh sách vị trí');
       }
 
       // Process departments
-      if (departmentsResult && departmentsResult.data) {
-        const deptArray = Array.isArray(departmentsResult.data) ? departmentsResult.data : [];
+      if (departmentsResult && (departmentsResult as any).data) {
+        const deptArray = Array.isArray((departmentsResult as any).data) ? (departmentsResult as any).data : [];
         setDepartments(deptArray);
       } else if (departmentsResult && Array.isArray(departmentsResult)) {
-        setDepartments(departmentsResult);
+        setDepartments(departmentsResult as any[]);
       }
     } catch (err) {
       setError('Có lỗi xảy ra khi tải dữ liệu');

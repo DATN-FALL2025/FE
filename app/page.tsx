@@ -41,38 +41,38 @@ export default function LandingPage() {
   const features = [
     {
       icon: Upload,
-      title: "Easy Document Upload",
-      description: "Drag & drop your admission documents with automatic format validation and virus scanning.",
+      title: "Tải Tài Liệu Dễ Dàng",
+      description: "Kéo thả tài liệu nhập học với tự động kiểm tra định dạng và quét virus.",
       color: "bg-blue-500",
     },
     {
       icon: Zap,
-      title: "Automated Validation",
-      description: "Smart system automatically checks formats, sizes, and requirements before submission.",
+      title: "Xác Thực Tự Động",
+      description: "Hệ thống thông minh tự động kiểm tra định dạng, kích thước và yêu cầu trước khi nộp.",
       color: "bg-yellow-500",
     },
     {
       icon: Clock,
-      title: "Real-time Tracking",
-      description: "Monitor your document status with live updates and deadline reminders.",
+      title: "Theo Dõi Thời Gian Thực",
+      description: "Giám sát trạng thái tài liệu với cập nhật trực tiếp và nhắc nhở hạn chót.",
       color: "bg-green-500",
     },
     {
       icon: Shield,
-      title: "Secure & Compliant",
-      description: "Bank-level security with encrypted storage and comprehensive audit trails.",
+      title: "Bảo Mật & Tuân Thủ",
+      description: "Bảo mật cấp ngân hàng với lưu trữ mã hóa và theo dõi đầy đủ.",
       color: "bg-purple-500",
     },
     {
       icon: Bell,
-      title: "Smart Notifications",
-      description: "Get instant alerts for approvals, rejections, and approaching deadlines.",
+      title: "Thông Báo Thông Minh",
+      description: "Nhận cảnh báo tức thì cho phê duyệt, từ chối và hạn chót sắp đến.",
       color: "bg-orange-500",
     },
     {
       icon: BarChart3,
-      title: "Progress Dashboard",
-      description: "Visual analytics showing your submission progress and completion percentage.",
+      title: "Bảng Điều Khiển Tiến Độ",
+      description: "Phân tích trực quan hiển thị tiến độ nộp và tỷ lệ hoàn thành của bạn.",
       color: "bg-pink-500",
     },
   ];
@@ -80,23 +80,23 @@ export default function LandingPage() {
   const programs = [
     {
       icon: Plane,
-      title: "Pilot Training",
-      description: "Professional pilot certification program with comprehensive flight training.",
-      badge: "Most Popular",
+      title: "Đào Tạo Phi Công",
+      description: "Chương trình chứng chỉ phi công chuyên nghiệp với đào tạo bay toàn diện.",
+      badge: "Phổ Biến Nhất",
       color: "from-blue-500 to-blue-700",
     },
     {
       icon: Users,
-      title: "Cabin Crew",
-      description: "Elite cabin crew training for exceptional customer service excellence.",
-      badge: "New",
+      title: "Tiếp Viên Hàng Không",
+      description: "Đào tạo tiếp viên hàng không ưu tú với dịch vụ khách hàng xuất sắc.",
+      badge: "Mới",
       color: "from-purple-500 to-purple-700",
     },
     {
       icon: GraduationCap,
-      title: "Aviation Maintenance",
-      description: "Technical expertise in aircraft maintenance and engineering systems.",
-      badge: "High Demand",
+      title: "Bảo Trì Hàng Không",
+      description: "Chuyên môn kỹ thuật về bảo trì máy bay và hệ thống kỹ thuật.",
+      badge: "Nhu Cầu Cao",
       color: "from-orange-500 to-orange-700",
     },
   ];
@@ -104,31 +104,31 @@ export default function LandingPage() {
   const steps = [
     {
       step: "01",
-      title: "Create Account",
-      description: "Register with your email and student information to access the portal.",
+      title: "Tạo Tài Khoản",
+      description: "Đăng ký với email và thông tin sinh viên để truy cập cổng thông tin.",
     },
     {
       step: "02",
-      title: "View Requirements",
-      description: "Check your program's document requirements and submission guidelines.",
+      title: "Xem Yêu Cầu",
+      description: "Kiểm tra yêu cầu tài liệu và hướng dẫn nộp của chương trình.",
     },
     {
       step: "03",
-      title: "Upload Documents",
-      description: "Submit your documents with our easy drag-and-drop interface.",
+      title: "Tải Lên Tài Liệu",
+      description: "Nộp tài liệu với giao diện kéo thả dễ dàng của chúng tôi.",
     },
     {
       step: "04",
-      title: "Track Progress",
-      description: "Monitor review status and receive notifications for any updates.",
+      title: "Theo Dõi Tiến Độ",
+      description: "Giám sát trạng thái xét duyệt và nhận thông báo về mọi cập nhật.",
     },
   ];
 
   const stats = [
-    { value: "5,000+", label: "Students Enrolled" },
-    { value: "98%", label: "Approval Rate" },
-    { value: "24hrs", label: "Avg Review Time" },
-    { value: "100%", label: "Secure Platform" },
+    { value: "5,000+", label: "Sinh Viên Đã Đăng Ký" },
+    { value: "98%", label: "Tỷ Lệ Phê Duyệt" },
+    { value: "24 giờ", label: "Thời Gian Xét Duyệt TB" },
+    { value: "100%", label: "Nền Tảng Bảo Mật" },
   ];
 
   return (
@@ -142,26 +142,26 @@ export default function LandingPage() {
             </div>
             <div>
               <h1 className="font-bold text-lg">IDMAWA</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Aviation Academy</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">Học Viện Hàng Không</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-4">
             <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors hidden md:block">
-              About
+              Giới Thiệu
             </Link>
             <Link href="/programs" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors hidden md:block">
-              Programs
+              Chương Trình
             </Link>
             <Link href="/contact" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors hidden md:block">
-              Contact
+              Liên Hệ
             </Link>
             <Button variant="outline" asChild>
-              <Link href="/login">Login</Link>
+              <Link href="/login">Đăng Nhập</Link>
             </Button>
             <Button asChild>
               <Link href="/signup">
-                Get Started
+                Bắt Đầu
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
@@ -175,27 +175,27 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="mx-auto max-w-4xl text-center space-y-8">
             <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-              ✈️ Aviation Academy Admission Portal
+              ✈️ Cổng Thông Tin Tuyển Sinh Học Viện Hàng Không
             </Badge>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-              Streamline Your Aviation Academy Admission
+              Đơn Giản Hóa Quy Trình Tuyển Sinh Học Viện Hàng Không
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Upload, track, and manage your admission documents with ease. Our automated workflow ensures fast, secure, and efficient document processing.
+              Tải lên, theo dõi và quản lý hồ sơ tuyển sinh của bạn một cách dễ dàng. Quy trình tự động của chúng tôi đảm bảo xử lý hồ sơ nhanh chóng, an toàn và hiệu quả.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Button size="lg" className="text-lg h-12 px-8" asChild>
                 <Link href="/signup">
-                  Start Your Application
+                  Bắt Đầu Đăng Ký
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-lg h-12 px-8" asChild>
                 <Link href="#how-it-works">
-                  Learn More
+                  Tìm Hiểu Thêm
                 </Link>
               </Button>
             </div>
@@ -217,12 +217,12 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/50">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
-            <Badge className="mb-4" variant="outline">Features</Badge>
+            <Badge className="mb-4" variant="outline">Tính Năng</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything You Need for Smooth Admission
+              Mọi Thứ Bạn Cần Cho Tuyển Sinh Thuận Lợi
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our platform combines automation, security, and user-friendly design to simplify your document submission process.
+              Nền tảng của chúng tôi kết hợp tự động hóa, bảo mật và thiết kế thân thiện để đơn giản hóa quy trình nộp hồ sơ của bạn.
             </p>
           </div>
 
@@ -249,12 +249,12 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-20">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
-            <Badge className="mb-4" variant="outline">Process</Badge>
+            <Badge className="mb-4" variant="outline">Quy Trình</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              How It Works
+              Cách Thức Hoạt Động
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get started with our simple 4-step process to complete your admission.
+              Bắt đầu với quy trình 4 bước đơn giản để hoàn thành tuyển sinh của bạn.
             </p>
           </div>
 
@@ -283,12 +283,12 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/50">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
-            <Badge className="mb-4" variant="outline">Programs</Badge>
+            <Badge className="mb-4" variant="outline">Chương Trình</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Aviation Training Programs
+              Chương Trình Đào Tạo Hàng Không
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose from our world-class aviation programs designed to prepare you for a successful career.
+              Lựa chọn từ các chương trình hàng không đẳng cấp thế giới được thiết kế để chuẩn bị cho bạn một sự nghiệp thành công.
             </p>
           </div>
 
@@ -307,7 +307,7 @@ export default function LandingPage() {
                   <CardContent className="p-6">
                     <p className="text-muted-foreground mb-6 leading-relaxed">{program.description}</p>
                     <Button variant="outline" className="w-full group hover:bg-primary hover:text-white transition-colors">
-                      Learn More
+                      Tìm Hiểu Thêm
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </CardContent>
@@ -326,21 +326,21 @@ export default function LandingPage() {
             <CardContent className="p-12 md:p-16 text-center text-white relative">
               <div className="max-w-3xl mx-auto space-y-6">
                 <h2 className="text-3xl md:text-5xl font-bold">
-                  Ready to Start Your Aviation Career?
+                  Sẵn Sàng Bắt Đầu Sự Nghiệp Hàng Không?
                 </h2>
                 <p className="text-lg md:text-xl text-white/90">
-                  Join thousands of students who have successfully completed their admission process with IDMAWA.
+                  Tham gia cùng hàng nghìn sinh viên đã hoàn thành thành công quy trình tuyển sinh với IDMAWA.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                   <Button size="lg" variant="secondary" className="text-lg h-12 px-8" asChild>
                     <Link href="/signup">
-                      Apply Now
+                      Đăng Ký Ngay
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" className="text-lg h-12 px-8 bg-transparent text-white border-white hover:bg-white/10" asChild>
                     <Link href="/contact">
-                      Contact Us
+                      Liên Hệ Chúng Tôi
                     </Link>
                   </Button>
                 </div>
@@ -361,51 +361,51 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h1 className="font-bold text-lg">IDMAWA</h1>
-                  <p className="text-xs text-muted-foreground">Aviation Academy</p>
+                  <p className="text-xs text-muted-foreground">Học Viện Hàng Không</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Streamlining aviation academy admissions with modern technology.
+                Đơn giản hóa tuyển sinh học viện hàng không với công nghệ hiện đại.
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-4">Quick Links</h3>
+              <h3 className="font-semibold mb-4">Liên Kết Nhanh</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-                <li><Link href="/programs" className="hover:text-primary transition-colors">Programs</Link></li>
-                <li><Link href="/admissions" className="hover:text-primary transition-colors">Admissions</Link></li>
-                <li><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">Giới Thiệu</Link></li>
+                <li><Link href="/programs" className="hover:text-primary transition-colors">Chương Trình</Link></li>
+                <li><Link href="/admissions" className="hover:text-primary transition-colors">Tuyển Sinh</Link></li>
+                <li><Link href="/faq" className="hover:text-primary transition-colors">Câu Hỏi Thường Gặp</Link></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-4">Support</h3>
+              <h3 className="font-semibold mb-4">Hỗ Trợ</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/help" className="hover:text-primary transition-colors">Help Center</Link></li>
-                <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
-                <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+                <li><Link href="/help" className="hover:text-primary transition-colors">Trung Tâm Trợ Giúp</Link></li>
+                <li><Link href="/contact" className="hover:text-primary transition-colors">Liên Hệ</Link></li>
+                <li><Link href="/privacy" className="hover:text-primary transition-colors">Chính Sách Bảo Mật</Link></li>
+                <li><Link href="/terms" className="hover:text-primary transition-colors">Điều Khoản Dịch Vụ</Link></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-4">Contact</h3>
+              <h3 className="font-semibold mb-4">Liên Hệ</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>Email: support@idmawa.edu.vn</li>
-                <li>Phone: +84 123 456 789</li>
-                <li>Hours: 8AM - 5PM (Mon-Fri)</li>
+                <li>Điện thoại: +84 123 456 789</li>
+                <li>Giờ làm việc: 8AM - 5PM (Thứ 2 - Thứ 6)</li>
               </ul>
             </div>
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 IDMAWA - Aviation Academy. All rights reserved.
+              © 2024 IDMAWA - Học Viện Hàng Không. Bảo lưu mọi quyền.
             </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-primary transition-colors">Bảo Mật</Link>
+              <Link href="/terms" className="hover:text-primary transition-colors">Điều Khoản</Link>
               <Link href="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
             </div>
           </div>

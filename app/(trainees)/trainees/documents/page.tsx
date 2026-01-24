@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Upload, CheckCircle2, AlertCircle, Clock, User, Eye, Download, FileText, Calendar, MessageSquare, XCircle, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Upload, CheckCircle2, AlertCircle, Clock, User, Eye, Download, FileText, Calendar, MessageSquare, XCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthInfo } from "@/hooks/use-auth-info";
 import { getDecodedToken } from "@/lib/auth-utils";
@@ -101,10 +101,6 @@ export default function StudentDocumentsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionDetail | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  
-  // Image preview modal
-  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState("");
   
   // Resubmit modal
   const [isResubmitModalOpen, setIsResubmitModalOpen] = useState(false);
@@ -659,6 +655,60 @@ export default function StudentDocumentsPage() {
         </p>
       </div>
 
+      {/* Batch Info */}
+      {batchInfo && (
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Thông tin đợt nộp hồ sơ</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Thời gian nộp hồ sơ hiện tại</p>
+              </div>
+              <Badge className={batchInfo.status ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"}>
+                {batchInfo.status ? "Đang mở" : "Đã đóng"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Ngày bắt đầu</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {new Date(batchInfo.startDate).toLocaleDateString('vi-VN', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Ngày kết thúc</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {new Date(batchInfo.endDate).toLocaleDateString('vi-VN', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </p>
+              </div>
+            </div>
+            {!batchInfo.status && (
+              <div className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
+                <p className="text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  Đợt nộp hồ sơ đã đóng. Vui lòng chờ đợt tiếp theo.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Application Info */}
@@ -1066,43 +1116,6 @@ export default function StudentDocumentsPage() {
         </Card>
       </div>
 
-      {/* File Preview Modal */}
-      <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-2xl border-0">
-          <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <DialogTitle className="flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              Xem file
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
-            <Image
-              src={previewImageUrl}
-              alt="Preview"
-              className="max-w-full max-h-[60vh] object-contain rounded-xl shadow-lg"
-            />
-          </div>
-          <div className="flex gap-3 p-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <Button
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 cursor-pointer transition-colors duration-200"
-              onClick={() => window.open(previewImageUrl, '_blank')}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Tải xuống
-            </Button>
-            <Button
-              variant="outline"
-              className="rounded-xl h-11 cursor-pointer transition-colors duration-200"
-              onClick={() => setIsImagePreviewOpen(false)}
-            >
-              Đóng
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Resubmit Modal */}
       <Dialog open={isResubmitModalOpen} onOpenChange={setIsResubmitModalOpen}>
         <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl border-0">
@@ -1377,6 +1390,8 @@ export default function StudentDocumentsPage() {
                               <Image
                                 src={fileUrl}
                                 alt={`File ${index + 1}`}
+                                width={800}
+                                height={600}
                                 className="w-full h-auto object-contain max-h-[600px]"
                               />
                             </div>
@@ -1447,25 +1462,7 @@ export default function StudentDocumentsPage() {
                   </div>
                 )}
 
-                {/* Resubmit Button - Only show if status is Reject */}
-                {selectedSubmission.submissionStatus === "Reject" && (
-                  <Button
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 cursor-pointer transition-colors duration-200"
-                    onClick={() => {
-                      setIsResubmitModalOpen(true);
-                      setResubmitNote("");
-                      setResubmitFile(null);
-                    }}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Nộp lại tài liệu
-                  </Button>
-                )}
-
-                {/* Submission ID */}
-                <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
-                  ID: #{selectedSubmission.submissionId}
-                </p>
+     
               </div>
             ) : (
               <div className="p-12 text-center">

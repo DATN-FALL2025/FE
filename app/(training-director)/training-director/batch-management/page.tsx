@@ -39,7 +39,7 @@ import { formatDate } from "@/lib/utils";
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://manage-and-automate-aviation-academy-application-production.up.railway.app'}/api`;
 
 interface Batch {
-  id?: number;
+  batchId?: number;
   startDate: string;
   endDate: string;
   status: boolean;
@@ -118,13 +118,19 @@ export default function BatchManagementPage() {
 
   // Update batch
   const handleUpdate = async () => {
-    if (!selectedBatch?.id || !formData.startDate || !formData.endDate) {
+    if (!selectedBatch?.batchId || !formData.startDate || !formData.endDate) {
       toast.error("Vui lòng nhập đầy đủ thông tin");
       return;
     }
 
+    // Kiểm tra nếu batch đang hoạt động
+    if (selectedBatch.status) {
+      toast.error("Không thể cập nhật đợt duyệt đang hoạt động");
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/batch/update-batch/${selectedBatch.id}`, {
+      const response = await fetch(`${API_BASE_URL}/batch/update-batch/${selectedBatch.batchId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -154,10 +160,17 @@ export default function BatchManagementPage() {
 
   // Delete batch
   const handleDelete = async () => {
-    if (!selectedBatch?.id) return;
+    if (!selectedBatch?.batchId) return;
+
+    // Kiểm tra nếu batch đang hoạt động
+    if (selectedBatch.status) {
+      toast.error("Không thể xóa đợt duyệt đang hoạt động");
+      setIsDeleteDialogOpen(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/batch/delete-batch/${selectedBatch.id}`, {
+      const response = await fetch(`${API_BASE_URL}/batch/delete-batch/${selectedBatch.batchId}`, {
         method: "DELETE",
       });
 
@@ -257,7 +270,7 @@ export default function BatchManagementPage() {
               </TableHeader>
               <TableBody>
                 {batches.map((batch, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={batch.batchId || index}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell>{formatDate(batch.startDate)}</TableCell>
                     <TableCell>{formatDate(batch.endDate)}</TableCell>
@@ -272,6 +285,8 @@ export default function BatchManagementPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => openEditDialog(batch)}
+                          disabled={batch.status}
+                          title={batch.status ? "Không thể sửa đợt duyệt đang hoạt động" : "Chỉnh sửa"}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -279,6 +294,8 @@ export default function BatchManagementPage() {
                           size="sm"
                           variant="destructive"
                           onClick={() => openDeleteDialog(batch)}
+                          disabled={batch.status}
+                          title={batch.status ? "Không thể xóa đợt duyệt đang hoạt động" : "Xóa"}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

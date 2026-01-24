@@ -2,19 +2,25 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Search,
   FileText,
   Building2,
   Briefcase,
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getMatrixFilterByPositionDepartment } from "@/lib/actions/matrix";
 import { getAllPositions } from "@/lib/actions/position";
 import { getAllDepartments } from "@/lib/actions/department";
@@ -65,13 +71,8 @@ export function DocumentRequirementsPage() {
   const [matrixData, setMatrixData] = useState<MatrixData[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<{
-    type: "position" | "department" | null;
-    id: number | null;
-    name: string;
-  }>({ type: null, id: null, name: "" });
+  const [selectedPosition, setSelectedPosition] = useState<string>("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
@@ -84,8 +85,8 @@ export function DocumentRequirementsPage() {
           getAllDepartments(),
         ]) as [any, any];
 
-        console.log(" Positions:", posRes);
-        console.log(" Departments:", deptRes);
+        console.log("📋 Positions:", posRes);
+        console.log("📋 Departments:", deptRes);
 
         if (posRes.status === "200 OK" || posRes.status === "success") {
           setPositions(posRes.data || []);
@@ -101,60 +102,36 @@ export function DocumentRequirementsPage() {
     loadInitialData();
   }, []);
 
-  // Search suggestions based on query
-  const suggestions = useMemo<SearchSuggestion[]>(() => {
-    if (!searchQuery.trim()) return [];
-
-    const query = searchQuery.toLowerCase();
-    const results: SearchSuggestion[] = [];
-
-    // Search positions - use id field
-    positions.forEach((pos) => {
-      if (pos.positionName?.toLowerCase().includes(query)) {
-        results.push({
-          type: "position",
-          id: pos.id || pos.positionId || 0,
-          name: pos.positionName,
-        });
-      }
-    });
-
-    // Search departments - use id field
-    departments.forEach((dept) => {
-      if (dept.departmentName?.toLowerCase().includes(query)) {
-        results.push({
-          type: "department",
-          id: dept.id || dept.departmentId || 0,
-          name: dept.departmentName,
-        });
-      }
-    });
-
-    return results.slice(0, 10);
-  }, [searchQuery, positions, departments]);
-
   // Get department name by ID
   const getDepartmentName = (departmentId: number): string => {
     const dept = departments.find((d) => (d.id || d.departmentId) === departmentId);
     return dept?.departmentName || "";
   };
 
-  // Handle suggestion selection
-  const handleSelectSuggestion = async (suggestion: SearchSuggestion) => {
-    setSelectedFilter({
-      type: suggestion.type,
-      id: suggestion.id,
-      name: suggestion.name,
-    });
-    setSearchQuery(suggestion.name);
-    setShowSuggestions(false);
+  // Handle position selection
+  const handlePositionChange = async (value: string) => {
+    setSelectedPosition(value);
+    setSelectedDepartment(""); // Reset department when position is selected
+    
+    if (value) {
+      await fetchMatrixData(parseInt(value), undefined, "position");
+    } else {
+      setMatrixData([]);
+      setCurrentPage(1);
+    }
+  };
 
-    // Fetch matrix data with filter type
-    await fetchMatrixData(
-      suggestion.type === "position" ? suggestion.id : undefined,
-      suggestion.type === "department" ? suggestion.id : undefined,
-      suggestion.type
-    );
+  // Handle department selection
+  const handleDepartmentChange = async (value: string) => {
+    setSelectedDepartment(value);
+    setSelectedPosition(""); // Reset position when department is selected
+    
+    if (value) {
+      await fetchMatrixData(undefined, parseInt(value), "department");
+    } else {
+      setMatrixData([]);
+      setCurrentPage(1);
+    }
   };
 
   // Fetch matrix data
@@ -228,8 +205,8 @@ export function DocumentRequirementsPage() {
 
   // Clear filter
   const handleClearFilter = () => {
-    setSelectedFilter({ type: null, id: null, name: "" });
-    setSearchQuery("");
+    setSelectedPosition("");
+    setSelectedDepartment("");
     setMatrixData([]);
     setCurrentPage(1);
   };
@@ -246,24 +223,6 @@ export function DocumentRequirementsPage() {
     return docs?.filter((doc) => doc.required === true) || [];
   };
 
-  // Get filter type label
-  const getFilterTypeLabel = (type: string) => {
-    switch (type) {
-      case "position": return "Vị trí";
-      case "department": return "Khoa";
-      default: return "";
-    }
-  };
-
-  // Get filter type icon
-  const getFilterTypeIcon = (type: string) => {
-    switch (type) {
-      case "position": return <Briefcase className="w-4 h-4 text-blue-500" />;
-      case "department": return <Building2 className="w-4 h-4 text-green-500" />;
-      default: return null;
-    }
-  };
-
   return (
     <div className="space-y-6 w-full pb-8">
       {/* Page Header */}
@@ -274,60 +233,90 @@ export function DocumentRequirementsPage() {
         </p>
       </div>
 
-      {/* Search Section */}
+      {/* Filter Section */}
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm theo vị trí hoặc khoa..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                className="pl-10 pr-4"
-              />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">Lọc yêu cầu hồ sơ</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Position Dropdown */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  Chọn vị trí
+                </label>
+                <Select value={selectedPosition} onValueChange={handlePositionChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn vị trí..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions.map((position) => (
+                      <SelectItem 
+                        key={position.id || position.positionId} 
+                        value={(position.id || position.positionId || 0).toString()}
+                      >
+                        {position.positionName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Department Dropdown */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Chọn khoa
+                </label>
+                <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn khoa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((department) => (
+                      <SelectItem 
+                        key={department.id || department.departmentId} 
+                        value={(department.id || department.departmentId || 0).toString()}
+                      >
+                        {department.departmentName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Suggestions Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={`${suggestion.type}-${suggestion.id}-${index}`}
-                    className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2 text-foreground"
-                    onClick={() => handleSelectSuggestion(suggestion)}
-                  >
-                    {getFilterTypeIcon(suggestion.type)}
-                    <span className="flex-1">{suggestion.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {getFilterTypeLabel(suggestion.type)}
-                    </span>
-                  </button>
-                ))}
+            {/* Selected Filter Display */}
+            {(selectedPosition || selectedDepartment) && (
+              <div className="flex items-center gap-2 pt-2">
+                <span className="text-sm text-muted-foreground">Đang lọc theo:</span>
+                {selectedPosition && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm">
+                    <Briefcase className="w-3 h-3" />
+                    {positions.find(p => (p.id || p.positionId)?.toString() === selectedPosition)?.positionName}
+                  </span>
+                )}
+                {selectedDepartment && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm">
+                    <Building2 className="w-3 h-3" />
+                    {departments.find(d => (d.id || d.departmentId)?.toString() === selectedDepartment)?.departmentName}
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilter}
+                  className="h-7 px-2 text-xs"
+                >
+                  Xóa bộ lọc
+                </Button>
               </div>
             )}
           </div>
-
-          {/* Selected Filter */}
-          {selectedFilter.type && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Đang lọc theo:</span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-sm">
-                {getFilterTypeIcon(selectedFilter.type)}
-                {selectedFilter.name}
-                <button
-                  onClick={handleClearFilter}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </span>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -401,20 +390,6 @@ export function DocumentRequirementsPage() {
                       </p>
                     )}
                   </div>
-
-                  {/* Deadline Info */}
-                  {(matrix.startDate || matrix.endDate) && (
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {matrix.startDate && (
-                          <span>Bắt đầu: {new Date(matrix.startDate).toLocaleDateString("vi-VN")}</span>
-                        )}
-                        {matrix.endDate && (
-                          <span>Kết thúc: {new Date(matrix.endDate).toLocaleDateString("vi-VN")}</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             );
@@ -455,14 +430,14 @@ export function DocumentRequirementsPage() {
             </div>
           )}
         </div>
-      ) : selectedFilter.type ? (
+      ) : (selectedPosition || selectedDepartment) ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">Không tìm thấy kết quả</h3>
               <p className="text-sm text-muted-foreground">
-                Không có yêu cầu hồ sơ nào cho {getFilterTypeLabel(selectedFilter.type).toLowerCase()} này
+                Không có yêu cầu hồ sơ nào cho bộ lọc này
               </p>
             </div>
           </CardContent>
@@ -471,10 +446,10 @@ export function DocumentRequirementsPage() {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Tìm kiếm yêu cầu hồ sơ</h3>
+              <Filter className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Chọn vị trí hoặc khoa</h3>
               <p className="text-sm text-muted-foreground">
-                Nhập tên vị trí hoặc khoa để xem danh sách yêu cầu
+                Vui lòng chọn vị trí hoặc khoa để xem danh sách yêu cầu hồ sơ
               </p>
             </div>
           </CardContent>

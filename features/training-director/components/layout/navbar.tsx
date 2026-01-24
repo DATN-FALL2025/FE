@@ -5,13 +5,11 @@ import {
   Bell,
   Moon,
   Sun,
-  Search,
   Target,
   Settings,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -50,29 +48,8 @@ export function Navbar() {
         </Breadcrumb>
       </div>
 
-      {/* Center Section - Search Bar */}
-      <div className="hidden md:flex flex-1 justify-center max-w-xl mx-4">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Tìm kiếm..."
-            className="pl-10 h-9 bg-muted/50"
-          />
-        </div>
-      </div>
-
       {/* Right Section */}
       <div className="flex items-center gap-1">
-        {/* Search button - Mobile */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden cursor-pointer h-8 w-8"
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-
         {/* Theme Toggle */}
         <Button
           variant="ghost"

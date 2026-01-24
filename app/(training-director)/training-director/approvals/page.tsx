@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getAllMatrix, setMatrixStatusForTrainingDirector, getMatrixDashboard } from "@/lib/actions/matrix";
-import { getAllDepartments } from "@/lib/actions/department";
+import { getAllDepartmentsV2 } from "@/lib/actions/department";
 import { toast } from "@/lib/toast-compat";
 import type { ApiResponse as DepartmentApiResponse, Department } from "@/types/department";
 import MatrixTimeDisplay from "@/components/shared/matrix-time-display";
@@ -120,7 +120,7 @@ export default function TrainingDirectorApprovalsPage() {
 
       try {
         const [deptResult, matrixResult, dashboardResult] = await Promise.all([
-          getAllDepartments(),
+          getAllDepartmentsV2(),
           getAllMatrix(),
           getMatrixDashboard(),
         ]) as [DepartmentApiResponse<Department[]>, any, any];
