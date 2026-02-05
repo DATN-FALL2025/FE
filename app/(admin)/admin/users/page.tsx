@@ -40,11 +40,16 @@ import {
 } from "@/components/ui/select";
 
 interface UserData {
-  id: string;
+  accountId?: string | number;
+  id?: string;
   userName: string;
-  gmail: string;
+  gmail?: string;
+  image?: string | null;
   accountImage?: string;
+  roleEnum?: string;
+  active?: boolean;
   roles?: any[];
+  authorities?: any[];
   [key: string]: any;
 }
 
@@ -431,12 +436,12 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   currentUsers.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={user.accountId || user.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                          {user.accountImage && (user.accountImage.startsWith('http://') || user.accountImage.startsWith('https://')) ? (
+                          {(user.image || user.accountImage) && ((user.image || user.accountImage)?.startsWith('http://') || (user.image || user.accountImage)?.startsWith('https://')) ? (
                             <Image
-                              src={user.accountImage}
+                              src={user.image || user.accountImage || ''}
                               alt={user.userName}
                               width={48}
                               height={48}
@@ -453,13 +458,17 @@ export default function UsersPage() {
                       <td className="py-4 px-6">
                         <div className="text-sm text-muted-foreground flex items-center gap-2">
                           <Mail className="w-4 h-4" />
-                          {user.gmail}
+                          {user.gmail || 'N/A'}
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex gap-1 flex-wrap">
-                          {(user.authorities || user.roles) && (user.authorities || user.roles).length > 0 ? (
-                            (user.authorities || user.roles).map((role: any, index: number) => {
+                          {user.roleEnum ? (
+                            <Badge variant="outline" className="text-xs">
+                              {getRoleInVietnamese(user.roleEnum)}
+                            </Badge>
+                          ) : (user.authorities?.length || 0) > 0 || (user.roles?.length || 0) > 0 ? (
+                            (user.authorities || user.roles || []).map((role: any, index: number) => {
                               const roleText = role.authority || role.roleName || role.name || 'User';
                               return (
                                 <Badge key={index} variant="outline" className="text-xs">
@@ -673,9 +682,9 @@ export default function UsersPage() {
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-4">
-                  {selectedUser.accountImage && (selectedUser.accountImage.startsWith('http://') || selectedUser.accountImage.startsWith('https://')) ? (
+                  {(selectedUser.image || selectedUser.accountImage) && ((selectedUser.image || selectedUser.accountImage)?.startsWith('http://') || (selectedUser.image || selectedUser.accountImage)?.startsWith('https://')) ? (
                     <Image
-                      src={selectedUser.accountImage}
+                      src={selectedUser.image || selectedUser.accountImage || ''}
                       alt={selectedUser.userName}
                       width={96}
                       height={96}
@@ -686,7 +695,7 @@ export default function UsersPage() {
                   )}
                 </div>
                 <h3 className="text-xl font-semibold">{selectedUser.userName}</h3>
-                <p className="text-sm text-muted-foreground">{selectedUser.gmail}</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.gmail || 'N/A'}</p>
               </div>
 
               <div className="space-y-3 pt-4 border-t">
@@ -696,13 +705,17 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Email</Label>
-                  <p className="mt-1">{selectedUser.gmail}</p>
+                  <p className="mt-1">{selectedUser.gmail || 'N/A'}</p>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Vai trò</Label>
                   <div className="mt-2 flex gap-2 flex-wrap">
-                    {(selectedUser.authorities || selectedUser.roles) && (selectedUser.authorities || selectedUser.roles).length > 0 ? (
-                      (selectedUser.authorities || selectedUser.roles).map((role: any, index: number) => {
+                    {selectedUser.roleEnum ? (
+                      <Badge variant="secondary">
+                        {getRoleInVietnamese(selectedUser.roleEnum)}
+                      </Badge>
+                    ) : (selectedUser.authorities?.length || 0) > 0 || (selectedUser.roles?.length || 0) > 0 ? (
+                      (selectedUser.authorities || selectedUser.roles || []).map((role: any, index: number) => {
                         const roleText = role.authority || role.roleName || role.name || 'User';
                         return (
                           <Badge key={index} variant="secondary">

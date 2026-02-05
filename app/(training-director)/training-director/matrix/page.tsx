@@ -1195,24 +1195,9 @@ export default function TrainingDirectorMatrixPage() {
       {/* Deadline Setting Dialog */}
       <Dialog open={isDeadlineDialogOpen} onOpenChange={(open) => {
         setIsDeadlineDialogOpen(open);
-        if (open) {
-          // Set default start date: 00:00 ngày hôm sau
-          const startDate = new Date();
-          startDate.setDate(startDate.getDate() + 1);
-          startDate.setHours(0, 0, 0, 0);
-          const startYear = startDate.getFullYear();
-          const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
-          const startDay = String(startDate.getDate()).padStart(2, '0');
-          setDeadlineStartDate(`${startYear}-${startMonth}-${startDay}T00:00`);
-          
-          // Set default end date: 7 ngày sau, 23:59
-          const endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 7);
-          endDate.setHours(23, 59, 0, 0);
-          const endYear = endDate.getFullYear();
-          const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
-          const endDay = String(endDate.getDate()).padStart(2, '0');
-          setDeadlineEndDate(`${endYear}-${endMonth}-${endDay}T23:59`);
+        if (!open) {
+          setDeadlineStartDate("");
+          setDeadlineEndDate("");
         }
       }}>
         <DialogContent className="max-w-md">
@@ -1230,11 +1215,10 @@ export default function TrainingDirectorMatrixPage() {
                 type="date"
                 value={deadlineStartDate.slice(0, 10)}
                 min={(() => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  const y = tomorrow.getFullYear();
-                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
-                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  const today = new Date();
+                  const y = today.getFullYear();
+                  const m = String(today.getMonth() + 1).padStart(2, '0');
+                  const d = String(today.getDate()).padStart(2, '0');
                   return `${y}-${m}-${d}`;
                 })()}
                 onChange={(e) => {
@@ -1251,11 +1235,10 @@ export default function TrainingDirectorMatrixPage() {
                 type="date"
                 value={deadlineEndDate.slice(0, 10)}
                 min={deadlineStartDate ? deadlineStartDate.slice(0, 10) : (() => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  const y = tomorrow.getFullYear();
-                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
-                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  const today = new Date();
+                  const y = today.getFullYear();
+                  const m = String(today.getMonth() + 1).padStart(2, '0');
+                  const d = String(today.getDate()).padStart(2, '0');
                   return `${y}-${m}-${d}`;
                 })()}
                 onChange={(e) => {
@@ -1298,23 +1281,9 @@ export default function TrainingDirectorMatrixPage() {
       {/* Active Setting Dialog */}
       <Dialog open={isActiveDialogOpen} onOpenChange={(open) => {
         setIsActiveDialogOpen(open);
-        if (open) {
-          // Set default start date: 00:00 ngày hôm sau
-          const startDate = new Date();
-          startDate.setDate(startDate.getDate() + 1);
-          startDate.setHours(0, 0, 0, 0);
-          const startYear = startDate.getFullYear();
-          const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
-          const startDay = String(startDate.getDate()).padStart(2, '0');
-          setActiveStartDate(`${startYear}-${startMonth}-${startDay}T00:00`);
-          
-          // Set default end date: 1 năm sau, 23:59
-          const endDate = new Date(startDate);
-          endDate.setFullYear(endDate.getFullYear() + 1);
-          const endYear = endDate.getFullYear();
-          const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
-          const endDay = String(endDate.getDate()).padStart(2, '0');
-          setActiveEndDate(`${endYear}-${endMonth}-${endDay}T23:59`);
+        if (!open) {
+          setActiveStartDate("");
+          setActiveEndDate("");
         }
       }}>
         <DialogContent className="max-w-md">
@@ -1332,11 +1301,10 @@ export default function TrainingDirectorMatrixPage() {
                 type="date"
                 value={activeStartDate.slice(0, 10)}
                 min={(() => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  const y = tomorrow.getFullYear();
-                  const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
-                  const d = String(tomorrow.getDate()).padStart(2, '0');
+                  const today = new Date();
+                  const y = today.getFullYear();
+                  const m = String(today.getMonth() + 1).padStart(2, '0');
+                  const d = String(today.getDate()).padStart(2, '0');
                   return `${y}-${m}-${d}`;
                 })()}
                 onChange={(e) => {

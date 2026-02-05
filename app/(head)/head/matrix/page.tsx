@@ -86,7 +86,7 @@ export default function HeadMatrixPage() {
         const result: any = await getAllMatrix();
         if (result.status === 'error') { setError(result.message); setAllMatrixData(null); }
         else { setAllMatrixData(result.data); }
-      } catch (err: any) { setError(err.message || 'Failed to load'); }
+      } catch (err: any) { setError(err.message || 'Không thể tải dữ liệu'); }
       finally { setIsLoading(false); }
     };
     loadMatrix();
@@ -132,15 +132,16 @@ export default function HeadMatrixPage() {
   const handleSubmitRuleForm = async () => {
     if (!selectedCell) return;
     const list = Object.entries(ruleValues).filter(([_, v]) => v.trim()).map(([id, v]) => ({ document_rule_Id: Number(id), document_rule_value: v }));
-    if (list.length === 0) { toast({ title: "Lỗi", description: "Nhập ít nhất 1 giá trị", variant: "destructive" }); return; }
     
     const temp = selectedCell;
     setIsRuleFormOpen(false); setSelectedCell(null); setRuleValues({}); setDocumentRules([]);
     setIsSubmitting(true);
     try {
-      await createDocumentRuleValue({ matrixID: temp.matrixId, documentRuleValueDTOList: list });
+      if (list.length > 0) {
+        await createDocumentRuleValue({ matrixID: temp.matrixId, documentRuleValueDTOList: list });
+      }
       await clickToCellMatrix({ matrixId: temp.matrixId, required: true });
-      toast({ title: "Thành công", description: `Đã lưu ${list.length} quy tắc` });
+      toast({ title: "Thành công", description: list.length > 0 ? `Đã lưu ${list.length} quy tắc` : "Đã kiểm tra ô" });
       await reloadMatrix();
     } catch (e: any) { toast({ title: "Lỗi", description: e.message, variant: "destructive" }); }
     finally { setIsSubmitting(false); }
@@ -289,7 +290,7 @@ export default function HeadMatrixPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsRuleFormOpen(false); setSelectedCell(null); }}>Hủy</Button>
-            <Button onClick={handleSubmitRuleForm} disabled={isSubmitting || !Object.values(ruleValues).some(v => v.trim())}>
+            <Button onClick={handleSubmitRuleForm} disabled={isSubmitting}>
               {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Đang lưu...</> : "Lưu"}
             </Button>
           </DialogFooter>

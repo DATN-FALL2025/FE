@@ -600,7 +600,7 @@ export default function RulesPage() {
             <div className="space-y-2">
               <Label className="text-muted-foreground">Tài liệu</Label>
               <p className="font-medium">
-                {selectedRule?.document?.documentCode} - {selectedRule?.document?.documentName}
+                {selectedRule?.document?.documentCode && `${selectedRule.document.documentCode} - `}{selectedRule?.document?.documentName || selectedRule?.documentName}
               </p>
             </div>
             <div className="space-y-2">
